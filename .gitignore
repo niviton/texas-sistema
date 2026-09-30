@@ -1,0 +1,19 @@
+__pycache__/
+*.pyc
+db.sqlite3
+.venv/
+venv/
+media/
+sharepoint_simulado/
+.env
+.env.*
+!.env.example
+
+# Dados reais / internos (não publicar)
+NIV/
+modelos certificados/
+solicitacao-acesso-sharepoint.md
+
+# Arquivos de teste/depuração
+headers.txt
+preview_extreme.png

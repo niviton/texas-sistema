@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Verificação de Certificados · Polaris{% endblock %}
+{% block content %}
+<div style="min-height:100vh; width:100%; background:#f4f6f8; color:#12181f; display:flex; flex-direction:column; align-items:center; padding:56px 24px;">
+  <div style="width:100%; max-width:480px;">
+    <a href="{% url 'accounts:auth' %}" style="display:inline-block; text-decoration:none; color:#1e5c94; font-weight:700; font-size:13px; margin-bottom:24px;">← Voltar</a>
+    <div style="text-align:center; margin-bottom:32px;">
+      <div style="display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:20px;">
+        <img src="{% static 'assets/star-mark-v2.png' %}" alt="" style="height:34px; width:auto;">
+        <span style="font-family:'Sora',sans-serif; font-weight:800; font-size:19px; color:#0d1b2e;">Texas Controls</span>
+      </div>
+      <h1 style="font-family:'Sora',sans-serif; font-size:22px; font-weight:800; margin:0 0 6px; color:#0d1b2e;">Verificação de Certificados</h1>
+      <p style="font-size:13px; color:#8b95a1; margin:0;">texascontrols.com/verificacao-certificados</p>
+    </div>
+
+    <div style="background:#fff; border:1px solid #e6e9ec; border-radius:16px; padding:26px;">
+      <form method="post">
+        {% csrf_token %}
+        <label style="display:block; font-size:12.5px; font-weight:600; color:#334051; margin-bottom:8px;">Código do certificado</label>
+        <input type="text" name="code" value="{{ code }}" placeholder="TC-FO-202600093-SF-01" required
+          style="width:100%; padding:12px 14px; border-radius:9px; border:1.5px solid #dfe3e8; font-size:14px; margin-bottom:6px; text-transform:uppercase;">
+        <p style="font-size:11.5px; color:#8b95a1; margin:0 0 18px;">Digite o código impresso no certificado (canto inferior esquerdo).</p>
+
+        <button type="submit" style="width:100%; padding:13px 0; border:none; border-radius:10px; background:#0d2440; color:#fff; font-family:'Sora',sans-serif; font-weight:700; font-size:14.5px; cursor:pointer;">Verificar autenticidade</button>
+      </form>
+
+      {% if checked %}
+        {% if certificate %}
+          <div style="margin-top:20px; background:#e5f3ea; border:1px solid #b7ddc3; border-radius:12px; padding:18px 20px;">
+            <div style="font-weight:700; font-size:14px; color:#1e7a4a; margin-bottom:10px;">✓ Certificado autêntico</div>
+            <div style="font-size:13px; color:#2c2c2c; line-height:1.8;">
+              <strong>{{ certificate.student_name }}</strong><br>
+              {{ certificate.course_title }}<br>
+              Instrutor: {{ certificate.instructor_name }}<br>
+              Data do curso: {{ certificate.course_date|date:"d/m/Y" }} · Duração: {{ certificate.duration }}<br>
+              Emitido em {{ certificate.issue_date|date:"d/m/Y" }} · {{ certificate.code }}
+            </div>
+          </div>
+        {% else %}
+          <div style="margin-top:20px; background:#fdecea; border:1px solid #f3c2bd; border-radius:12px; padding:18px 20px; font-size:13.5px; color:#c0392b; font-weight:600;">✕ Certificado não encontrado. Verifique o código digitado.</div>
+        {% endif %}
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

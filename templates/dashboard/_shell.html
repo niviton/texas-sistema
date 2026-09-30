@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<div style="display:flex; min-height:100vh; width:100%; background:#f4f6f8; color:#12181f;">
+
+  <div style="width:240px; min-width:240px; background:linear-gradient(180deg,#0a1526 0%,#0d2440 100%); display:flex; flex-direction:column; align-items:stretch; padding:24px 18px; gap:18px; box-sizing:border-box;">
+    <div style="display:flex; align-items:center; padding:0 6px; margin-bottom:12px; flex-shrink:0;">
+      <img src="{% static 'assets/texas-controls-logo-onwhite-star-white-text.png' %}" alt="Texas Controls" style="height:36px; width:auto; display:block;">
+    </div>
+    <div style="display:flex; flex-direction:column; gap:2px; flex:1;">
+      {% url 'dashboard:home' as inicio_url %}
+      <a href="{{ inicio_url }}" style="display:flex; align-items:center; gap:12px; padding:11px 14px; border-radius:10px; text-decoration:none; background:{% if active_nav == 'inicio' %}rgba(245,166,35,0.14){% else %}transparent{% endif %}; border-left:3px solid {% if active_nav == 'inicio' %}#f5a623{% else %}transparent{% endif %};">
+        <div style="width:8px; height:8px; border-radius:50%; background:{% if active_nav == 'inicio' %}#f5a623{% else %}rgba(255,255,255,0.3){% endif %}; flex-shrink:0;"></div>
+        <span style="font-size:14px; font-weight:{% if active_nav == 'inicio' %}700{% else %}500{% endif %}; color:{% if active_nav == 'inicio' %}#ffffff{% else %}rgba(255,255,255,0.65){% endif %};">Início</span>
+      </a>
+      {% if request.user.role == 'admin' %}
+      {% url 'cert_admin:emitir' as certificados_url %}
+      <a href="{{ certificados_url }}" style="display:flex; align-items:center; gap:12px; padding:11px 14px; border-radius:10px; text-decoration:none; background:{% if active_nav == 'certificados' %}rgba(245,166,35,0.14){% else %}transparent{% endif %}; border-left:3px solid {% if active_nav == 'certificados' %}#f5a623{% else %}transparent{% endif %};">
+        <div style="width:8px; height:8px; border-radius:50%; background:{% if active_nav == 'certificados' %}#f5a623{% else %}rgba(255,255,255,0.3){% endif %}; flex-shrink:0;"></div>
+        <span style="font-size:14px; font-weight:{% if active_nav == 'certificados' %}700{% else %}500{% endif %}; color:{% if active_nav == 'certificados' %}#ffffff{% else %}rgba(255,255,255,0.65){% endif %};">Certificados</span>
+      </a>
+      {% url 'accounts_admin:usuarios' as usuarios_url %}
+      <a href="{{ usuarios_url }}" style="display:flex; align-items:center; gap:12px; padding:11px 14px; border-radius:10px; text-decoration:none; background:{% if active_nav == 'configuracoes' %}rgba(245,166,35,0.14){% else %}transparent{% endif %}; border-left:3px solid {% if active_nav == 'configuracoes' %}#f5a623{% else %}transparent{% endif %};">
+        <div style="width:8px; height:8px; border-radius:50%; background:{% if active_nav == 'configuracoes' %}#f5a623{% else %}rgba(255,255,255,0.3){% endif %}; flex-shrink:0;"></div>
+        <span style="font-size:14px; font-weight:{% if active_nav == 'configuracoes' %}700{% else %}500{% endif %}; color:{% if active_nav == 'configuracoes' %}#ffffff{% else %}rgba(255,255,255,0.65){% endif %};">Configurações</span>
+      </a>
+      {% endif %}
+      {% if request.user.role == 'professor' %}
+      {% url 'cert_prof:folders' as meus_certificados_url %}
+      <a href="{{ meus_certificados_url }}" style="display:flex; align-items:center; gap:12px; padding:11px 14px; border-radius:10px; text-decoration:none; background:{% if active_nav == 'certificados_prof' %}rgba(245,166,35,0.14){% else %}transparent{% endif %}; border-left:3px solid {% if active_nav == 'certificados_prof' %}#f5a623{% else %}transparent{% endif %};">
+        <div style="width:8px; height:8px; border-radius:50%; background:{% if active_nav == 'certificados_prof' %}#f5a623{% else %}rgba(255,255,255,0.3){% endif %}; flex-shrink:0;"></div>
+        <span style="font-size:14px; font-weight:{% if active_nav == 'certificados_prof' %}700{% else %}500{% endif %}; color:{% if active_nav == 'certificados_prof' %}#ffffff{% else %}rgba(255,255,255,0.65){% endif %};">Certificados</span>
+      </a>
+      {% endif %}
+    </div>
+    <div style="margin-top:auto; padding-top:16px; border-top:1px solid rgba(255,255,255,0.1); flex-shrink:0;">
+      <form method="post" action="{% url 'accounts:logout' %}">
+        {% csrf_token %}
+        <button type="submit" style="width:100%; padding:11px 0; border:1.5px solid rgba(255,255,255,0.18); background:none; border-radius:10px; color:rgba(255,255,255,0.75); font-family:'Manrope',sans-serif; font-weight:600; font-size:13.5px; cursor:pointer;">Sair</button>
+      </form>
+    </div>
+  </div>
+
+  <div style="flex:1; display:flex; flex-direction:column; min-width:0;">
+    <div style="height:64px; background:#ffffff; border-bottom:1px solid #e6e9ec; display:flex; align-items:center; justify-content:space-between; padding:0 32px; flex-wrap:wrap; gap:8px;">
+      <div>
+        <div style="font-family:'Sora',sans-serif; font-size:15px; font-weight:700; color:#0d1b2e;">Polaris</div>
+        <div style="font-size:11.5px; color:#8b95a1;">Portal unificado · Texas Controls</div>
+      </div>
+      <div style="display:flex; align-items:center; gap:16px;">
+        <div style="padding:7px 14px; border-radius:100px; border:1.5px solid #dfe3e8; background:#f7f8fa; color:#556072; font-family:'Manrope',sans-serif; font-weight:700; font-size:12px;">{{ request.user.role_label }}</div>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <div style="width:38px; height:38px; border-radius:50%; background:#0d2440; color:#fff; display:flex; align-items:center; justify-content:center; font-family:'Sora',sans-serif; font-weight:700; font-size:13.5px; flex-shrink:0;">{{ request.user.initials }}</div>
+          <div>
+            <div style="font-size:13.5px; font-weight:700; color:#0d1b2e;">{{ request.user.full_name }}</div>
+            <div style="font-size:11.5px; color:#8b95a1;">{{ request.user.email }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="flex:1; overflow:auto; padding:32px;">
+      {% if messages %}
+        {% for message in messages %}
+          <div style="padding:12px 16px; border-radius:10px; margin-bottom:18px; max-width:640px; font-size:13.5px; font-weight:600;
+            background:{% if message.tags == 'error' %}#fdecea{% else %}#e5f3ea{% endif %};
+            color:{% if message.tags == 'error' %}#c0392b{% else %}#1e7a4a{% endif %};
+            border:1px solid {% if message.tags == 'error' %}#f3c2bd{% else %}#b7ddc3{% endif %};">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+      {% block shell_content %}{% endblock %}
+    </div>
+  </div>
+</div>
+{% endblock %}

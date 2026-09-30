@@ -1,0 +1,10 @@
+Django>=6.0,<6.1
+Pillow>=11.0
+qrcode>=8.0
+openpyxl>=3.1
+python-docx>=1.1
+docxtpl>=0.20
+lxml>=5.0
+python-dotenv>=1.0
+msal>=1.28
+requests>=2.31

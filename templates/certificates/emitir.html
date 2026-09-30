@@ -1,0 +1,188 @@
+{% extends "dashboard/_shell.html" %}
+{% block title %}Emitir certificado · Polaris{% endblock %}
+{% block shell_content %}
+<h1 style="font-family:'Sora',sans-serif; font-size:24px; font-weight:800; margin:0 0 4px; color:#0d1b2e;">Certificados</h1>
+<p style="font-size:14px; color:#6b7480; margin:0 0 24px;">Valide os cadastros enviados pelos professores e emita os certificados.</p>
+{% include "certificates/_tabs.html" %}
+
+{% if not has_professors or not has_templates %}
+  <div style="background:#fff8ea; border:1px solid #f6dfa8; border-radius:12px; padding:16px 20px; margin-bottom:24px; max-width:640px; font-size:13.5px; color:#7a5410;">
+    {% if not has_professors %}Cadastre pelo menos um <a href="{% url 'cert_admin:professores' %}" style="color:#7a5410; font-weight:700;">professor</a> antes de emitir.{% endif %}
+    {% if not has_templates %}Cadastre pelo menos um <a href="{% url 'cert_admin:modelos' %}" style="color:#7a5410; font-weight:700;">modelo de certificado</a> antes de emitir.{% endif %}
+  </div>
+{% endif %}
+
+
+<div style="display:flex; gap:28px; flex-wrap:wrap; align-items:flex-start;">
+  <form method="post" id="emitir-form" style="background:#fff; border:1px solid #e6e9ec; border-radius:14px; padding:24px; width:420px; flex-shrink:0;">
+    {% csrf_token %}
+
+    <label style="display:block; font-size:12.5px; font-weight:600; color:#334051; margin-bottom:6px;">Certificado (modelo)</label>
+    <select name="course_template" id="id_course_template" style="width:100%; box-sizing:border-box; padding:11px 12px; border-radius:9px; border:1.5px solid #dfe3e8; font-size:13.5px; margin-bottom:6px;">
+      <option value="">Selecione...</option>
+      {% for template in form.fields.course_template.queryset %}
+        <option value="{{ template.pk }}" {% if form.course_template.value|stringformat:'s' == template.pk|stringformat:'s' %}selected{% endif %}>{{ template.title }}</option>
+      {% endfor %}
+    </select>
+    {% if form.course_template.errors %}<p style="font-size:12px; color:#c0392b; margin:0 0 12px;">{{ form.course_template.errors.0 }}</p>{% endif %}
+
+    <label style="display:block; font-size:12.5px; font-weight:600; color:#334051; margin:14px 0 6px;">Tipo de certificado</label>
+    <select name="cert_type" id="id_cert_type" style="width:100%; box-sizing:border-box; padding:11px 12px; border-radius:9px; border:1.5px solid #dfe3e8; font-size:13.5px; margin-bottom:6px;">
+      {% for value, label in form.fields.cert_type.choices %}
+        <option value="{{ value }}" {% if form.cert_type.value == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <div style="font-size:11.5px; color:#8b95a1; margin:-2px 0 14px;">Define a assinatura do instrutor chefe exibida no certificado.</div>
+
+    <label style="display:block; font-size:12.5px; font-weight:600; color:#334051; margin-bottom:6px;">Instrutor responsável</label>
+    <select name="professor" id="id_professor" style="width:100%; box-sizing:border-box; padding:11px 12px; border-radius:9px; border:1.5px solid #dfe3e8; font-size:13.5px; margin-bottom:6px;">
+      <option value="">Selecione...</option>
+      {% for professor in form.fields.professor.queryset %}
+        <option value="{{ professor.pk }}" {% if form.professor.value|stringformat:'s' == professor.pk|stringformat:'s' %}selected{% endif %}>{{ professor.full_name }} ({{ professor.sigla }})</option>
+      {% endfor %}
+    </select>
+    {% if form.professor.errors %}<p style="font-size:12px; color:#c0392b; margin:0 0 12px;">{{ form.professor.errors.0 }}</p>{% endif %}
+
+    <label style="display:block; font-size:12.5px; font-weight:600; color:#334051; margin:14px 0 6px;">Assunto (código do cliente/empresa)</label>
+    <input type="text" name="subject_code" list="subject-code-options" value="{{ form.subject_code.value|default:'' }}" placeholder="Ex: 202600093" maxlength="9" style="width:100%; box-sizing:border-box; padding:11px 12px; border-radius:9px; border:1.5px solid #dfe3e8; font-size:13.5px; margin-bottom:6px;">
+    <datalist id="subject-code-options">
+      {% for code in subject_codes %}<option value="{{ code }}">{% endfor %}
+    </datalist>
+    {% if form.subject_code.errors %}<p style="font-size:12px; color:#c0392b; margin:0 0 12px;">{{ form.subject_code.errors.0 }}</p>{% endif %}
+
+    <label style="display:block; font-size:12.5px; font-weight:600; color:#334051; margin-bottom:6px;">Cliente / local do curso</label>
+    <input type="text" name="client_name" list="client-name-options" value="{{ form.client_name.value|default:'' }}" placeholder="Ex: Texas Parnamirim" style="width:100%; box-sizing:border-box; padding:11px 12px; border-radius:9px; border:1.5px solid #dfe3e8; font-size:13.5px; margin-bottom:6px;">
+    <datalist id="client-name-options">
+      {% for name in client_names %}<option value="{{ name }}">{% endfor %}
+    </datalist>
+    {% if form.client_name.errors %}<p style="font-size:12px; color:#c0392b; margin:0 0 12px;">{{ form.client_name.errors.0 }}</p>{% endif %}
+
+    <div style="height:1px; background:#eef0f2; margin:18px 0;"></div>
+
+    <label style="display:block; font-size:12.5px; font-weight:600; color:#334051; margin-bottom:6px;">CPF do aluno</label>
+    <input type="text" name="cpf" id="id_cpf" value="{{ form.cpf.value|default:'' }}" placeholder="000.000.000-00" maxlength="14" style="width:100%; box-sizing:border-box; padding:11px 12px; border-radius:9px; border:1.5px solid #dfe3e8; font-size:13.5px; margin-bottom:6px;">
+    {% if form.cpf.errors %}<p style="font-size:12px; color:#c0392b; margin:0 0 12px;">{{ form.cpf.errors.0 }}</p>{% endif %}
+
+    <label style="display:block; font-size:12.5px; font-weight:600; color:#334051; margin-bottom:6px;">Nome do aluno</label>
+    <input type="text" name="student_name" id="id_student_name" value="{{ form.student_name.value|default:'' }}" placeholder="Nome completo" style="width:100%; box-sizing:border-box; padding:11px 12px; border-radius:9px; border:1.5px solid #dfe3e8; font-size:13.5px; margin-bottom:6px;">
+    {% if form.student_name.errors %}<p style="font-size:12px; color:#c0392b; margin:0 0 12px;">{{ form.student_name.errors.0 }}</p>{% endif %}
+
+    <div style="display:flex; gap:10px; margin-bottom:14px;">
+      <div style="flex:1;">
+        <label style="display:block; font-size:12.5px; font-weight:600; color:#334051; margin-bottom:6px;">Data</label>
+        <input type="date" name="course_date" value="{{ form.course_date.value|default:'' }}" style="width:100%; box-sizing:border-box; padding:10px; border-radius:9px; border:1.5px solid #dfe3e8; font-size:13px;">
+      </div>
+      <div style="flex:1;">
+        <label style="display:block; font-size:12.5px; font-weight:600; color:#334051; margin-bottom:6px;">Duração (horas)</label>
+        <input type="number" name="duration" min="1" value="{{ form.duration.value|default:'' }}" placeholder="8" style="width:100%; box-sizing:border-box; padding:10px; border-radius:9px; border:1.5px solid #dfe3e8; font-size:13px;">
+      </div>
+    </div>
+
+    <label style="display:block; font-size:12.5px; font-weight:600; color:#334051; margin-bottom:6px;">Data de emissão</label>
+    <input type="date" name="issue_date" value="{{ form.issue_date.value|default:'' }}" style="width:100%; box-sizing:border-box; padding:11px 12px; border-radius:9px; border:1.5px solid #dfe3e8; font-size:13.5px; margin-bottom:20px;">
+
+    <div style="display:flex; gap:10px;">
+      <button type="submit" name="action" value="preview" style="flex:1; padding:13px 0; border:1.5px solid #1e5c94; border-radius:10px; background:none; color:#1e5c94; font-family:'Sora',sans-serif; font-weight:700; font-size:14px; cursor:pointer;">Pré-visualizar</button>
+      <button type="submit" name="action" value="issue" style="flex:1; padding:13px 0; border:none; border-radius:10px; background:#0d2440; color:#fff; font-family:'Sora',sans-serif; font-weight:700; font-size:14.5px; cursor:pointer;">Emitir certificado</button>
+    </div>
+  </form>
+
+  <div style="flex:1; min-width:340px;">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+      <div style="font-size:12.5px; font-weight:600; color:#8b95a1; text-transform:uppercase; letter-spacing:0.04em;">Pré-visualização</div>
+      <div id="preview-loading" style="display:none; font-size:11.5px; color:#8b95a1;">Atualizando...</div>
+    </div>
+
+    <div id="preview-panel">
+    {% if certificate %}
+      <div style="background:#e5f3ea; border:1px solid #b7ddc3; border-radius:12px; padding:16px 20px; margin-bottom:16px;">
+        <div style="font-weight:700; font-size:14px; color:#1e7a4a; margin-bottom:6px;">✓ Certificado emitido: {{ certificate.code }}</div>
+        <div style="font-size:13px; color:#2c2c2c; margin-bottom:12px;">{{ certificate.student_name }} · {{ certificate.course_title }}</div>
+        <a href="{% url 'cert_admin:certificate_pdf' certificate.pk %}" target="_blank" style="display:inline-block; padding:9px 16px; border-radius:8px; background:#0d2440; color:#fff; font-weight:700; font-size:12.5px; text-decoration:none;">Baixar PDF</a>
+      </div>
+      <img id="preview-img" src="{% url 'cert_admin:certificate_preview' certificate.pk %}" alt="Pré-visualização do certificado" style="display:block; width:100%; border-radius:8px; box-shadow:0 4px 24px rgba(13,27,46,0.14);">
+    {% elif preview_data_uri %}
+      <img id="preview-img" src="{{ preview_data_uri }}" alt="Pré-visualização do certificado" style="display:block; width:100%; border-radius:8px; box-shadow:0 4px 24px rgba(13,27,46,0.14);">
+    {% else %}
+      <div id="preview-empty" style="background:#fff; border:1px solid #e6e9ec; border-radius:14px; padding:48px; text-align:center; color:#8b95a1; font-size:13.5px;">Preencha os dados e clique em "Pré-visualizar" para ver o certificado antes de emitir.</div>
+    {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var form = document.getElementById('emitir-form');
+  var loading = document.getElementById('preview-loading');
+  var panel = document.getElementById('preview-panel');
+  var watchedFields = ['id_course_template', 'id_cert_type', 'id_professor'];
+
+  function showPreviewImage(url) {
+    var img = document.getElementById('preview-img');
+    if (!img) {
+      panel.innerHTML = '';
+      img = document.createElement('img');
+      img.id = 'preview-img';
+      img.alt = 'Pré-visualização do certificado';
+      img.style.cssText = 'display:block; width:100%; border-radius:8px; box-shadow:0 4px 24px rgba(13,27,46,0.14);';
+      panel.appendChild(img);
+    }
+    img.src = url;
+  }
+
+  function refreshPreview() {
+    var formData = new FormData(form);
+    formData.set('action', 'preview');
+    loading.style.display = 'inline';
+    fetch('{% url "cert_admin:emitir_preview_ajax" %}', {
+      method: 'POST',
+      body: formData,
+    }).then(function (response) {
+      loading.style.display = 'none';
+      if (!response.ok) {
+        return; // form not complete enough yet (or a render error) — leave preview as-is
+      }
+      return response.blob().then(function (blob) {
+        showPreviewImage(URL.createObjectURL(blob));
+      });
+    }).catch(function () {
+      loading.style.display = 'none';
+    });
+  }
+
+  watchedFields.forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('change', refreshPreview);
+    }
+  });
+
+  var cpfInput = document.getElementById('id_cpf');
+  var nameInput = document.getElementById('id_student_name');
+  var cpfLookupTimer = null;
+  if (cpfInput && nameInput) {
+    cpfInput.addEventListener('input', function () {
+      clearTimeout(cpfLookupTimer);
+      var digits = cpfInput.value.replace(/\D/g, '');
+      if (digits.length !== 11) {
+        return;
+      }
+      cpfLookupTimer = setTimeout(function () {
+        fetch('{% url "cert_admin:cpf_lookup" %}?cpf=' + digits)
+          .then(function (response) {
+            if (!response.ok) { return null; }
+            return response.json();
+          })
+          .then(function (data) {
+            if (data && data.student_name && !nameInput.value.trim()) {
+              nameInput.value = data.student_name;
+              refreshPreview();
+            }
+          })
+          .catch(function () {});
+      }, 300);
+    });
+  }
+})();
+</script>
+{% endblock %}

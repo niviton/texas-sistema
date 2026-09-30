@@ -1,0 +1,59 @@
+{% extends "dashboard/_shell.html" %}
+{% block title %}Histórico · Polaris{% endblock %}
+{% block shell_content %}
+<h1 style="font-family:'Sora',sans-serif; font-size:24px; font-weight:800; margin:0 0 4px; color:#0d1b2e;">Certificados</h1>
+<p style="font-size:14px; color:#6b7480; margin:0 0 24px;">Valide os cadastros enviados pelos professores e emita os certificados.</p>
+{% include "certificates/_tabs.html" %}
+
+<form method="get" style="display:flex; gap:10px; margin-bottom:20px; max-width:420px;">
+  <input type="text" name="q" value="{{ query }}" placeholder="Buscar por aluno, código ou CPF..." style="flex:1; padding:11px 14px; border-radius:9px; border:1.5px solid #dfe3e8; font-size:13.5px;">
+  <button type="submit" style="padding:11px 20px; border-radius:9px; border:none; background:#0d2440; color:#fff; font-weight:700; font-size:13px; cursor:pointer;">Buscar</button>
+  {% if query %}<a href="{% url 'cert_admin:historico' %}" style="padding:11px 16px; border-radius:9px; border:1.5px solid #dfe3e8; background:none; color:#556072; font-weight:700; font-size:13px; text-decoration:none;">Limpar</a>{% endif %}
+</form>
+
+<form method="post" action="{% url 'cert_admin:historico_zip_selected' %}">
+{% csrf_token %}
+{% if groups %}
+  <div style="display:flex; flex-direction:column; gap:22px;">
+    {% for g in groups %}
+      <div>
+        <div style="display:flex; align-items:baseline; justify-content:space-between; gap:10px; margin-bottom:10px;">
+          <div>
+            <span style="font-family:'Sora',sans-serif; font-weight:700; font-size:14.5px; color:#0d1b2e;">Assunto {{ g.subject_code }}</span>
+            <span style="font-size:12.5px; color:#8b95a1; margin-left:8px;">{{ g.course_title }} · {{ g.course_date|date:"d/m/Y" }} · {{ g.professor_name }} · {{ g.rows|length }} certificado(s)</span>
+          </div>
+          <a href="{% url 'cert_admin:historico_zip_group' %}?subject_code={{ g.subject_code }}&professor_id={{ g.rows.0.professor_id }}&course_date={{ g.course_date|date:'Y-m-d' }}" style="padding:8px 14px; border-radius:8px; border:1.5px solid #1e5c94; background:none; color:#1e5c94; font-weight:700; font-size:12.5px; text-decoration:none;">Baixar ZIP (PDFs)</a>
+        </div>
+        <div style="background:#fff; border:1px solid #e6e9ec; border-radius:14px; overflow:hidden;">
+          <div style="display:grid; grid-template-columns:32px 1.4fr 1.6fr 1.4fr 1fr 70px 80px; gap:12px; padding:12px 20px; background:#f7f8fa; font-size:11.5px; font-weight:700; color:#8b95a1; text-transform:uppercase; letter-spacing:0.03em;">
+            <div></div><div>Código</div><div>Aluno</div><div>Instrutor</div><div>Emissão</div><div></div><div></div>
+          </div>
+          {% for c in g.rows %}
+            <div style="display:grid; grid-template-columns:32px 1.4fr 1.6fr 1.4fr 1fr 70px 80px; gap:12px; padding:13px 20px; border-top:1px solid #eef0f2; align-items:center; font-size:13.5px;">
+              <input type="checkbox" name="ids" value="{{ c.pk }}" style="width:18px; height:18px; cursor:pointer;">
+              <div style="font-weight:700; color:#0d2440;">{{ c.code }}</div>
+              <div style="color:#334051;">{{ c.student_name }}</div>
+              <div style="color:#556072; font-size:12.5px;">{{ c.instructor_name }}</div>
+              <div style="color:#556072;">{{ c.issue_date|date:"d/m/Y" }}</div>
+              {% if c.external_link %}
+                <a href="{{ c.external_link }}" target="_blank" rel="noopener" style="padding:7px 12px; border-radius:8px; border:1.5px solid #1e5c94; background:none; color:#1e5c94; font-weight:700; font-size:12px; text-decoration:none; text-align:center;">Ver</a>
+              {% elif c.course_template_id %}
+                <a href="{% url 'cert_admin:certificate_pdf' c.pk %}" target="_blank" style="padding:7px 12px; border-radius:8px; border:1.5px solid #1e5c94; background:none; color:#1e5c94; font-weight:700; font-size:12px; text-decoration:none; text-align:center;">Ver</a>
+              {% else %}
+                <span style="padding:7px 12px; font-size:11.5px; color:#b7bec7; text-align:center;">Sem PDF</span>
+              {% endif %}
+              <button type="submit" formaction="{% url 'cert_admin:certificate_delete' c.pk %}" formmethod="post" onclick="return confirm('Apagar o certificado {{ c.code }}? Esta ação não pode ser desfeita.');" style="width:100%; padding:7px 10px; border-radius:8px; border:1.5px solid #e2534d; background:none; color:#c0392b; font-weight:700; font-size:12px; cursor:pointer;">Apagar</button>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+  <button type="submit" style="margin-top:24px; padding:12px 20px; border-radius:8px; border:none; background:#0d2440; color:#fff; font-weight:700; font-size:13.5px; cursor:pointer;">Baixar selecionados (ZIP)</button>
+{% else %}
+  <div style="background:#fff; border:1px solid #e6e9ec; border-radius:14px; padding:48px; text-align:center; color:#8b95a1; font-size:13.5px;">
+    {% if query %}Nenhum certificado encontrado para "{{ query }}".{% else %}Nenhum certificado emitido ainda.{% endif %}
+  </div>
+{% endif %}
+</form>
+{% endblock %}

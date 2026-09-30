@@ -1,0 +1,64 @@
+{% extends "dashboard/_shell.html" %}
+{% block title %}Modelos de certificado · Polaris{% endblock %}
+{% block shell_content %}
+<h1 style="font-family:'Sora',sans-serif; font-size:24px; font-weight:800; margin:0 0 4px; color:#0d1b2e;">Certificados</h1>
+<p style="font-size:14px; color:#6b7480; margin:0 0 24px;">Valide os cadastros enviados pelos professores e emita os certificados.</p>
+{% include "certificates/_tabs.html" %}
+
+<div style="display:flex; gap:32px; flex-wrap:wrap;">
+  <div style="flex:1; min-width:340px; max-width:420px; background:#fff; border:1px solid #e6e9ec; border-radius:14px; padding:24px;">
+    <h3 style="margin:0 0 18px; font-family:'Sora',sans-serif; font-size:16px; font-weight:700; color:#0d1b2e;">{% if editing %}Editar modelo{% else %}Criar modelo{% endif %}</h3>
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      {% if editing %}<input type="hidden" name="editing_id" value="{{ editing.pk }}">{% endif %}
+
+      <label style="display:block; font-size:12.5px; font-weight:600; color:#334051; margin-bottom:6px;">Título do curso</label>
+      <textarea name="title" placeholder="Curso de Aperto por Torque e Tensionamento..." style="width:100%; box-sizing:border-box; padding:11px 12px; border-radius:9px; border:1.5px solid #dfe3e8; font-size:13.5px; margin-bottom:6px; min-height:64px; resize:vertical;">{{ form.title.value|default:'' }}</textarea>
+      {% if form.title.errors %}<p style="font-size:12px; color:#c0392b; margin:0 0 10px;">{{ form.title.errors.0 }}</p>{% endif %}
+
+      <label style="display:block; font-size:12.5px; font-weight:600; color:#334051; margin-bottom:6px;">Número do assunto padrão (9 dígitos)</label>
+      <input type="text" name="default_subject_number" value="{{ form.default_subject_number.value|default:'' }}" placeholder="202600093" maxlength="9" style="width:100%; box-sizing:border-box; padding:11px 12px; border-radius:9px; border:1.5px solid #dfe3e8; font-size:13.5px; margin-bottom:6px;">
+      {% if form.default_subject_number.errors %}<p style="font-size:12px; color:#c0392b; margin:0 0 10px;">{{ form.default_subject_number.errors.0 }}</p>{% endif %}
+      <div style="font-size:11.5px; color:#8b95a1; margin:-2px 0 14px;">Código final: TC-FO-{número}-{sigla do instrutor}-{sequência}</div>
+
+      <label style="display:block; font-size:12.5px; font-weight:600; color:#334051; margin-bottom:6px;">Conteúdo programático (um item por linha)</label>
+      <textarea name="syllabus_items" placeholder="Fundamentos de torque..." style="width:100%; box-sizing:border-box; padding:11px 12px; border-radius:9px; border:1.5px solid #dfe3e8; font-size:13px; margin-bottom:14px; min-height:110px; resize:vertical; line-height:1.6;">{{ form.syllabus_items.value|default:'' }}</textarea>
+
+      <label style="display:block; font-size:12.5px; font-weight:600; color:#334051; margin-bottom:6px;">Duração padrão</label>
+      <input type="text" name="default_duration" value="{{ form.default_duration.value|default:'' }}" placeholder="16 horas" style="width:100%; box-sizing:border-box; padding:11px 12px; border-radius:9px; border:1.5px solid #dfe3e8; font-size:13.5px; margin-bottom:20px;">
+
+      <label style="display:block; font-size:12.5px; font-weight:600; color:#334051; margin-bottom:6px;">Modelo em Word (.docx)</label>
+      {% if editing.word_template %}
+        <div style="font-size:12.5px; margin-bottom:8px;"><a href="{{ editing.word_template.url }}" target="_blank" style="color:#1e5c94; font-weight:600;">Arquivo atual: {{ editing.word_template.name|cut:"course_templates/word/" }}</a></div>
+      {% endif %}
+      <input type="file" name="word_template" accept=".doc,.docx" style="width:100%; font-size:12.5px; margin-bottom:20px;">
+
+      <div style="display:flex; gap:10px;">
+        <button type="submit" style="flex:1; padding:12px 0; border:none; border-radius:10px; background:#0d2440; color:#fff; font-family:'Sora',sans-serif; font-weight:700; font-size:14px; cursor:pointer;">{% if editing %}Salvar{% else %}Criar modelo{% endif %}</button>
+        {% if editing %}<a href="{% url 'cert_admin:modelos' %}" style="padding:12px 16px; border-radius:10px; border:1.5px solid #dfe3e8; background:none; color:#556072; font-weight:700; font-size:13.5px; text-decoration:none; text-align:center;">Cancelar</a>{% endif %}
+      </div>
+    </form>
+  </div>
+
+  <div style="flex:1.2; min-width:320px;">
+    {% for template in templates %}
+      <div style="background:#fff; border:1px solid #e6e9ec; border-radius:12px; padding:18px 20px; margin-bottom:12px;">
+        <div style="font-weight:700; font-size:14px; color:#0d1b2e; margin-bottom:4px;">{{ template.title }}</div>
+        <div style="font-size:12px; color:#8b95a1; margin-bottom:12px;">Modelo base {{ template.default_subject_number }} · {{ template.syllabus_list|length }} itens · {{ template.default_duration }}</div>
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          <a href="{% url 'cert_admin:modelos' %}?edit={{ template.pk }}" style="padding:7px 14px; border-radius:8px; border:1.5px solid #1e5c94; background:none; color:#1e5c94; font-weight:700; font-size:12px; text-decoration:none;">Editar</a>
+          {% if template.word_template %}
+            <a href="{{ template.word_template.url }}" target="_blank" style="padding:7px 14px; border-radius:8px; border:1.5px solid #dfe3e8; background:none; color:#556072; font-weight:700; font-size:12px; text-decoration:none;">Baixar Word</a>
+          {% endif %}
+          <form method="post" action="{% url 'cert_admin:modelo_remove' template.pk %}" onsubmit="return confirm('Remover {{ template.title }}?');">
+            {% csrf_token %}
+            <button type="submit" style="padding:7px 14px; border-radius:8px; border:1.5px solid #e2534d; background:none; color:#c0392b; font-weight:700; font-size:12px; cursor:pointer;">Remover</button>
+          </form>
+        </div>
+      </div>
+    {% empty %}
+      <div style="background:#fff; border:1px solid #e6e9ec; border-radius:14px; padding:48px; text-align:center; color:#8b95a1; font-size:13.5px;">Nenhum modelo cadastrado ainda.</div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Entrar · Polaris{% endblock %}
+{% block content %}
+<div style="display:flex; min-height:100vh; width:100%; background:#f7f8fa; color:#12181f;">
+
+  <div style="position:relative; width:44%; min-width:420px; background:linear-gradient(160deg,#0a1526 0%,#0d2440 45%,#12395f 100%); overflow:hidden; display:flex; flex-direction:column; justify-content:space-between; padding:56px 56px 48px;">
+    <img src="{% static 'assets/star-mark-v2.png' %}" alt="" style="position:absolute; top:-80px; right:-80px; width:380px; height:380px; opacity:0.95; animation:floatStar 9s ease-in-out infinite; pointer-events:none;">
+    <img src="{% static 'assets/star-mark-v2.png' %}" alt="" style="position:absolute; bottom:-60px; left:-60px; width:230px; height:230px; opacity:0.16; pointer-events:none;">
+
+    <div style="position:relative; z-index:1;">
+      <img src="{% static 'assets/texas-controls-logo-onwhite-star-white-text.png' %}" alt="Texas Controls" style="height:52px; width:auto; display:block; filter:drop-shadow(0 4px 12px rgba(0,0,0,0.35));">
+      <div style="margin-top:72px;">
+        <div style="display:inline-flex; align-items:center; gap:8px; padding:6px 12px; border-radius:100px; background:rgba(245,166,35,0.14); border:1px solid rgba(245,166,35,0.35); font-size:12px; font-weight:600; letter-spacing:0.04em; color:#f5c165; text-transform:uppercase;">Portal unificado</div>
+        <h1 style="font-family:'Sora',sans-serif; font-size:44px; line-height:1.12; font-weight:800; color:#ffffff; margin:20px 0 0; letter-spacing:-0.01em;">Polaris</h1>
+        <p style="font-size:16px; line-height:1.6; color:rgba(255,255,255,0.62); max-width:380px; margin:14px 0 0;">Um único acesso para operações, equipe e documentos da Texas Controls. Simples, seguro, sempre à mão.</p>
+      </div>
+    </div>
+
+    <div style="position:relative; z-index:1; display:flex; flex-direction:column; gap:18px;">
+      <div style="height:1px; background:rgba(255,255,255,0.10);"></div>
+      <p style="font-size:12.5px; color:rgba(255,255,255,0.38); margin:0;">© {% now "Y" %} Texas Controls. Todos os direitos reservados.</p>
+    </div>
+  </div>
+
+  <div style="flex:1; display:flex; align-items:center; justify-content:center; padding:48px 24px;">
+    <div style="width:100%; max-width:420px;">
+
+      {% if submitted %}
+        <div style="text-align:center; animation:fadeUp .4s ease; padding:24px 0;">
+          <div style="width:64px; height:64px; border-radius:50%; background:rgba(30,92,148,0.1); display:flex; align-items:center; justify-content:center; margin:0 auto 24px;">
+            <div style="width:26px; height:14px; border-left:3px solid #1e5c94; border-bottom:3px solid #1e5c94; transform:rotate(-45deg) translate(2px,-2px);"></div>
+          </div>
+          <h2 style="font-family:'Sora',sans-serif; font-size:22px; font-weight:700; margin:0 0 10px; color:#0d1b2e;">Cadastro enviado</h2>
+          <p style="font-size:14.5px; color:#6b7480; line-height:1.6; max-width:340px; margin:0 auto 28px;">Recebemos seus dados, {{ register_first_name }}. Um administrador vai revisar seu cadastro e liberar suas permissões de acesso em breve. Você receberá um e-mail em {{ register_email }}.</p>
+          <a href="{% url 'accounts:auth' %}?tab=login" style="display:inline-block; padding:13px 28px; border:1.5px solid #1e5c94; border-radius:10px; background:none; color:#1e5c94; font-family:'Sora',sans-serif; font-weight:700; font-size:14.5px; text-decoration:none;">Voltar para o login</a>
+        </div>
+      {% else %}
+
+        <div style="display:flex; background:#eef0f2; border-radius:12px; padding:4px; margin-bottom:32px;">
+          <a href="?tab=login" style="flex:1; text-align:center; text-decoration:none; font-family:'Manrope',sans-serif; font-weight:700; font-size:14px; padding:11px 0; border-radius:9px; transition:all .18s ease;
+            background:{% if tab == 'login' %}#ffffff{% else %}transparent{% endif %};
+            color:{% if tab == 'login' %}#0d1b2e{% else %}#6b7480{% endif %};
+            box-shadow:{% if tab == 'login' %}0 2px 6px rgba(13,27,46,0.08){% else %}none{% endif %};">Entrar</a>
+          <a href="?tab=register" style="flex:1; text-align:center; text-decoration:none; font-family:'Manrope',sans-serif; font-weight:700; font-size:14px; padding:11px 0; border-radius:9px; transition:all .18s ease;
+            background:{% if tab == 'register' %}#ffffff{% else %}transparent{% endif %};
+            color:{% if tab == 'register' %}#0d1b2e{% else %}#6b7480{% endif %};
+            box-shadow:{% if tab == 'register' %}0 2px 6px rgba(13,27,46,0.08){% else %}none{% endif %};">Criar conta</a>
+        </div>
+
+        {% if tab == 'login' %}
+        <div style="animation:fadeUp .35s ease;">
+          <h2 style="font-family:'Sora',sans-serif; font-size:24px; font-weight:700; margin:0 0 6px; color:#0d1b2e;">Bem-vindo de volta</h2>
+          <p style="font-size:14px; color:#6b7480; margin:0 0 28px;">Entre com seu e-mail e senha para acessar o Polaris.</p>
+
+          <form method="post" novalidate>
+            {% csrf_token %}
+            <input type="hidden" name="form_type" value="login">
+
+            <label style="display:block; font-size:13px; font-weight:600; color:#334051; margin-bottom:7px;">E-mail</label>
+            <input type="email" name="username" placeholder="seunome@texascontrols.com" required autofocus
+              style="width:100%; padding:13px 14px; border-radius:10px; border:1.5px solid #dfe3e8; font-size:14.5px; outline:none; margin-bottom:18px;">
+
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:7px;">
+              <label style="font-size:13px; font-weight:600; color:#334051;">Senha</label>
+              <a href="#" style="font-size:12.5px; font-weight:600; text-decoration:none;">Esqueci minha senha</a>
+            </div>
+            <div style="position:relative; margin-bottom:8px;">
+              <input type="password" name="password" id="login-password" placeholder="••••••••" required
+                style="width:100%; padding:13px 44px 13px 14px; border-radius:10px; border:1.5px solid #dfe3e8; font-size:14.5px; outline:none;">
+              <button type="button" onclick="togglePassword('login-password', this)" style="position:absolute; right:6px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; font-size:12px; color:#8b95a1; font-weight:600; padding:8px;">Mostrar</button>
+            </div>
+
+            <label style="display:flex; align-items:center; gap:8px; margin:14px 0 20px; cursor:pointer; user-select:none;">
+              <input type="checkbox" name="remember" style="width:16px; height:16px; accent-color:#1e5c94; cursor:pointer;">
+              <span style="font-size:13.5px; color:#556072;">Manter-me conectado</span>
+            </label>
+
+            {% if login_form.non_field_errors %}
+              <p style="font-size:13px; color:#c0392b; background:#fdecea; border:1px solid #f3c2bd; border-radius:8px; padding:10px 12px; margin:0 0 16px;">{{ login_form.non_field_errors.0 }}</p>
+            {% endif %}
+
+            <button type="submit" style="width:100%; padding:14px 0; border:none; border-radius:10px; background:#f5a623; color:#0d1b2e; font-family:'Sora',sans-serif; font-weight:700; font-size:15px; cursor:pointer; box-shadow:0 8px 20px -8px rgba(245,166,35,0.55);">Entrar</button>
+
+            <p style="text-align:center; font-size:13.5px; color:#8b95a1; margin:22px 0 0;">Ainda não tem conta? <a href="?tab=register" style="font-weight:700; text-decoration:none;">Cadastre-se</a></p>
+
+            <div style="margin-top:24px; padding:14px 16px; background:#f7f8fa; border:1px solid #eef0f2; border-radius:10px; font-size:12px; color:#8b95a1; line-height:1.7;">
+              <strong style="color:#556072;">Acesso de teste</strong><br>
+              Administrador: admin@texascontrols.com / admin123<br>
+              Professor: joao@texascontrols.com / usuario123
+            </div>
+
+            <p style="text-align:center; font-size:12.5px; margin:18px 0 0;"><a href="{% url 'certificates:verify' %}" style="color:#8b95a1; text-decoration:underline;">Verificar autenticidade de um certificado</a></p>
+          </form>
+        </div>
+        {% else %}
+        <div style="animation:fadeUp .35s ease;">
+          <h2 style="font-family:'Sora',sans-serif; font-size:24px; font-weight:700; margin:0 0 6px; color:#0d1b2e;">Criar sua conta</h2>
+          <p style="font-size:14px; color:#6b7480; margin:0 0 24px;">Suas permissões de acesso serão liberadas por um administrador após a análise do cadastro.</p>
+
+          <form method="post" novalidate>
+            {% csrf_token %}
+            <input type="hidden" name="form_type" value="register">
+
+            <label style="display:block; font-size:13px; font-weight:600; color:#334051; margin-bottom:7px;">Nome completo</label>
+            <input type="text" name="full_name" value="{{ register_form.full_name.value|default:'' }}" placeholder="Maria da Silva" required
+              style="width:100%; padding:13px 14px; border-radius:10px; border:1.5px solid #dfe3e8; font-size:14.5px; outline:none; margin-bottom:16px;">
+            {% if register_form.full_name.errors %}<p style="font-size:12px; color:#c0392b; margin:-12px 0 14px;">{{ register_form.full_name.errors.0 }}</p>{% endif %}
+
+            <div style="display:flex; gap:12px; margin-bottom:16px;">
+              <div style="flex:1;">
+                <label style="display:block; font-size:13px; font-weight:600; color:#334051; margin-bottom:7px;">CPF</label>
+                <input type="text" name="cpf" value="{{ register_form.cpf.value|default:'' }}" placeholder="000.000.000-00" maxlength="14"
+                  style="width:100%; padding:13px 14px; border-radius:10px; border:1.5px solid #dfe3e8; font-size:14.5px; outline:none;">
+                {% if register_form.cpf.errors %}<p style="font-size:12px; color:#c0392b; margin:6px 0 0;">{{ register_form.cpf.errors.0 }}</p>{% endif %}
+              </div>
+              <div style="flex:1;">
+                <label style="display:block; font-size:13px; font-weight:600; color:#334051; margin-bottom:7px;">Telefone</label>
+                <input type="text" name="phone" value="{{ register_form.phone.value|default:'' }}" placeholder="(00) 00000-0000" maxlength="15"
+                  style="width:100%; padding:13px 14px; border-radius:10px; border:1.5px solid #dfe3e8; font-size:14.5px; outline:none;">
+              </div>
+            </div>
+
+            <label style="display:block; font-size:13px; font-weight:600; color:#334051; margin-bottom:7px;">E-mail</label>
+            <input type="email" name="email" value="{{ register_form.email.value|default:'' }}" placeholder="seunome@texascontrols.com" required
+              style="width:100%; padding:13px 14px; border-radius:10px; border:1.5px solid #dfe3e8; font-size:14.5px; outline:none; margin-bottom:16px;">
+            {% if register_form.email.errors %}<p style="font-size:12px; color:#c0392b; margin:-12px 0 16px;">{{ register_form.email.errors.0 }}</p>{% endif %}
+
+            <div style="display:flex; gap:12px; margin-bottom:6px;">
+              <div style="flex:1;">
+                <label style="display:block; font-size:13px; font-weight:600; color:#334051; margin-bottom:7px;">Senha</label>
+                <input type="password" name="password" id="reg-password" placeholder="Mínimo 8 caracteres" required
+                  style="width:100%; padding:13px 14px; border-radius:10px; border:1.5px solid #dfe3e8; font-size:14.5px; outline:none;">
+              </div>
+              <div style="flex:1;">
+                <label style="display:block; font-size:13px; font-weight:600; color:#334051; margin-bottom:7px;">Confirmar senha</label>
+                <input type="password" name="password2" id="reg-password2" placeholder="Repita a senha" required onkeyup="checkPasswordMatch()"
+                  style="width:100%; padding:13px 14px; border-radius:10px; border:1.5px solid #dfe3e8; font-size:14.5px; outline:none;">
+              </div>
+            </div>
+            <p id="reg-password-hint" style="font-size:12.5px; color:#8b95a1; margin:0 0 16px; min-height:16px;">
+              {% if register_form.password.errors %}{{ register_form.password.errors.0 }}{% endif %}
+              {% if register_form.password2.errors %}{{ register_form.password2.errors.0 }}{% endif %}
+            </p>
+
+            <label style="display:flex; align-items:flex-start; gap:9px; margin:6px 0 22px; cursor:pointer; user-select:none;">
+              <input type="checkbox" name="terms" style="width:16px; height:16px; margin-top:1px; accent-color:#1e5c94; cursor:pointer;">
+              <span style="font-size:13px; color:#556072; line-height:1.5;">Li e aceito os <a href="#" style="font-weight:600; text-decoration:none;">termos de uso</a> e a política de privacidade da Texas Controls.</span>
+            </label>
+            {% if register_form.terms.errors %}<p style="font-size:12px; color:#c0392b; margin:-14px 0 16px;">{{ register_form.terms.errors.0 }}</p>{% endif %}
+
+            <button type="submit" style="width:100%; padding:14px 0; border:none; border-radius:10px; background:#f5a623; color:#0d1b2e; font-family:'Sora',sans-serif; font-weight:700; font-size:15px; cursor:pointer; box-shadow:0 8px 20px -8px rgba(245,166,35,0.55);">Criar conta</button>
+
+            <p style="text-align:center; font-size:13.5px; color:#8b95a1; margin:20px 0 0;">Já tem conta? <a href="?tab=login" style="font-weight:700; text-decoration:none;">Entrar</a></p>
+          </form>
+        </div>
+        {% endif %}
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+  function togglePassword(inputId, btn) {
+    const input = document.getElementById(inputId);
+    const showing = input.type === 'text';
+    input.type = showing ? 'password' : 'text';
+    btn.textContent = showing ? 'Mostrar' : 'Ocultar';
+  }
+  function checkPasswordMatch() {
+    const p1 = document.getElementById('reg-password');
+    const p2 = document.getElementById('reg-password2');
+    const hint = document.getElementById('reg-password-hint');
+    if (!p1 || !p2 || !hint) return;
+    if (!p2.value) { hint.textContent = ''; return; }
+    if (p1.value === p2.value) {
+      hint.textContent = 'As senhas coincidem.';
+      hint.style.color = '#1e7a4a';
+    } else {
+      hint.textContent = 'As senhas não coincidem.';
+      hint.style.color = '#c0392b';
+    }
+  }
+</script>
+{% endblock %}

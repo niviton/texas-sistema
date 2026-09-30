@@ -1,0 +1,28 @@
+[
+  {
+    "model": "certificates.certificate",
+    "pk": 1,
+    "fields": {
+      "code": "TC-FO-202600093-SF-01",
+      "student_name": "Maria da Silva",
+      "course_title": "Torque e Tensionamento",
+      "instructor_name": "João Pereira",
+      "course_date": "2026-06-10",
+      "duration": "16 horas",
+      "issue_date": "2026-06-12"
+    }
+  },
+  {
+    "model": "certificates.certificate",
+    "pk": 2,
+    "fields": {
+      "code": "TC-FO-202600806-EV-01",
+      "student_name": "Yuri Marques",
+      "course_title": "Vistoria de Equipamentos",
+      "instructor_name": "João Pereira",
+      "course_date": "2026-07-01",
+      "duration": "8 horas",
+      "issue_date": "2026-07-03"
+    }
+  }
+]

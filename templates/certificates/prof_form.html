@@ -1,0 +1,76 @@
+{% extends "dashboard/_shell.html" %}
+{% block title %}{{ template.title }} · Polaris{% endblock %}
+{% block shell_content %}
+<a href="{% url 'cert_prof:groups' template.pk %}" style="border:none; background:none; color:#1e5c94; font-weight:700; font-size:13px; text-decoration:none; display:inline-block; margin-bottom:16px;">← Voltar aos assuntos</a>
+<div style="font-size:11.5px; color:#8b95a1; text-transform:uppercase; letter-spacing:0.03em; margin-bottom:4px;">{{ template.title }}</div>
+<h1 style="font-family:'Sora',sans-serif; font-size:22px; font-weight:800; margin:0 0 18px; color:#0d1b2e; max-width:720px; line-height:1.3;">
+  {% if subject_code %}Assunto {{ subject_code }}{% else %}Novo assunto/turma{% endif %}
+</h1>
+
+<div style="display:flex; gap:32px; flex-wrap:wrap;">
+  <div style="flex:1; min-width:300px; max-width:360px; background:#fff; border:1px solid #e6e9ec; border-radius:14px; padding:24px;">
+    <h3 style="margin:0 0 4px; font-family:'Sora',sans-serif; font-size:15px; font-weight:700; color:#0d1b2e;">Cadastrar aluno</h3>
+    <p style="font-size:12.5px; color:#8b95a1; margin:0 0 18px;">O cadastro entra na fila de aprovação do administrador.</p>
+
+    <form method="post">
+      {% csrf_token %}
+      <label style="display:block; font-size:12.5px; font-weight:600; color:#334051; margin-bottom:6px;">Nome do aluno</label>
+      <input type="text" name="student_name" value="{{ form.student_name.value|default:'' }}" placeholder="Nome completo" style="width:100%; box-sizing:border-box; padding:11px 12px; border-radius:9px; border:1.5px solid #dfe3e8; font-size:13.5px; margin-bottom:6px;">
+      {% if form.student_name.errors %}<p style="font-size:12px; color:#c0392b; margin:0 0 10px;">{{ form.student_name.errors.0 }}</p>{% endif %}
+
+      <label style="display:block; font-size:12.5px; font-weight:600; color:#334051; margin-bottom:6px;">CPF do aluno</label>
+      <input type="text" name="cpf" value="{{ form.cpf.value|default:'' }}" placeholder="000.000.000-00" maxlength="14" style="width:100%; box-sizing:border-box; padding:11px 12px; border-radius:9px; border:1.5px solid #dfe3e8; font-size:13.5px; margin-bottom:6px;">
+      {% if form.cpf.errors %}<p style="font-size:12px; color:#c0392b; margin:0 0 10px;">{{ form.cpf.errors.0 }}</p>{% endif %}
+
+      <label style="display:block; font-size:12.5px; font-weight:600; color:#334051; margin:14px 0 6px;">Tipo de certificado</label>
+      <select name="cert_type" style="width:100%; box-sizing:border-box; padding:11px 12px; border-radius:9px; border:1.5px solid #dfe3e8; font-size:13.5px; margin-bottom:14px;">
+        {% for value, label in form.fields.cert_type.choices %}
+          <option value="{{ value }}" {% if form.cert_type.value == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+
+      <label style="display:block; font-size:12.5px; font-weight:600; color:#334051; margin-bottom:6px;">Instrutor responsável</label>
+      <select name="professor" style="width:100%; box-sizing:border-box; padding:11px 12px; border-radius:9px; border:1.5px solid #dfe3e8; font-size:13.5px; margin-bottom:6px;">
+        <option value="">Selecione...</option>
+        {% for professor in form.fields.professor.queryset %}
+          <option value="{{ professor.pk }}" {% if form.professor.value|stringformat:'s' == professor.pk|stringformat:'s' %}selected{% endif %}>{{ professor.full_name }} ({{ professor.sigla }})</option>
+        {% endfor %}
+      </select>
+      {% if form.professor.errors %}<p style="font-size:12px; color:#c0392b; margin:0 0 10px;">{{ form.professor.errors.0 }}</p>{% endif %}
+
+      <label style="display:block; font-size:12.5px; font-weight:600; color:#334051; margin:14px 0 6px;">Assunto (código do cliente/empresa)</label>
+      <input type="text" name="subject_code" value="{{ form.subject_code.value|default:'' }}" placeholder="Ex: 202600093" maxlength="9" style="width:100%; box-sizing:border-box; padding:11px 12px; border-radius:9px; border:1.5px solid #dfe3e8; font-size:13.5px; margin-bottom:6px;">
+      {% if form.subject_code.errors %}<p style="font-size:12px; color:#c0392b; margin:0 0 10px;">{{ form.subject_code.errors.0 }}</p>{% endif %}
+
+      <label style="display:block; font-size:12.5px; font-weight:600; color:#334051; margin-bottom:6px;">Cliente / local do curso</label>
+      <input type="text" name="client_name" value="{{ form.client_name.value|default:'' }}" placeholder="Ex: Texas Parnamirim" style="width:100%; box-sizing:border-box; padding:11px 12px; border-radius:9px; border:1.5px solid #dfe3e8; font-size:13.5px; margin-bottom:6px;">
+      {% if form.client_name.errors %}<p style="font-size:12px; color:#c0392b; margin:0 0 10px;">{{ form.client_name.errors.0 }}</p>{% endif %}
+
+      <label style="display:block; font-size:12.5px; font-weight:600; color:#334051; margin-bottom:6px;">Data do curso</label>
+      <input type="date" name="course_date" value="{{ form.course_date.value|default:'' }}" style="width:100%; box-sizing:border-box; padding:11px 12px; border-radius:9px; border:1.5px solid #dfe3e8; font-size:13.5px; margin-bottom:14px;">
+
+      <label style="display:block; font-size:12.5px; font-weight:600; color:#334051; margin-bottom:6px;">Duração (horas)</label>
+      <input type="number" name="duration" min="1" value="{{ form.duration.value|default:'' }}" placeholder="8" style="width:100%; box-sizing:border-box; padding:11px 12px; border-radius:9px; border:1.5px solid #dfe3e8; font-size:13.5px; margin-bottom:20px;">
+
+      <button type="submit" style="width:100%; padding:13px 0; border:none; border-radius:10px; background:#f5a623; color:#0d1b2e; font-family:'Sora',sans-serif; font-weight:700; font-size:14.5px; cursor:pointer;">Cadastrar aluno</button>
+    </form>
+  </div>
+
+  <div style="flex:1.3; min-width:340px;">
+    <div style="font-size:12.5px; font-weight:600; color:#8b95a1; margin-bottom:10px; text-transform:uppercase; letter-spacing:0.04em;">Seus cadastros neste assunto/turma</div>
+    {% for reg in registrations %}
+      <div style="background:#fff; border:1px solid #e6e9ec; border-radius:12px; padding:14px 18px; display:flex; align-items:center; gap:14px; margin-bottom:10px;">
+        <div style="flex:1;">
+          <div style="font-weight:700; font-size:13.5px; color:#0d1b2e;">{{ reg.student_name }}</div>
+          <div style="font-size:12px; color:#8b95a1;">{{ reg.cpf }} · cadastrado em {{ reg.created_at|date:"d/m/Y" }}</div>
+        </div>
+        <div style="padding:5px 11px; border-radius:100px; font-size:11.5px; font-weight:700;
+          background:{% if reg.status == 'pendente' %}#fff8ea{% elif reg.status == 'aprovado' %}#e5f3ea{% else %}#fdecea{% endif %};
+          color:{% if reg.status == 'pendente' %}#8a6a2a{% elif reg.status == 'aprovado' %}#1e7a4a{% else %}#c0392b{% endif %};">{{ reg.get_status_display }}</div>
+      </div>
+    {% empty %}
+      <div style="background:#fff; border:1px solid #e6e9ec; border-radius:14px; padding:36px; text-align:center; color:#8b95a1; font-size:13px;">Nenhum aluno cadastrado ainda nesta turma.</div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

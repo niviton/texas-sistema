@@ -1,0 +1,18 @@
+{% extends "dashboard/_shell.html" %}
+{% block title %}Dashboard · Polaris{% endblock %}
+{% block shell_content %}
+  <h1 style="font-family:'Sora',sans-serif; font-size:26px; font-weight:800; margin:0 0 4px; color:#0d1b2e;">Bem-vindo(a), {{ request.user.first_name_display }}</h1>
+  <p style="font-size:14.5px; color:#6b7480; margin:0 0 24px;">{{ today_label }}</p>
+
+  {% if is_admin %}
+    <div style="background:#fff; border:1px solid #e6e9ec; border-radius:14px; padding:26px 28px; max-width:520px;">
+      <div style="font-family:'Sora',sans-serif; font-size:16px; font-weight:700; color:#0d1b2e; margin-bottom:6px;">Fundação do Polaris pronta</div>
+      <div style="font-size:13.5px; color:#6b7480; line-height:1.6;">Autenticação, cadastro com aprovação, verificação de certificados e emissão de certificados já estão no ar.</div>
+    </div>
+  {% else %}
+    <div style="background:#fff8ea; border:1px solid #f6dfa8; border-radius:14px; padding:24px 28px; max-width:520px;">
+      <div style="font-family:'Sora',sans-serif; font-size:16px; font-weight:700; color:#7a5410; margin-bottom:6px;">Aguardando atribuições</div>
+      <div style="font-size:13.5px; color:#8a6a2a; line-height:1.6;">Um administrador ainda não liberou suas permissões de acesso. Assim que isso acontecer, os módulos disponíveis aparecerão aqui.</div>
+    </div>
+  {% endif %}
+{% endblock %}

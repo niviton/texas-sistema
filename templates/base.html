@@ -1,0 +1,25 @@
+{% load static %}<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Polaris · Texas Controls{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  @keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes floatStar { 0%,100% { transform:translateY(0) rotate(0deg); } 50% { transform:translateY(-14px) rotate(4deg); } }
+  * { box-sizing: border-box; }
+  body { margin:0; -webkit-font-smoothing:antialiased; font-family:'Manrope',system-ui,sans-serif; }
+  ::selection { background:#f5a623; color:#0d1b2e; }
+  input::placeholder, textarea::placeholder { color:#9aa3ad; }
+  a { color:#1e5c94; }
+  a:hover { color:#164674; }
+  input, select { font-family:'Manrope',sans-serif; }
+  {% block extra_style %}{% endblock %}
+</style>
+</head>
+<body>
+{% block content %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,32 @@
+{% extends "dashboard/_shell.html" %}
+{% block title %}Configurações · Polaris{% endblock %}
+{% block shell_content %}
+<h1 style="font-family:'Sora',sans-serif; font-size:24px; font-weight:800; margin:0 0 4px; color:#0d1b2e;">Certificados</h1>
+<p style="font-size:14px; color:#6b7480; margin:0 0 24px;">Valide os cadastros enviados pelos professores e emita os certificados.</p>
+{% include "certificates/_tabs.html" %}
+
+<form method="post" style="background:#fff; border:1px solid #e6e9ec; border-radius:14px; padding:24px; max-width:480px;">
+  {% csrf_token %}
+
+  <label style="display:flex; align-items:center; gap:8px; margin-bottom:24px; cursor:pointer; user-select:none;">
+    <input type="checkbox" name="show_qr_code" {% if form.show_qr_code.value %}checked{% endif %} style="width:16px; height:16px; accent-color:#1e5c94; cursor:pointer;">
+    <span style="font-size:13px; font-weight:600; color:#334051;">Mostrar QR code de verificação nos certificados</span>
+  </label>
+
+  <div style="font-size:12.5px; font-weight:700; color:#0d1b2e; text-transform:uppercase; letter-spacing:0.04em; margin-bottom:14px;">Tamanho da assinatura</div>
+  <div style="display:flex; gap:12px; margin-bottom:20px;">
+    <div style="flex:1;">
+      <label style="display:block; font-size:12.5px; font-weight:600; color:#334051; margin-bottom:6px;">Largura (pt)</label>
+      <input type="number" name="signature_width_pt" value="{{ form.signature_width_pt.value|default:'' }}" min="1" style="width:100%; box-sizing:border-box; padding:11px 12px; border-radius:9px; border:1.5px solid #dfe3e8; font-size:13.5px;">
+    </div>
+    <div style="flex:1;">
+      <label style="display:block; font-size:12.5px; font-weight:600; color:#334051; margin-bottom:6px;">Altura (pt)</label>
+      <input type="number" name="signature_height_pt" value="{{ form.signature_height_pt.value|default:'' }}" min="1" style="width:100%; box-sizing:border-box; padding:11px 12px; border-radius:9px; border:1.5px solid #dfe3e8; font-size:13.5px;">
+    </div>
+  </div>
+
+  <div style="font-size:11.5px; color:#8b95a1; margin-bottom:20px;">A posição e o tom de cada assinatura são configurados individualmente em <a href="{% url 'cert_admin:professores' %}" style="color:#1e5c94;">Professores</a>, já que cada imagem enviada tem sua própria peculiaridade.</div>
+
+  <button type="submit" style="width:100%; padding:13px 0; border:none; border-radius:10px; background:#0d2440; color:#fff; font-family:'Sora',sans-serif; font-weight:700; font-size:14.5px; cursor:pointer;">Salvar configurações</button>
+</form>
+{% endblock %}

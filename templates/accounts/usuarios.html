@@ -1,0 +1,79 @@
+{% extends "dashboard/_shell.html" %}
+{% block title %}Usuários · Polaris{% endblock %}
+{% block shell_content %}
+<h1 style="font-family:'Sora',sans-serif; font-size:24px; font-weight:800; margin:0 0 4px; color:#0d1b2e;">Configurações</h1>
+<p style="font-size:14px; color:#6b7480; margin:0 0 24px;">Usuários — dados de acesso, CPF e permissões de cada pessoa cadastrada.</p>
+
+<div style="display:flex; gap:32px; flex-wrap:wrap;">
+  <div style="flex:1.3; min-width:340px;">
+    <div style="background:#fff; border:1px solid #e6e9ec; border-radius:14px; overflow:hidden;">
+      <div style="display:grid; grid-template-columns:1.4fr 1fr 90px 90px 80px; gap:10px; padding:12px 18px; background:#f7f8fa; font-size:11.5px; font-weight:700; color:#8b95a1; text-transform:uppercase; letter-spacing:0.03em;">
+        <div>Usuário</div><div>CPF</div><div>Papel</div><div>Aprovado</div><div></div>
+      </div>
+      {% for u in users %}
+        <div style="display:grid; grid-template-columns:1.4fr 1fr 90px 90px 80px; gap:10px; padding:13px 18px; border-top:1px solid #eef0f2; align-items:center; font-size:13px;">
+          <div>
+            <div style="font-weight:700; color:#0d1b2e;">{{ u.full_name }}</div>
+            <div style="font-size:11.5px; color:#8b95a1;">{{ u.email }}</div>
+          </div>
+          <div style="color:#556072;">{{ u.cpf|default:"—" }}</div>
+          <div style="color:#556072;">{{ u.role_label }}</div>
+          <div style="color:{% if u.is_approved %}#1e7a4a{% else %}#c0392b{% endif %}; font-weight:700;">{% if u.is_approved %}Sim{% else %}Não{% endif %}</div>
+          <a href="{% url 'accounts_admin:usuarios' %}?edit={{ u.pk }}" style="padding:6px 10px; border-radius:8px; border:1.5px solid #1e5c94; background:none; color:#1e5c94; font-weight:700; font-size:11.5px; text-decoration:none; text-align:center;">Editar</a>
+        </div>
+      {% empty %}
+        <div style="padding:48px; text-align:center; color:#8b95a1; font-size:13.5px;">Nenhum usuário cadastrado ainda.</div>
+      {% endfor %}
+    </div>
+  </div>
+
+  {% if editing %}
+    <div style="flex:1; min-width:320px; max-width:380px; background:#fff; border:1px solid #e6e9ec; border-radius:14px; padding:24px;">
+      <h3 style="margin:0 0 18px; font-family:'Sora',sans-serif; font-size:16px; font-weight:700; color:#0d1b2e;">Editar usuário</h3>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="editing_id" value="{{ editing.pk }}">
+
+        <label style="display:block; font-size:12.5px; font-weight:600; color:#334051; margin-bottom:6px;">Nome completo</label>
+        <input type="text" name="full_name" value="{{ form.full_name.value|default:'' }}" style="width:100%; box-sizing:border-box; padding:11px 12px; border-radius:9px; border:1.5px solid #dfe3e8; font-size:13.5px; margin-bottom:6px;">
+        {% if form.full_name.errors %}<p style="font-size:12px; color:#c0392b; margin:0 0 10px;">{{ form.full_name.errors.0 }}</p>{% endif %}
+
+        <label style="display:block; font-size:12.5px; font-weight:600; color:#334051; margin-bottom:6px;">E-mail</label>
+        <input type="email" name="email" value="{{ form.email.value|default:'' }}" style="width:100%; box-sizing:border-box; padding:11px 12px; border-radius:9px; border:1.5px solid #dfe3e8; font-size:13.5px; margin-bottom:6px;">
+        {% if form.email.errors %}<p style="font-size:12px; color:#c0392b; margin:0 0 10px;">{{ form.email.errors.0 }}</p>{% endif %}
+
+        <label style="display:block; font-size:12.5px; font-weight:600; color:#334051; margin-bottom:6px;">CPF</label>
+        <input type="text" name="cpf" value="{{ form.cpf.value|default:'' }}" maxlength="14" style="width:100%; box-sizing:border-box; padding:11px 12px; border-radius:9px; border:1.5px solid #dfe3e8; font-size:13.5px; margin-bottom:6px;">
+        {% if form.cpf.errors %}<p style="font-size:12px; color:#c0392b; margin:0 0 10px;">{{ form.cpf.errors.0 }}</p>{% endif %}
+
+        <label style="display:block; font-size:12.5px; font-weight:600; color:#334051; margin-bottom:6px;">Telefone</label>
+        <input type="text" name="phone" value="{{ form.phone.value|default:'' }}" style="width:100%; box-sizing:border-box; padding:11px 12px; border-radius:9px; border:1.5px solid #dfe3e8; font-size:13.5px; margin-bottom:14px;">
+
+        <label style="display:block; font-size:12.5px; font-weight:600; color:#334051; margin-bottom:6px;">Papel</label>
+        <select name="role" style="width:100%; box-sizing:border-box; padding:11px 12px; border-radius:9px; border:1.5px solid #dfe3e8; font-size:13.5px; margin-bottom:14px;">
+          {% for value, label in form.fields.role.choices %}
+            <option value="{{ value }}" {% if form.role.value == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+
+        <label style="display:flex; align-items:center; gap:8px; margin-bottom:18px; cursor:pointer; user-select:none;">
+          <input type="checkbox" name="is_approved" {% if form.is_approved.value %}checked{% endif %} style="width:16px; height:16px; accent-color:#1e5c94; cursor:pointer;">
+          <span style="font-size:13px; font-weight:600; color:#334051;">Acesso aprovado</span>
+        </label>
+
+        <div style="height:1px; background:#eef0f2; margin:14px 0;"></div>
+
+        <label style="display:block; font-size:12.5px; font-weight:600; color:#334051; margin-bottom:6px;">Nova senha</label>
+        <input type="password" name="new_password" style="width:100%; box-sizing:border-box; padding:11px 12px; border-radius:9px; border:1.5px solid #dfe3e8; font-size:13.5px; margin-bottom:6px;">
+        {% if form.new_password.errors %}<p style="font-size:12px; color:#c0392b; margin:0 0 6px;">{{ form.new_password.errors.0 }}</p>{% endif %}
+        <div style="font-size:11px; color:#8b95a1; margin-bottom:20px;">Deixe em branco para manter a senha atual.</div>
+
+        <div style="display:flex; gap:10px;">
+          <button type="submit" style="flex:1; padding:12px 0; border:none; border-radius:10px; background:#0d2440; color:#fff; font-family:'Sora',sans-serif; font-weight:700; font-size:14px; cursor:pointer;">Salvar</button>
+          <a href="{% url 'accounts_admin:usuarios' %}" style="padding:12px 16px; border-radius:10px; border:1.5px solid #dfe3e8; background:none; color:#556072; font-weight:700; font-size:13.5px; text-decoration:none; text-align:center;">Cancelar</a>
+        </div>
+      </form>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

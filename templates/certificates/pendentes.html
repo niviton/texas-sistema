@@ -1,0 +1,47 @@
+{% extends "dashboard/_shell.html" %}
+{% block title %}Pendentes · Polaris{% endblock %}
+{% block shell_content %}
+<h1 style="font-family:'Sora',sans-serif; font-size:24px; font-weight:800; margin:0 0 4px; color:#0d1b2e;">Certificados</h1>
+<p style="font-size:14px; color:#6b7480; margin:0 0 24px;">Valide os cadastros enviados pelos professores e emita os certificados.</p>
+{% include "certificates/_tabs.html" %}
+
+{% if groups %}
+  <div style="display:flex; flex-direction:column; gap:22px;">
+    {% for g in groups %}
+      <div>
+        <div style="display:flex; align-items:baseline; gap:10px; margin-bottom:10px;">
+          <div style="font-family:'Sora',sans-serif; font-weight:700; font-size:14.5px; color:#0d1b2e;">Assunto {{ g.subject_code }}</div>
+          <div style="font-size:12.5px; color:#8b95a1;">{{ g.course_title }} · curso em {{ g.course_date|date:"d/m/Y" }} · instrutor {{ g.professor_name }}</div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          {% for c in g.rows %}
+            <div style="background:#fff; border:1px solid #e6e9ec; border-radius:12px; padding:16px 20px; display:flex; align-items:center; gap:16px;">
+              <div style="flex:1; display:grid; grid-template-columns:repeat(auto-fit, minmax(120px, 1fr)); gap:12px; font-size:13px;">
+                <div><div style="color:#8b95a1; font-size:11px; text-transform:uppercase; margin-bottom:3px;">Aluno</div><div style="font-weight:600; color:#334051;">{{ c.student_name }}</div></div>
+                <div><div style="color:#8b95a1; font-size:11px; text-transform:uppercase; margin-bottom:3px;">CPF</div><div style="font-weight:600; color:#334051;">{{ c.cpf }}</div></div>
+                <div><div style="color:#8b95a1; font-size:11px; text-transform:uppercase; margin-bottom:3px;">Cadastrado por</div><div style="font-weight:600; color:#334051;">{% firstof c.created_by.full_name c.created_by.email "—" %}</div></div>
+              </div>
+              <div style="display:flex; gap:8px; flex-shrink:0;">
+                <form method="post" style="display:inline;">
+                  {% csrf_token %}
+                  <input type="hidden" name="registration_id" value="{{ c.pk }}">
+                  <input type="hidden" name="action" value="reject">
+                  <button type="submit" onclick="return confirm('Rejeitar cadastro de {{ c.student_name }}?');" style="padding:8px 12px; border-radius:8px; border:1.5px solid #e2534d; background:none; color:#c0392b; font-weight:700; font-size:12px; cursor:pointer;">Rejeitar</button>
+                </form>
+                <form method="post" style="display:inline;">
+                  {% csrf_token %}
+                  <input type="hidden" name="registration_id" value="{{ c.pk }}">
+                  <input type="hidden" name="action" value="approve">
+                  <button type="submit" style="padding:8px 12px; border-radius:8px; border:none; background:#0d2440; color:#fff; font-weight:700; font-size:12px; cursor:pointer;">Aprovar</button>
+                </form>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <div style="background:#fff; border:1px solid #e6e9ec; border-radius:14px; padding:48px; text-align:center; color:#8b95a1; font-size:13.5px;">Nenhum cadastro pendente de validação.</div>
+{% endif %}
+{% endblock %}

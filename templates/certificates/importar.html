@@ -1,0 +1,77 @@
+{% extends "dashboard/_shell.html" %}
+{% block title %}Importar planilha · Polaris{% endblock %}
+{% block shell_content %}
+<h1 style="font-family:'Sora',sans-serif; font-size:24px; font-weight:800; margin:0 0 4px; color:#0d1b2e;">Certificados</h1>
+<p style="font-size:14px; color:#6b7480; margin:0 0 24px;">Valide os cadastros enviados pelos professores e emita os certificados.</p>
+{% include "certificates/_tabs.html" %}
+
+<div style="display:flex; gap:32px; flex-wrap:wrap;">
+  <div style="flex:1; min-width:320px; max-width:380px; background:#fff; border:1px solid #e6e9ec; border-radius:14px; padding:24px;">
+    <h3 style="margin:0 0 6px; font-family:'Sora',sans-serif; font-size:16px; font-weight:700; color:#0d1b2e;">Importar planilha de alunos</h3>
+    <p style="font-size:12.5px; color:#8b95a1; margin:0 0 18px; line-height:1.5;">Aceita .xlsx e .csv. As colunas Nome, CPF, Assunto/Código e Data são detectadas automaticamente pelo cabeçalho.</p>
+
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="upload">
+      <input type="file" name="spreadsheet" accept=".xlsx,.xls,.csv" style="width:100%; font-size:12.5px; margin-bottom:16px;" required>
+      <button type="submit" style="width:100%; padding:12px 0; border:none; border-radius:10px; background:#0d2440; color:#fff; font-family:'Sora',sans-serif; font-weight:700; font-size:14px; cursor:pointer;">Enviar planilha</button>
+    </form>
+
+    {% if staged %}
+      <div style="height:1px; background:#eef0f2; margin:20px 0;"></div>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="confirm">
+        <label style="display:block; font-size:12.5px; font-weight:600; color:#334051; margin-bottom:6px;">Certificado (modelo)</label>
+        <select name="course_template" style="width:100%; box-sizing:border-box; padding:11px 12px; border-radius:9px; border:1.5px solid #dfe3e8; font-size:13.5px; margin-bottom:14px;">
+          {% for template in course_templates %}<option value="{{ template.pk }}">{{ template.title }}</option>{% endfor %}
+        </select>
+        <label style="display:block; font-size:12.5px; font-weight:600; color:#334051; margin-bottom:6px;">Instrutor responsável (aplicado a todos)</label>
+        <select name="professor" style="width:100%; box-sizing:border-box; padding:11px 12px; border-radius:9px; border:1.5px solid #dfe3e8; font-size:13.5px; margin-bottom:14px;">
+          {% for professor in professors %}<option value="{{ professor.pk }}">{{ professor.full_name }} ({{ professor.sigla }})</option>{% endfor %}
+        </select>
+        <label style="display:block; font-size:12.5px; font-weight:600; color:#334051; margin-bottom:6px;">Tipo de certificado</label>
+        <select name="cert_type" style="width:100%; box-sizing:border-box; padding:11px 12px; border-radius:9px; border:1.5px solid #dfe3e8; font-size:13.5px; margin-bottom:14px;">
+          <option value="interno">Interno</option>
+          <option value="externo">Externo</option>
+        </select>
+        <label style="display:block; font-size:12.5px; font-weight:600; color:#334051; margin-bottom:6px;">Duração</label>
+        <input type="text" name="duration" placeholder="16 horas" style="width:100%; box-sizing:border-box; padding:11px 12px; border-radius:9px; border:1.5px solid #dfe3e8; font-size:13.5px; margin-bottom:16px;">
+        <div style="font-size:12.5px; color:#556072; margin-bottom:16px;">{{ ok_count }} de {{ staged.rows|length }} linha(s) válida(s) serão importadas.</div>
+        <div style="display:flex; gap:10px;">
+          <button type="submit" {% if ok_count == 0 %}disabled{% endif %} style="flex:1; padding:12px 0; border:none; border-radius:10px; background:{% if ok_count == 0 %}#c7cdd4{% else %}#0d2440{% endif %}; color:#fff; font-family:'Sora',sans-serif; font-weight:700; font-size:14px; cursor:{% if ok_count == 0 %}not-allowed{% else %}pointer{% endif %};">Confirmar importação</button>
+        </div>
+      </form>
+      <form method="post" style="margin-top:10px;">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="cancel">
+        <button type="submit" style="width:100%; padding:10px 0; border-radius:10px; border:1.5px solid #dfe3e8; background:none; color:#556072; font-weight:700; font-size:13.5px; cursor:pointer;">Cancelar</button>
+      </form>
+    {% endif %}
+  </div>
+
+  <div style="flex:1.4; min-width:380px;">
+    {% if staged %}
+      <div style="font-size:12.5px; font-weight:600; color:#8b95a1; margin-bottom:10px; text-transform:uppercase; letter-spacing:0.04em;">Pré-visualização — {{ staged.filename }}</div>
+      <div style="background:#fff; border:1px solid #e6e9ec; border-radius:14px; overflow:hidden;">
+        <div style="display:grid; grid-template-columns:1.6fr 1.2fr 1.6fr 1fr 120px; gap:10px; padding:12px 18px; background:#f7f8fa; font-size:11.5px; font-weight:700; color:#8b95a1; text-transform:uppercase; letter-spacing:0.03em;">
+          <div>Aluno</div><div>CPF</div><div>Assunto</div><div>Data</div><div></div>
+        </div>
+        {% for row in staged.rows %}
+          <div style="display:grid; grid-template-columns:1.6fr 1.2fr 1.6fr 1fr 120px; gap:10px; padding:12px 18px; border-top:1px solid #eef0f2; align-items:center; font-size:12.5px;">
+            <div style="color:#334051; font-weight:600;">{{ row.student_name|default:"—" }}</div>
+            <div style="color:#556072;">{{ row.cpf|default:"—" }}</div>
+            <div style="color:#556072; font-size:11.5px;">{{ row.subject_code|default:"—" }}</div>
+            <div style="color:#556072;">{{ row.course_date|default:"—" }}</div>
+            <div style="padding:4px 9px; border-radius:100px; font-size:11px; font-weight:700; text-align:center;
+              background:{% if row.status == 'ok' %}#e5f3ea{% else %}#fdecea{% endif %};
+              color:{% if row.status == 'ok' %}#1e7a4a{% else %}#c0392b{% endif %};">{% if row.status == 'ok' %}OK{% else %}{{ row.error_msg }}{% endif %}</div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div style="background:#fff; border:1px solid #e6e9ec; border-radius:14px; padding:48px; text-align:center; color:#8b95a1; font-size:13.5px;">Envie uma planilha para pré-visualizar os dados.</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

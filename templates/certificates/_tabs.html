@@ -1,0 +1,8 @@
+{% load static %}
+<div style="display:flex; gap:8px; margin-bottom:28px; flex-wrap:wrap;">
+  {% for key, label, url_name in cert_tabs %}
+    <a href="{% url url_name %}" style="padding:9px 18px; border-radius:100px; border:1.5px solid #dfe3e8; text-decoration:none; font-family:'Manrope',sans-serif; font-weight:700; font-size:13.5px;
+      background:{% if active_tab == key %}#0d2440{% else %}#fff{% endif %};
+      color:{% if active_tab == key %}#fff{% else %}#556072{% endif %};">{{ label }}</a>
+  {% endfor %}
+</div>
