@@ -1,0 +1,19 @@
+{% extends "veiculos/_cadastro.html" %}
+{% block nome_singular %}veículo{% endblock %}
+{% block archive_url %}{% url 'veiculos:veiculo_arquivar' obj.pk %}{% endblock %}
+{% block item %}
+  <div style="display:flex; gap:14px; align-items:center;">
+    {% if obj.foto %}<img src="{{ obj.foto.url }}" alt="" style="width:56px; height:56px; object-fit:cover; border-radius:10px;">{% endif %}
+    <div>
+      <div style="font-family:'Sora',sans-serif; font-weight:800; font-size:15px; color:#0d1b2e;">{{ obj.placa }}</div>
+      <div style="font-size:12.5px; color:#6b7480;">{{ obj.get_categoria_display }} · {{ obj.marca }} {{ obj.modelo }}{% if obj.ano %} · {{ obj.ano }}{% endif %}{% if obj.cor %} · {{ obj.cor }}{% endif %} · {{ obj.km_atual }} km</div>
+      <div style="font-size:12px; color:#8b95a1;">Responsável: {{ obj.motorista_responsavel|default:"—" }} · checklist a cada {{ obj.checklist_frequencia_dias }} dias</div>
+      <div style="margin-top:6px;"><a class="v-btn-sm blue v-ico" href="{% url 'veiculos:manutencoes' obj.pk %}">{% include "veiculos/_icon.html" with i="wrench" s=14 w="2" %}Manutenções ({{ obj.manutencoes.count }})</a></div>
+      <div style="margin-top:4px; display:flex; gap:6px; flex-wrap:wrap;">
+        {% for nome, data, dias in obj.vencimentos %}
+          <span class="v-badge {% if dias is not None and dias < 0 %}b-nok{% else %}b-warn{% endif %}">{{ nome }}{% if data %} · {{ data|date:"d/m/Y" }}{% endif %}</span>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+{% endblock %}

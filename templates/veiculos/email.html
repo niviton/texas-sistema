@@ -1,0 +1,49 @@
+{% extends "veiculos/_base.html" %}
+{% block veiculos_content %}
+<div style="display:flex; gap:24px; flex-wrap:wrap; align-items:flex-start;">
+  <div class="v-card" style="flex:1; min-width:300px; max-width:520px;">
+    <h3 class="v-h3">Conta de envio (Gmail)</h3>
+    {% if configurado %}
+      <p style="font-size:13.5px; margin:0 0 6px;"><span class="v-badge b-ok">Configurado</span> Os e-mails saem de <b>{{ remetente }}</b>.</p>
+    {% else %}
+      <p style="font-size:13.5px; margin:0 0 10px;"><span class="v-badge b-warn">Não configurado</span> Por enquanto os e-mails só aparecem no terminal do servidor.</p>
+      <ol style="font-size:13px; color:#334051; padding-left:18px; line-height:1.7; margin:0;">
+        <li>Na conta Gmail que vai enviar, ative a <b>verificação em 2 etapas</b>.</li>
+        <li>Acesse <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener">myaccount.google.com/apppasswords</a> e crie uma senha de app chamada "Polaris".</li>
+        <li>No arquivo <code>.env</code> do projeto, preencha <code>EMAIL_HOST_USER</code> (o Gmail) e <code>EMAIL_HOST_PASSWORD</code> (a senha de 16 letras).</li>
+        <li>Reinicie o servidor.</li>
+      </ol>
+    {% endif %}
+    <div style="height:1px; background:#eef0f2; margin:18px 0;"></div>
+    <form method="post" style="display:flex; gap:10px; flex-wrap:wrap;">
+      {% csrf_token %}
+      <input type="hidden" name="acao" value="teste">
+      <input type="email" name="destino" placeholder="{{ request.user.email }}" style="flex:1; min-width:200px;">
+      <button type="submit" class="v-btn">Enviar e-mail de teste</button>
+    </form>
+  </div>
+
+  <div class="v-card" style="flex:1; min-width:300px;">
+    <h3 class="v-h3">Quem recebe</h3>
+    {% if supervisores %}
+      <p style="font-size:13px; color:#334051; margin:0 0 8px;">{{ supervisores|length }} supervisor{{ supervisores|pluralize:"es" }} ativo{{ supervisores|pluralize }}:</p>
+      <p style="font-size:13px; color:#6b7480; margin:0 0 14px;">{{ supervisores|join:", " }}</p>
+    {% else %}
+      <p style="font-size:13px; margin:0 0 14px;"><span class="v-badge b-warn">Nenhum</span> <a href="{% url 'veiculos:supervisores' %}">Cadastre os supervisores</a>.</p>
+    {% endif %}
+    <table style="font-size:13px; color:#334051; width:100%; border-collapse:collapse;">
+      <tr><td style="padding:6px 0; border-bottom:1px solid #f0f2f4;"><b>Toda inspeção feita</b></td><td style="padding:6px 0; border-bottom:1px solid #f0f2f4; color:#6b7480;">Na hora, com o PDF em anexo</td></tr>
+      <tr><td style="padding:6px 0; border-bottom:1px solid #f0f2f4;"><b>Checklist com problema</b></td><td style="padding:6px 0; border-bottom:1px solid #f0f2f4; color:#6b7480;">Na hora, com o problema destacado no assunto</td></tr>
+      <tr><td style="padding:6px 0; border-bottom:1px solid #f0f2f4;"><b>Vencimentos</b></td><td style="padding:6px 0; border-bottom:1px solid #f0f2f4; color:#6b7480;">Rotina diária: 30, 15, 7 dias e no vencimento</td></tr>
+      <tr><td style="padding:6px 0;"><b>Lembrete de checklist</b></td><td style="padding:6px 0; color:#6b7480;">Rotina diária: motorista, com cópia aos supervisores</td></tr>
+    </table>
+    <div style="height:1px; background:#eef0f2; margin:18px 0;"></div>
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="acao" value="alertas">
+      <button type="submit" class="v-btn orange">Verificar vencimentos e lembretes agora</button>
+    </form>
+    <p class="v-help" style="margin-top:10px;">A rotina diária roda com o comando <code>python manage.py veiculos_alertas</code> (agendado no Agendador de Tarefas do Windows). Cada alerta é enviado só uma vez.</p>
+  </div>
+</div>
+{% endblock %}

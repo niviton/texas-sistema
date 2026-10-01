@@ -1,15 +1,90 @@
 {% extends "dashboard/_shell.html" %}
 {% block title %}Dashboard · Polaris{% endblock %}
+{% block extra_style %}
+  .home-frota { max-width:760px; }
+  .home-cta { display:flex; align-items:center; justify-content:space-between; gap:16px; background:#0d2440; color:#fff; border-radius:14px; padding:22px 24px; text-decoration:none; margin-bottom:18px; border-bottom:4px solid #ffc000; }
+  .home-cta:hover { color:#fff; background:#12305a; }
+  .home-cta b { display:block; font-family:'Sora',sans-serif; font-size:19px; }
+  .home-cta span { font-size:13px; color:rgba(255,255,255,.72); }
+  .home-cta .go { flex-shrink:0; background:#ffc000; color:#0d2440; font-weight:800; font-size:14px; padding:11px 18px; border-radius:10px; }
+  .home-nums { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:12px; margin-bottom:18px; }
+  .home-num { background:#fff; border:1px solid #e6e9ec; border-radius:12px; padding:14px 16px; text-decoration:none; color:#12181f; }
+  .home-num b { display:block; font-family:'Sora',sans-serif; font-size:26px; font-weight:800; color:#0d1b2e; line-height:1.1; }
+  .home-num span { font-size:12.5px; color:#6b7480; font-weight:600; }
+  .home-num.warn b { color:#b7791f; }
+  .home-box { background:#fff; border:1px solid #e6e9ec; border-radius:12px; padding:16px 18px; margin-bottom:14px; }
+  .home-box h3 { margin:0 0 8px; font-family:'Sora',sans-serif; font-size:15px; color:#0d1b2e; }
+  .home-row { display:flex; justify-content:space-between; align-items:center; gap:10px; padding:9px 0; border-top:1px solid #f0f2f4; font-size:13.5px; }
+  .home-row:first-of-type { border-top:none; }
+  .home-row small { display:block; font-size:12px; color:#8b95a1; }
+  .home-link { font-size:13px; font-weight:700; color:#1e5c94; text-decoration:none; white-space:nowrap; }
+  .home-empty { font-size:13px; color:#8b95a1; margin:0; }
+  @media (max-width: 860px) {
+    .home-cta { flex-direction:column; align-items:stretch; text-align:left; padding:18px; }
+    .home-cta .go { text-align:center; padding:13px; }
+    .home-num { padding:12px; }
+    .home-num b { font-size:22px; }
+  }
+{% endblock %}
 {% block shell_content %}
   <h1 style="font-family:'Sora',sans-serif; font-size:26px; font-weight:800; margin:0 0 4px; color:#0d1b2e;">Bem-vindo(a), {{ request.user.first_name_display }}</h1>
   <p style="font-size:14.5px; color:#6b7480; margin:0 0 24px;">{{ today_label }}</p>
 
+  {% if frota %}
+    <div class="home-frota">
+      <a class="home-cta" href="{% url 'veiculos:inspecao_nova' %}">
+        <div><b>Fazer uma inspeção</b><span>Checklist, fotos e assinatura antes de sair ou ao chegar com o veículo.</span></div>
+        <div class="go">Nova inspeção</div>
+      </a>
+
+      <div class="home-nums">
+        <a class="home-num" href="{% url 'veiculos:painel' %}"><b>{{ frota.disponiveis }}</b><span>disponíveis</span></a>
+        <a class="home-num" href="{% url 'veiculos:usos' %}?abertos=1"><b>{{ frota.em_uso|length }}</b><span>em uso</span></a>
+        <a class="home-num{% if frota.n_alertas %} warn{% endif %}" href="{% url 'veiculos:painel' %}"><b>{{ frota.n_alertas }}</b><span>avisos</span></a>
+      </div>
+
+      <div class="home-box">
+        <h3>Veículos em uso</h3>
+        {% for u in frota.em_uso %}
+          <div class="home-row">
+            <div><b>{{ u.veiculo.placa }}</b> {{ u.veiculo.modelo }}<small>{{ u.motorista|default:"Sem motorista" }}, saiu em {{ u.saida_em|date:"d/m \à\s H:i" }}</small></div>
+            <a class="home-link" href="{% url 'veiculos:inspecao_nova' %}?veiculo={{ u.veiculo_id }}&tipo=chegada">Registrar chegada</a>
+          </div>
+        {% empty %}
+          <p class="home-empty">Nenhum veículo fora no momento.</p>
+        {% endfor %}
+      </div>
+
+      {% if frota.alertas %}
+      <div class="home-box">
+        <h3>Avisos de manutenção e vencimento</h3>
+        {% for v, texto in frota.alertas %}
+          <div class="home-row"><div><b>{{ v.placa }}</b><small>{{ texto }}</small></div></div>
+        {% endfor %}
+        {% if frota.n_alertas > 5 %}<a class="home-link" href="{% url 'veiculos:painel' %}">Ver todos os {{ frota.n_alertas }} avisos</a>{% endif %}
+      </div>
+      {% endif %}
+
+      <div class="home-box">
+        <h3>Minhas últimas inspeções</h3>
+        {% for i in frota.minhas %}
+          <div class="home-row">
+            <div><b>{{ i.veiculo.placa }}</b> {{ i.get_tipo_display|lower }}<small>{{ i.created_at|date:"d/m/Y H:i" }}{% if i.tem_problema %}, com problema{% endif %}</small></div>
+            <a class="home-link" href="{% url 'veiculos:inspecao_detalhe' i.pk %}">Abrir</a>
+          </div>
+        {% empty %}
+          <p class="home-empty">Você ainda não fez nenhuma inspeção.</p>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
   {% if is_admin %}
-    <div style="background:#fff; border:1px solid #e6e9ec; border-radius:14px; padding:26px 28px; max-width:520px;">
+    <div style="background:#fff; border:1px solid #e6e9ec; border-radius:14px; padding:26px 28px; max-width:520px; margin-top:{% if frota %}10px{% else %}0{% endif %};">
       <div style="font-family:'Sora',sans-serif; font-size:16px; font-weight:700; color:#0d1b2e; margin-bottom:6px;">Fundação do Polaris pronta</div>
       <div style="font-size:13.5px; color:#6b7480; line-height:1.6;">Autenticação, cadastro com aprovação, verificação de certificados e emissão de certificados já estão no ar.</div>
     </div>
-  {% else %}
+  {% elif not frota %}
     <div style="background:#fff8ea; border:1px solid #f6dfa8; border-radius:14px; padding:24px 28px; max-width:520px;">
       <div style="font-family:'Sora',sans-serif; font-size:16px; font-weight:700; color:#7a5410; margin-bottom:6px;">Aguardando atribuições</div>
       <div style="font-size:13.5px; color:#8a6a2a; line-height:1.6;">Um administrador ainda não liberou suas permissões de acesso. Assim que isso acontecer, os módulos disponíveis aparecerão aqui.</div>

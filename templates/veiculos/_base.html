@@ -1,0 +1,65 @@
+{% extends "dashboard/_shell.html" %}
+{% block title %}Veículos · Polaris{% endblock %}
+{% block extra_style %}
+  .v-card { background:#fff; border:1px solid #e6e9ec; border-radius:14px; padding:22px; }
+  .v-h3 { margin:0 0 16px; font-family:'Sora',sans-serif; font-size:16px; font-weight:700; color:#0d1b2e; }
+  .v-label { display:block; font-size:12.5px; font-weight:600; color:#334051; margin-bottom:6px; }
+  .v-input, .v-card select, .v-card textarea, .v-card input[type=text], .v-card input[type=email], .v-card input[type=number], .v-card input[type=date], .v-card input[type=search] {
+    width:100%; padding:11px 12px; border-radius:9px; border:1.5px solid #dfe3e8; font-size:13.5px; font-family:'Manrope',sans-serif; background:#fff; }
+  .v-card textarea { min-height:80px; resize:vertical; }
+  .v-field { margin-bottom:14px; }
+  .v-help { font-size:11px; color:#8b95a1; margin-top:4px; }
+  .v-err { font-size:12px; color:#c0392b; margin-top:4px; }
+  .v-btn { display:inline-block; padding:11px 18px; border:none; border-radius:10px; background:#0d2440; color:#fff !important; font-family:'Sora',sans-serif; font-weight:700; font-size:13.5px; cursor:pointer; text-decoration:none; text-align:center; }
+  .v-btn.orange { background:#f5a623; color:#0d1b2e !important; }
+  .v-btn-sm { display:inline-block; padding:7px 12px; border-radius:8px; border:1.5px solid #dfe3e8; background:none; color:#556072 !important; font-weight:700; font-size:12px; cursor:pointer; text-decoration:none; font-family:'Manrope',sans-serif; }
+  .v-btn-sm.blue { border-color:#1e5c94; color:#1e5c94 !important; }
+  .v-ico { display:inline-flex; align-items:center; gap:6px; }
+  .v-btn-sm[disabled] { opacity:.45; cursor:not-allowed; }
+  .v-btn-sm.green { border-color:#2f9e60; color:#217a48 !important; }
+  .v-badge { display:inline-block; padding:3px 9px; border-radius:100px; font-size:11px; font-weight:700; white-space:nowrap; }
+  .b-ok { background:#e5f3ea; color:#1e7a4a; } .b-nok { background:#fdecea; color:#c0392b; }
+  .b-warn { background:#fff8ea; color:#8a6a2a; } .b-info { background:#e8f0f8; color:#1e5c94; } .b-mute { background:#f1f2f4; color:#6b7480; }
+  .v-table { width:100%; border-collapse:collapse; font-size:13px; }
+  .v-table th { text-align:left; font-size:12px; color:#6b7480; font-weight:700; padding:10px 12px; border-bottom:2px solid #e6e9ec; }
+  .v-table td { padding:12px; border-bottom:1px solid #f0f2f4; vertical-align:middle; }
+  .v-table tr:last-child td { border-bottom:none; }
+  .v-scroll { overflow-x:auto; }
+  .v-stat { flex:1; min-width:150px; }
+  .v-stat .n { font-family:'Sora',sans-serif; font-size:28px; font-weight:800; color:#0d1b2e; }
+  .v-stat .l { font-size:12.5px; color:#6b7480; font-weight:600; }
+  .v-archived { opacity:.55; }
+  .v-tabs { display:flex; gap:8px; margin-bottom:28px; flex-wrap:wrap; }
+  .v-tabs a { padding:9px 18px; border-radius:100px; border:1.5px solid #dfe3e8; text-decoration:none; font-family:'Manrope',sans-serif; font-weight:700; font-size:13.5px; background:#fff; color:#556072; white-space:nowrap; }
+  .v-tabs a.on { background:#0d2440; color:#fff; border-color:#0d2440; }
+  @media (max-width: 860px) {
+    .v-tabs { flex-wrap:nowrap; overflow-x:auto; margin:0 -16px 20px; padding:0 16px 4px; scrollbar-width:none; }
+    .v-tabs::-webkit-scrollbar { display:none; }
+    .v-card { padding:16px; border-radius:12px; }
+    .shell-content .v-stat { flex-basis:calc(50% - 8px) !important; padding:14px 16px; }
+    .v-stat .n { font-size:24px; }
+    .v-btn { padding:13px 18px; font-size:14.5px; }
+    .v-btn-sm { padding:9px 13px; font-size:12.5px; }
+    .v-card select, .v-card input, .v-card textarea { font-size:16px !important; } /* evita zoom automático no iPhone */
+    /* Tabelas viram cartões empilhados */
+    .v-stack thead { display:none; }
+    .v-stack, .v-stack tbody, .v-stack tr, .v-stack td { display:block; width:100%; }
+    .v-stack tr { border:1px solid #e6e9ec; border-radius:10px; padding:10px 12px; margin-bottom:10px; background:#fff; }
+    .v-stack td { border:none !important; padding:4px 0 !important; text-align:left !important; white-space:normal !important; }
+    .v-stack td[data-label]::before { content:attr(data-label); display:block; font-size:11.5px; font-weight:600; color:#8b95a1; }
+    .v-stack td.v-actions { padding-top:8px !important; }
+    .v-stack td.v-actions a { display:block; text-align:center; }
+    .v-scroll { overflow:visible; }
+  }
+  {% block v_style %}{% endblock %}
+{% endblock %}
+{% block shell_content %}
+<h1 style="font-family:'Sora',sans-serif; font-size:24px; font-weight:800; margin:0 0 4px; color:#0d1b2e;">Veículos</h1>
+<p style="font-size:14px; color:#6b7480; margin:0 0 24px;">Checklist de inspeção, uso da frota e vencimentos.</p>
+<nav class="v-tabs">
+  {% for key, label, url_name in veic_tabs %}
+    <a href="{% url url_name %}" class="{% if active_tab == key %}on{% endif %}">{{ label }}</a>
+  {% endfor %}
+</nav>
+{% block veiculos_content %}{% endblock %}
+{% endblock %}

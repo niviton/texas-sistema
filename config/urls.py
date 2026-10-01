@@ -10,6 +10,7 @@ urlpatterns = [
     path('dashboard/usuarios/', include('accounts.urls_admin')),
     path('dashboard/certificados/', include('certificates.urls_admin')),
     path('dashboard/meus-certificados/', include('certificates.urls_professor')),
+    path('dashboard/veiculos/', include('veiculos.urls')),
     path('verificacao-certificados/', include('certificates.urls')),
 ]
 

@@ -1,0 +1,77 @@
+{% extends "veiculos/_base.html" %}
+{% block v_style %}
+  .det-fotos { display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:10px; }
+  .det-fotos a { display:block; }
+  .det-fotos img { width:100%; aspect-ratio:1; object-fit:cover; border-radius:10px; border:1px solid #e6e9ec; display:block; }
+  .det-fotos span { display:block; font-size:11.5px; font-weight:700; color:#334051; margin-top:4px; text-align:center; }
+  @media (max-width: 860px) { .det-fotos { grid-template-columns:repeat(2, minmax(0, 1fr)); } }
+{% endblock %}
+{% block veiculos_content %}
+<div style="display:flex; gap:24px; flex-wrap:wrap; align-items:flex-start;">
+  <div class="v-card" style="flex:1; min-width:280px; max-width:400px;">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
+      <div>
+        <div style="font-family:'Sora',sans-serif; font-size:22px; font-weight:800; color:#0d1b2e;">{{ inspecao.veiculo.placa }}</div>
+        <div style="font-size:13px; color:#6b7480;">{{ inspecao.veiculo.marca }} {{ inspecao.veiculo.modelo }}</div>
+      </div>
+      {% if inspecao.tem_problema %}<span class="v-badge b-nok">Com problema</span>{% else %}<span class="v-badge b-ok">Tudo OK</span>{% endif %}
+    </div>
+    <div style="height:1px; background:#eef0f2; margin:16px 0;"></div>
+    <table style="font-size:13px; width:100%;">
+      <tr><td style="color:#8b95a1; padding:4px 0;">Tipo</td><td><b>{{ inspecao.get_tipo_display }}</b></td></tr>
+      <tr><td style="color:#8b95a1; padding:4px 0;">Data</td><td>{{ inspecao.created_at|date:"d/m/Y H:i" }}</td></tr>
+      <tr><td style="color:#8b95a1; padding:4px 0;">Motorista</td><td>{{ inspecao.motorista|default:"—" }}</td></tr>
+      <tr><td style="color:#8b95a1; padding:4px 0;">Km</td><td>{{ inspecao.km }}</td></tr>
+      <tr><td style="color:#8b95a1; padding:4px 0;">Combustível</td><td>{{ inspecao.combustivel_label }}</td></tr>
+      {% if inspecao.pneus %}<tr><td style="color:#8b95a1; padding:4px 0; vertical-align:top;">Pneus</td><td>{% for sigla, label, pct in inspecao.pneus %}<span title="{{ label }}" style="display:inline-block; margin:0 10px 2px 0;">{{ sigla }} <b style="color:{% if pct < 25 %}#c0392b{% elif pct < 50 %}#b7791f{% else %}#1e7a4a{% endif %};">{{ pct }}%</b></span>{% endfor %}</td></tr>{% endif %}
+      {% if inspecao.com_carga is not None %}<tr><td style="color:#8b95a1; padding:4px 0;">Leva carga</td><td>{{ inspecao.carga_label }}</td></tr>{% elif inspecao.destino %}<tr><td style="color:#8b95a1; padding:4px 0;">Destino</td><td>{{ inspecao.destino }}</td></tr>{% endif %}
+      <tr><td style="color:#8b95a1; padding:4px 0;">Registrado por</td><td>{{ inspecao.created_by|default:"—" }}</td></tr>
+    </table>
+    {% if inspecao.observacoes %}
+      <div style="margin-top:14px; padding:12px; background:#f7f8fa; border-radius:9px; font-size:13px; white-space:pre-wrap;">{{ inspecao.observacoes }}</div>
+    {% endif %}
+    <div style="height:1px; background:#eef0f2; margin:16px 0;"></div>
+    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+      {% if inspecao.email_enviado %}<span class="v-badge b-ok">E-mail enviado</span>{% else %}<span class="v-badge b-mute">E-mail não enviado</span>{% endif %}
+      <a class="v-btn-sm blue" href="{% url 'veiculos:inspecao_pdf' inspecao.pk %}" target="_blank">Ver PDF</a>
+      <a class="v-btn-sm" href="{% url 'veiculos:inspecao_pdf' inspecao.pk %}?download=1">Baixar PDF</a>
+      <form method="post" action="{% url 'veiculos:inspecao_reenviar' inspecao.pk %}">{% csrf_token %}<button class="v-btn-sm blue" type="submit">Reenviar aos supervisores</button></form>
+    </div>
+  </div>
+
+  <div style="flex:1.6; min-width:320px; display:flex; flex-direction:column; gap:24px;">
+    <div class="v-card">
+      <h3 class="v-h3">Checklist</h3>
+      {% for secao, itens in secoes %}
+        <div style="font-size:11.5px; font-weight:800; color:#0d1b2e; text-transform:uppercase; letter-spacing:.05em; margin:14px 0 4px;">{{ secao }}</div>
+        {% for it in itens %}
+          <div style="display:flex; justify-content:space-between; gap:10px; padding:8px 0; border-bottom:1px solid #f0f2f4; font-size:13.5px;">
+            <div>{{ it.label }}{% if it.observacao %}<div style="font-size:12px; color:#c0392b; margin-top:2px;">{{ it.observacao }}</div>{% endif %}</div>
+            <span class="v-badge {% if it.status == 'ok' %}b-ok{% elif it.status == 'nok' %}b-nok{% else %}b-mute{% endif %}">{{ it.get_status_display }}</span>
+          </div>
+        {% endfor %}
+      {% endfor %}
+    </div>
+    {% if fotos %}
+    <div class="v-card">
+      <h3 class="v-h3">Fotos ({{ fotos|length }})</h3>
+      <div class="det-fotos">
+        {% for f in fotos %}
+          <a href="{{ f.imagem.url }}" target="_blank" style="text-decoration:none;">
+            <img src="{{ f.imagem.url }}" alt="{{ f.titulo }}" loading="lazy">
+            <span>{{ f.titulo }}</span>
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+    {% if inspecao.assinatura %}
+    <div class="v-card">
+      <h3 class="v-h3">Assinatura do motorista</h3>
+      <div style="border-bottom:1.5px solid #12181f; max-width:360px; padding:4px 0;"><img src="{{ inspecao.assinatura.url }}" alt="Assinatura" style="max-width:100%; height:110px; object-fit:contain; display:block;"></div>
+      <div style="font-size:13px; font-weight:700; margin-top:6px;">{{ inspecao.motorista|default:"—" }}</div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

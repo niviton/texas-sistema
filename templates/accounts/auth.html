@@ -1,10 +1,20 @@
 {% extends "base.html" %}
 {% load static %}
 {% block title %}Entrar · Polaris{% endblock %}
+{% block extra_style %}
+  @media (max-width: 860px) {
+    .auth-hero { display:none !important; }
+    .auth-form { padding:28px 16px !important; align-items:flex-start !important; }
+    .auth-mobile-logo { display:flex !important; }
+  }
+  @media (max-width: 480px) {
+    .auth-form .auth-row { flex-direction:column; gap:0 !important; }
+  }
+{% endblock %}
 {% block content %}
 <div style="display:flex; min-height:100vh; width:100%; background:#f7f8fa; color:#12181f;">
 
-  <div style="position:relative; width:44%; min-width:420px; background:linear-gradient(160deg,#0a1526 0%,#0d2440 45%,#12395f 100%); overflow:hidden; display:flex; flex-direction:column; justify-content:space-between; padding:56px 56px 48px;">
+  <div class="auth-hero" style="position:relative; width:44%; min-width:420px; background:linear-gradient(160deg,#0a1526 0%,#0d2440 45%,#12395f 100%); overflow:hidden; display:flex; flex-direction:column; justify-content:space-between; padding:56px 56px 48px;">
     <img src="{% static 'assets/star-mark-v2.png' %}" alt="" style="position:absolute; top:-80px; right:-80px; width:380px; height:380px; opacity:0.95; animation:floatStar 9s ease-in-out infinite; pointer-events:none;">
     <img src="{% static 'assets/star-mark-v2.png' %}" alt="" style="position:absolute; bottom:-60px; left:-60px; width:230px; height:230px; opacity:0.16; pointer-events:none;">
 
@@ -23,8 +33,11 @@
     </div>
   </div>
 
-  <div style="flex:1; display:flex; align-items:center; justify-content:center; padding:48px 24px;">
+  <div class="auth-form" style="flex:1; display:flex; align-items:center; justify-content:center; padding:48px 24px;">
     <div style="width:100%; max-width:420px;">
+      <div class="auth-mobile-logo" style="display:none; justify-content:center; margin:8px 0 24px; padding:16px; border-radius:14px; background:linear-gradient(160deg,#0a1526 0%,#0d2440 60%,#12395f 100%);">
+        <img src="{% static 'assets/texas-controls-logo-onwhite-star-white-text.png' %}" alt="Texas Controls" style="height:56px; width:auto;">
+      </div>
 
       {% if submitted %}
         <div style="text-align:center; animation:fadeUp .4s ease; padding:24px 0;">
@@ -107,7 +120,7 @@
               style="width:100%; padding:13px 14px; border-radius:10px; border:1.5px solid #dfe3e8; font-size:14.5px; outline:none; margin-bottom:16px;">
             {% if register_form.full_name.errors %}<p style="font-size:12px; color:#c0392b; margin:-12px 0 14px;">{{ register_form.full_name.errors.0 }}</p>{% endif %}
 
-            <div style="display:flex; gap:12px; margin-bottom:16px;">
+            <div class="auth-row" style="display:flex; gap:12px; margin-bottom:16px;">
               <div style="flex:1;">
                 <label style="display:block; font-size:13px; font-weight:600; color:#334051; margin-bottom:7px;">CPF</label>
                 <input type="text" name="cpf" value="{{ register_form.cpf.value|default:'' }}" placeholder="000.000.000-00" maxlength="14"
@@ -126,7 +139,7 @@
               style="width:100%; padding:13px 14px; border-radius:10px; border:1.5px solid #dfe3e8; font-size:14.5px; outline:none; margin-bottom:16px;">
             {% if register_form.email.errors %}<p style="font-size:12px; color:#c0392b; margin:-12px 0 16px;">{{ register_form.email.errors.0 }}</p>{% endif %}
 
-            <div style="display:flex; gap:12px; margin-bottom:6px;">
+            <div class="auth-row" style="display:flex; gap:12px; margin-bottom:6px;">
               <div style="flex:1;">
                 <label style="display:block; font-size:13px; font-weight:600; color:#334051; margin-bottom:7px;">Senha</label>
                 <input type="password" name="password" id="reg-password" placeholder="Mínimo 8 caracteres" required

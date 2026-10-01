@@ -1,0 +1,17 @@
+<svg class="ic{% if cls %} {{ cls }}{% endif %}" width="{{ s|default:20 }}" height="{{ s|default:20 }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ w|default:'1.7' }}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{% spaceless %}
+{% if i == 'gauge' %}<path d="M3.5 18a9 9 0 1 1 17 0"/><path d="M12 14.5 16 9"/><circle cx="12" cy="15" r="1.4"/><path d="M6.5 13h1M16.5 13h1M12 7.5v1"/>
+{% elif i == 'car_front' %}<path d="M5 18v-5l1.8-5.2A2 2 0 0 1 8.7 6.5h6.6a2 2 0 0 1 1.9 1.3L19 13v5"/><path d="M4 18h16"/><path d="M5 18v1.5M19 18v1.5"/><path d="M5.5 11.5h13"/><circle cx="8" cy="14.8" r="1"/><circle cx="16" cy="14.8" r="1"/>
+{% elif i == 'car_rear' %}<path d="M5 18v-5l1.8-5.2A2 2 0 0 1 8.7 6.5h6.6a2 2 0 0 1 1.9 1.3L19 13v5"/><path d="M4 18h16"/><path d="M5 18v1.5M19 18v1.5"/><path d="M7 9.5h10"/><rect x="9.5" y="14" width="5" height="2" rx=".4"/><path d="M6.5 14.5h1.5M16 14.5h1.5"/>
+{% elif i == 'car_side' %}<path d="M3 16.5v-3.2c0-.6.3-1.1.8-1.4L7 10l2.6-3.1c.4-.5.9-.7 1.5-.7h3.6c.6 0 1.2.3 1.6.8L19 10.5l1.4.4c.9.2 1.6 1 1.6 2v3.6h-2"/><path d="M15.5 16.5h-7"/><path d="M5 16.5H3"/><circle cx="6.8" cy="16.8" r="1.9"/><circle cx="17.3" cy="16.8" r="1.9"/><path d="M9.5 10h8"/>
+{% elif i == 'tire' %}<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.6"/><path d="M12 3v5.4M12 15.6V21M3 12h5.4M15.6 12H21M5.6 5.6l3.9 3.9M14.5 14.5l3.9 3.9M18.4 5.6l-3.9 3.9M9.5 14.5l-3.9 3.9"/>
+{% elif i == 'id_card' %}<rect x="2.5" y="5" width="19" height="14" rx="2"/><circle cx="8.5" cy="11" r="2.2"/><path d="M5 16.3c.6-1.6 1.9-2.3 3.5-2.3s2.9.7 3.5 2.3"/><path d="M14.5 10h4M14.5 13h4M14.5 16h2.5"/>
+{% elif i == 'document' %}<path d="M14 2.5H7A2 2 0 0 0 5 4.5v15a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7.5z"/><path d="M14 2.5v5h5"/><path d="M8.5 12.5h7M8.5 16h7M8.5 9h2.5"/>
+{% elif i == 'camera' %}<path d="M14.5 4h-5L7.5 6.5H4.5a2 2 0 0 0-2 2v9.5a2 2 0 0 0 2 2h15a2 2 0 0 0 2-2V8.5a2 2 0 0 0-2-2h-3z"/><circle cx="12" cy="12.8" r="3.6"/>
+{% elif i == 'camera_plus' %}<path d="M14.5 4h-5L7.5 6.5H4.5a2 2 0 0 0-2 2v9.5a2 2 0 0 0 2 2h15a2 2 0 0 0 2-2V8.5a2 2 0 0 0-2-2h-3z"/><path d="M12 10v5.6M9.2 12.8h5.6"/>
+{% elif i == 'pen' %}<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7.5 18.5 3.5 19.5l1-4z"/>
+{% elif i == 'wrench' %}<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.4-3.4a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9z"/>
+{% elif i == 'check' %}<path d="M20 6 9 17l-5-5"/>
+{% elif i == 'arrow_left' %}<path d="M19 12H5M11 18l-6-6 6-6"/>
+{% elif i == 'fuel' %}<path d="M3.5 21.5h11M5 21.5V4.5a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v17"/><path d="M5 10h9"/><path d="M14 13.5h1.8a1.7 1.7 0 0 1 1.7 1.7v1.8a1.5 1.5 0 0 0 3 0V9.6a2 2 0 0 0-.6-1.4L17 5.5"/>
+{% elif i == 'alert' %}<path d="M10.3 3.9 2.4 17.6A2 2 0 0 0 4.1 20.6h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4.5M12 17h.01"/>
+{% endif %}{% endspaceless %}</svg>

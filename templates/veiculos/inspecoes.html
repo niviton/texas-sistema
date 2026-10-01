@@ -1,0 +1,38 @@
+{% extends "veiculos/_base.html" %}
+{% block veiculos_content %}
+<div class="v-card">
+  <form method="get" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:16px;">
+    <input type="search" name="q" value="{{ q }}" placeholder="Buscar por placa, modelo ou motorista" style="flex:1; min-width:220px;">
+    <select name="tipo" style="width:auto;">
+      <option value="">Todos os tipos</option>
+      <option value="saida" {% if request.GET.tipo == 'saida' %}selected{% endif %}>Saída</option>
+      <option value="chegada" {% if request.GET.tipo == 'chegada' %}selected{% endif %}>Chegada</option>
+      <option value="rotina" {% if request.GET.tipo == 'rotina' %}selected{% endif %}>Rotina</option>
+    </select>
+    <label style="display:flex; gap:6px; align-items:center; font-size:13px; font-weight:600; color:#334051;"><input type="checkbox" name="problema" value="1" {% if request.GET.problema == '1' %}checked{% endif %}> Só com problema</label>
+    <button class="v-btn" type="submit">Filtrar</button>
+  </form>
+  <div class="v-scroll">
+  <table class="v-table v-stack">
+    <thead><tr><th>Data</th><th>Veículo</th><th>Tipo</th><th>Motorista</th><th>Km</th><th>Resultado</th><th>Fotos</th><th>E-mail</th><th></th></tr></thead>
+    <tbody>
+    {% for i in inspecoes %}
+      <tr>
+        <td data-label="Data" style="white-space:nowrap;">{{ i.created_at|date:"d/m/Y H:i" }}</td>
+        <td><b>{{ i.veiculo.placa }}</b> <span style="color:#8b95a1; font-size:12px;">{{ i.veiculo.modelo }}</span></td>
+        <td data-label="Tipo">{{ i.get_tipo_display }}</td>
+        <td data-label="Motorista">{{ i.motorista|default:"—" }}</td>
+        <td data-label="Km">{{ i.km }}</td>
+        <td data-label="Resultado">{% if i.tem_problema %}<span class="v-badge b-nok">Problema</span>{% else %}<span class="v-badge b-ok">OK</span>{% endif %}</td>
+        <td data-label="Fotos">{{ i.fotos.all|length }}</td>
+        <td data-label="E-mail">{% if i.email_enviado %}<span class="v-badge b-ok">Enviado</span>{% else %}<span class="v-badge b-mute">Não</span>{% endif %}</td>
+        <td class="v-actions" style="text-align:right;"><a class="v-btn-sm blue" href="{% url 'veiculos:inspecao_detalhe' i.pk %}">Ver</a></td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="9" style="color:#6b7480;">Nenhuma inspeção encontrada.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+{% endblock %}

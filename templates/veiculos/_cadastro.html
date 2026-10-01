@@ -1,0 +1,38 @@
+{% extends "veiculos/_base.html" %}
+{% block veiculos_content %}
+<div style="display:flex; gap:28px; flex-wrap:wrap; align-items:flex-start;">
+  <div class="v-card" style="flex:1; min-width:280px; max-width:380px;">
+    <h3 class="v-h3">{% if editing %}Editar{% else %}Cadastrar{% endif %} {% block nome_singular %}{% endblock %}</h3>
+    {% block form_intro %}{% endblock %}
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      {% if editing %}<input type="hidden" name="editing_id" value="{{ editing.pk }}">{% endif %}
+      {% include "veiculos/_form_fields.html" %}
+      <div style="display:flex; gap:10px;">
+        <button type="submit" class="v-btn" style="flex:1;">{% if editing %}Salvar{% else %}Adicionar{% endif %}</button>
+        {% if editing %}<a href="{{ request.path }}" class="v-btn-sm" style="padding:11px 16px;">Cancelar</a>{% endif %}
+      </div>
+    </form>
+  </div>
+
+  <div style="flex:1.4; min-width:320px;">
+    <div style="display:flex; justify-content:flex-end; margin-bottom:12px;">
+      {% if show_archived %}<a href="{{ request.path }}" class="v-btn-sm">Ocultar arquivados</a>
+      {% else %}<a href="?arquivados=1" class="v-btn-sm">Mostrar arquivados</a>{% endif %}
+    </div>
+    {% for obj in objects %}
+      <div class="v-card {% if not obj.is_active %}v-archived{% endif %}" style="display:flex; align-items:center; gap:14px; padding:16px 18px; margin-bottom:12px; flex-wrap:wrap;">
+        <div style="flex:1; min-width:180px;">{% block item %}{% endblock %}</div>
+        <a href="?edit={{ obj.pk }}" class="v-btn-sm blue">Editar</a>
+        <form method="post" action="{% block archive_url %}{% endblock %}">
+          {% csrf_token %}
+          {% if obj.is_active %}<button type="submit" class="v-btn-sm">Arquivar</button>
+          {% else %}<button type="submit" class="v-btn-sm green">Reativar</button>{% endif %}
+        </form>
+      </div>
+    {% empty %}
+      <p style="font-size:13.5px; color:#6b7480;">Nenhum cadastro ainda.</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

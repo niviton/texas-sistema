@@ -34,7 +34,11 @@ SECRET_KEY = os.environ.get(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = []
+# Em desenvolvimento (DEBUG) aceita qualquer endereço, para abrir pelo celular na
+# mesma rede Wi-Fi. Em produção, liste os domínios em DJANGO_ALLOWED_HOSTS.
+ALLOWED_HOSTS = [h.strip() for h in os.environ.get('DJANGO_ALLOWED_HOSTS', '').split(',') if h.strip()]
+if DEBUG and not ALLOWED_HOSTS:
+    ALLOWED_HOSTS = ['*']
 
 
 # Microsoft Entra ID / Graph API (usado para acessar o SharePoint via Sites.Selected)
@@ -66,6 +70,7 @@ INSTALLED_APPS = [
     'accounts',
     'certificates',
     'dashboard',
+    'veiculos',
 ]
 
 AUTH_USER_MODEL = 'accounts.User'
@@ -157,3 +162,21 @@ MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 SOFFICE_PATH = r'C:\Program Files\LibreOffice\program\soffice.exe'
+
+
+# E-mail (Gmail com "senha de app"). Sem usuário/senha no .env, os e-mails
+# são apenas impressos no terminal, para testes.
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '').replace(' ', '')
+if EMAIL_HOST_USER and EMAIL_HOST_PASSWORD:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_TIMEOUT = 30
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', '') or f'Polaris Frota <{EMAIL_HOST_USER or "noreply@localhost"}>'
+
+# Endereço usado nos links dos e-mails (ex: http://192.168.0.10:8000)
+SITE_URL = os.environ.get('SITE_URL', 'http://127.0.0.1:8000')

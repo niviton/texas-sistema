@@ -33,9 +33,11 @@ class UserManager(BaseUserManager):
 class User(AbstractUser):
     ROLE_ADMIN = 'admin'
     ROLE_PROFESSOR = 'professor'
+    ROLE_VISTORIADOR = 'vistoriador'
     ROLE_CHOICES = [
         (ROLE_ADMIN, 'Administrador'),
         (ROLE_PROFESSOR, 'Professor'),
+        (ROLE_VISTORIADOR, 'Vistoriador (mobilização)'),
     ]
 
     username = None
@@ -66,6 +68,11 @@ class User(AbstractUser):
         if len(parts) == 1:
             return parts[0][:2].upper()
         return (parts[0][0] + parts[-1][0]).upper()
+
+    @property
+    def pode_veiculos(self):
+        """Acesso ao módulo de veículos: administradores e vistoriadores."""
+        return self.role in (self.ROLE_ADMIN, self.ROLE_VISTORIADOR)
 
     @property
     def role_label(self):

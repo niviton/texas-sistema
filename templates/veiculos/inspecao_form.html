@@ -1,0 +1,420 @@
+{% extends "veiculos/_base.html" %}
+{% block v_style %}
+  .insp-grid { display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1.25fr); gap:24px; align-items:start; }
+  .insp-col { display:flex; flex-direction:column; gap:24px; min-width:0; }
+  .step-h { display:flex; align-items:center; gap:10px; margin:0 0 16px; font-family:'Sora',sans-serif; font-size:16px; font-weight:700; color:#0d1b2e; }
+  .step-n { width:26px; height:26px; border-radius:50%; background:#ffc000; color:#0d2440; font-weight:800; display:flex; align-items:center; justify-content:center; font-size:13px; flex-shrink:0; }
+  .step-h .aux { margin-left:auto; font-family:'Manrope',sans-serif; font-size:12px; font-weight:700; color:#6b7480; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:0 12px; }
+  .grid2 .full { grid-column:1 / -1; }
+
+  /* Fotos guiadas */
+  .fotos-grid { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px; }
+  .foto-slot.wide { grid-column:1 / -1; aspect-ratio:auto; min-height:92px; flex-direction:row; gap:14px; justify-content:flex-start; padding:12px 16px; text-align:left; }
+  .foto-slot.wide .txt { display:flex; flex-direction:column; gap:2px; }
+  .foto-slot { position:relative; aspect-ratio:1; border:2px dashed #c5ccd4; border-radius:12px; background:#f7f8fa; cursor:pointer; overflow:hidden;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; padding:8px; text-align:center; user-select:none; -webkit-tap-highlight-color:transparent; }
+  .foto-slot input { display:none; }
+  .foto-slot .ico { color:#365f91; line-height:0; }
+  .foto-slot .ic.flip { transform:scaleX(-1); }
+  .foto-slot .lbl { font-size:12px; font-weight:700; color:#334051; line-height:1.25; }
+  .foto-slot .req { font-size:10.5px; font-weight:600; color:#8a6a2a; }
+  .foto-slot img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+  .foto-slot.done { border:2px solid #2f9e60; }
+  .foto-slot.done .tag { position:absolute; left:0; right:0; bottom:0; padding:6px 6px 5px; background:linear-gradient(0deg, rgba(10,21,38,.85), rgba(10,21,38,0)); color:#fff; font-size:11px; font-weight:700; line-height:1.2; }
+  .foto-slot.done .ok { position:absolute; top:6px; right:6px; width:22px; height:22px; border-radius:50%; background:#2f9e60; color:#fff; display:flex; align-items:center; justify-content:center; }
+  .foto-slot .req { font-weight:600; }
+  .foto-grupo { font-size:13.5px; font-weight:800; color:#365f91; margin:20px 0 8px; padding-bottom:6px; border-bottom:2px solid #ffc000; }
+  .foto-grupo.first { margin-top:4px; }
+  .pneu-row { display:grid; grid-template-columns:96px minmax(0, 1fr); gap:14px; align-items:center; padding:10px 0; border-bottom:1px solid #f0f2f4; }
+  .pneu-row:last-of-type { border-bottom:none; }
+  .pneu-row .foto-slot { aspect-ratio:1; padding:4px; }
+  .pneu-row .foto-slot .lbl { font-size:11px; }
+  .pneu-nome { font-size:13.5px; font-weight:700; color:#12181f; margin-bottom:2px; }
+
+  /* Barra de porcentagem (arrastar com o dedo) */
+  .pct-top { display:flex; justify-content:space-between; align-items:baseline; gap:8px; font-size:12px; font-weight:600; color:#556072; }
+  .pct-val { font-family:'Sora',sans-serif; font-size:16px; font-weight:800; color:var(--c, #12181f); white-space:nowrap; }
+  .pct.unset .pct-val { font-family:'Manrope',sans-serif; font-size:11.5px; font-weight:700; color:#9aa3ad; }
+  .pct-range { -webkit-appearance:none; appearance:none; width:100%; height:34px; margin:2px 0 0; background:transparent; touch-action:pan-y; cursor:pointer; }
+  .pct-range:focus { outline:none; }
+  .pct-range::-webkit-slider-runnable-track { height:10px; border-radius:10px; background:linear-gradient(90deg, var(--c, #c5ccd4) var(--p, 0%), #e6e9ec var(--p, 0%)); }
+  .pct-range::-moz-range-track { height:10px; border-radius:10px; background:linear-gradient(90deg, var(--c, #c5ccd4) var(--p, 0%), #e6e9ec var(--p, 0%)); }
+  .pct-range::-webkit-slider-thumb { -webkit-appearance:none; width:28px; height:28px; margin-top:-9px; border-radius:50%; background:#fff; border:3px solid var(--c, #9aa3ad); box-shadow:0 2px 6px rgba(13,36,64,.25); }
+  .pct-range::-moz-range-thumb { width:22px; height:22px; border-radius:50%; background:#fff; border:3px solid var(--c, #9aa3ad); box-shadow:0 2px 6px rgba(13,36,64,.25); }
+  .pct-scale { display:flex; justify-content:space-between; font-size:10.5px; font-weight:600; color:#9aa3ad; }
+  .pct.missing .pct-range::-webkit-slider-runnable-track { box-shadow:0 0 0 2px #c0392b; }
+  .pct.missing .pct-range::-moz-range-track { box-shadow:0 0 0 2px #c0392b; }
+  .pct.missing .pct-val { color:#c0392b; }
+  .fuel-box { margin:2px 0 6px; padding:12px 14px; border:1.5px solid #dfe3e8; border-radius:10px; }
+  .fuel-title { display:flex; align-items:center; gap:8px; font-size:12.5px; font-weight:700; color:#334051; margin-bottom:2px; }
+  .fuel-title .ic { color:#1e5c94; }
+  .foto-slot.missing { border-color:#c0392b; background:#fdf2f1; }
+  .foto-slot.busy::after { content:'Processando...'; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,.85); font-size:12px; font-weight:700; color:#334051; }
+  .extras { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+  .extras img { width:64px; height:64px; object-fit:cover; border-radius:8px; border:1px solid #e6e9ec; }
+  .progress { height:6px; background:#eef0f2; border-radius:100px; overflow:hidden; margin:-6px 0 14px; }
+  .progress div { height:100%; width:0; background:#ffc000; transition:width .2s; }
+
+  /* Checklist */
+  .seg { display:inline-flex; border:1.5px solid #dfe3e8; border-radius:9px; overflow:hidden; flex-shrink:0; }
+  .seg input { position:absolute; opacity:0; pointer-events:none; }
+  .seg label { padding:8px 12px; font-size:12.5px; font-weight:700; color:#6b7480; cursor:pointer; user-select:none; border-left:1.5px solid #dfe3e8; }
+  .seg label:first-of-type { border-left:none; }
+  .seg input[value=ok]:checked + label { background:#2f9e60; color:#fff; }
+  .seg input[value=nok]:checked + label { background:#c0392b; color:#fff; }
+  .seg input[value=na]:checked + label { background:#8b95a1; color:#fff; }
+  .seg-full { display:flex; width:100%; }
+  .seg-full label { flex:1; text-align:center; padding:11px 0; font-size:13.5px; }
+  .seg input[value=sim]:checked + label, .seg input[value=nao]:checked + label { background:#365f91; color:#fff; }
+  .seg-full.missing { border-color:#c0392b; }
+  .ck-sec { font-size:13.5px; font-weight:800; color:#365f91; margin:20px 0 2px; padding-bottom:6px; border-bottom:2px solid #ffc000; }
+  .ck-row { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 0; border-bottom:1px solid #f0f2f4; flex-wrap:wrap; }
+  .ck-row.is-nok { background:#fff7f6; margin:0 -10px; padding:10px; border-radius:8px; }
+  .ck-obs { display:none; width:100%; }
+  .ck-row.is-nok .ck-obs { display:block; }
+
+  /* Assinatura */
+  .sig-box { position:relative; border:2px dashed #c5ccd4; border-radius:12px; background:#fff; touch-action:none; }
+  .sig-box.signed { border-style:solid; border-color:#2f9e60; }
+  .sig-box.missing { border-color:#c0392b; }
+  .sig-box canvas { display:block; width:100%; height:190px; touch-action:none; cursor:crosshair; }
+  .sig-hint { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; gap:8px; color:#9aa3ad; font-size:14px; font-weight:600; pointer-events:none; }
+  .sig-line { position:absolute; left:24px; right:24px; bottom:42px; border-bottom:1.5px solid #c5ccd4; pointer-events:none; }
+  .sig-foot { display:flex; justify-content:space-between; align-items:center; margin-top:8px; gap:10px; }
+
+  .submit-bar { position:sticky; bottom:0; z-index:5; margin-top:20px; padding:12px 0; background:linear-gradient(180deg, rgba(244,246,248,0) 0%, #f4f6f8 35%); }
+  .submit-bar .v-btn { width:100%; max-width:520px; box-shadow:0 6px 18px rgba(13,36,64,.18); }
+  .erro-box { padding:12px 16px; border-radius:10px; margin-bottom:18px; background:#fdecea; color:#c0392b; border:1px solid #f3c2bd; font-size:13.5px; font-weight:600; }
+
+  @media (max-width: 860px) {
+    .insp-grid { grid-template-columns:minmax(0, 1fr); gap:16px; }
+    .insp-col { gap:16px; }
+    .foto-slot .lbl { font-size:13px; }
+    .ck-row { flex-direction:column; align-items:stretch; gap:8px; }
+    .seg { display:flex; width:100%; }
+    .seg label { flex:1; text-align:center; padding:12px 0; font-size:14px; }
+    .ck-row.is-nok { margin:0 -8px; padding:10px 8px; }
+    .sig-box canvas { height:210px; }
+    .pneu-row { grid-template-columns:88px minmax(0, 1fr); gap:12px; }
+    .submit-bar { position:fixed; left:0; right:0; bottom:0; padding:10px 16px calc(10px + env(safe-area-inset-bottom)); margin:0; }
+    .submit-bar .v-btn { max-width:none; }
+    #insp-form { padding-bottom:84px; }
+  }
+{% endblock %}
+{% block veiculos_content %}
+<form method="post" enctype="multipart/form-data" id="insp-form" novalidate>
+  {% csrf_token %}
+  <div id="erros" class="erro-box" {% if not form.errors %}style="display:none;"{% endif %}>
+    {% for e in form.non_field_errors %}{{ e }}<br>{% endfor %}
+    {% if form.errors %}<span style="font-weight:500;">Por segurança, o navegador não guarda as fotos e a assinatura depois de um erro: tire-as novamente.</span>{% endif %}
+  </div>
+
+  <div class="insp-grid">
+    <div class="insp-col">
+      <section class="v-card">
+        <h3 class="step-h"><span class="step-n">1</span>Dados da inspeção</h3>
+        <div class="grid2">
+          {% for field in form %}{% if field.name != 'observacoes' and field.name != 'combustivel_pct' and field.name != 'com_carga' %}
+            <div class="v-field {% if field.name == 'veiculo' or field.name == 'motorista' %}full{% endif %}" id="wrap-{{ field.name }}">
+              <label class="v-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+              {{ field }}
+              {% for e in field.errors %}<div class="v-err">{{ e }}</div>{% endfor %}
+            </div>
+          {% endif %}{% endfor %}
+        </div>
+        <div class="v-help" id="km-hint" style="margin:-8px 0 12px;"></div>
+        <div class="v-field" id="wrap-com_carga" style="display:none;">
+          <label class="v-label">A caminhonete leva carga?</label>
+          <div class="seg seg-full">
+            <input type="radio" name="com_carga" id="carga_sim" value="sim" {% if form.com_carga.value == 'sim' %}checked{% endif %}><label for="carga_sim">Sim, com carga</label>
+            <input type="radio" name="com_carga" id="carga_nao" value="nao" {% if form.com_carga.value == 'nao' %}checked{% endif %}><label for="carga_nao">Não, sem carga</label>
+          </div>
+          {% for e in form.com_carga.errors %}<div class="v-err">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="fuel-box" id="wrap-combustivel">
+          <div class="fuel-title">{% include "veiculos/_icon.html" with i="fuel" s=18 %}Combustível</div>
+          {% include "veiculos/_pct.html" with kind="fuel" name="combustivel_pct" value=form.combustivel_pct.value cap="Nível no marcador" label="Combustível" %}
+          {% for e in form.combustivel_pct.errors %}<div class="v-err">{{ e }}</div>{% endfor %}
+        </div>
+      </section>
+
+      <section class="v-card" id="sec-fotos">
+        <h3 class="step-h"><span class="step-n">2</span>Fotos<span class="aux" id="foto-count"></span></h3>
+        <div class="progress"><div id="foto-bar"></div></div>
+        <p class="v-help" style="margin:0 0 12px;">Toque em cada quadro para abrir a câmera.</p>
+        {% for grupo, itens in foto_grupos %}
+          <div class="foto-grupo{% if forloop.first %} first{% endif %}">{{ grupo }}</div>
+          {% if grupo == 'Pneus' %}
+            <p class="v-help" style="margin:-4px 0 4px;">Fotografe cada pneu e arraste a barra para indicar o estado da banda (0% = careca, 100% = novo).</p>
+            {% for f in itens %}
+              <div class="pneu-row">
+                <label class="foto-slot" data-key="{{ f.key }}" data-label="{{ f.label }}" {% if f.req %}data-req="1"{% endif %}>
+                  <input type="file" name="foto_{{ f.key }}" accept="image/*" capture="environment">
+                  <span class="ico">{% include "veiculos/_locator.html" with p=f.key s=38 %}</span>
+                  <span class="lbl">Tirar foto</span>
+                </label>
+                <div>
+                  <div class="pneu-nome">{{ f.label }}</div>
+                  {% include "veiculos/_pct.html" with kind="pneu" name="pct_"|add:f.key cap="Estado do pneu" label=f.label %}
+                </div>
+              </div>
+            {% endfor %}
+          {% else %}
+            <div class="fotos-grid">
+              {% for f in itens %}
+                <label class="foto-slot{% if f.key == 'painel' %} wide{% endif %}" data-key="{{ f.key }}" data-label="{{ f.label }}" {% if f.req %}data-req="1"{% endif %}>
+                  <input type="file" name="foto_{{ f.key }}" accept="image/*" capture="environment">
+                  <span class="ico">{% if f.key == 'cnh' %}{% include "veiculos/_icon.html" with i="id_card" s=32 %}{% elif f.key == 'documento' %}{% include "veiculos/_icon.html" with i="document" s=32 %}{% elif f.key == 'painel' %}{% include "veiculos/_icon.html" with i="gauge" s=32 %}{% else %}{% include "veiculos/_locator.html" with p=f.key s=46 %}{% endif %}</span>
+                  {% if f.key == 'painel' %}<span class="txt"><span class="lbl">{{ f.label }}</span>{% if f.req %}<span class="req">obrigatória · com o motor ligado, mostrando km e combustível</span>{% endif %}</span>
+                  {% else %}<span class="lbl">{{ f.label }}</span>
+                  {% if f.req %}<span class="req">obrigatória</span>{% endif %}{% endif %}
+                </label>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endfor %}
+        <div class="foto-grupo">Avarias e outras fotos</div>
+        <div class="fotos-grid">
+          <label class="foto-slot wide" id="slot-extra">
+            <input type="file" name="fotos_extra" id="fotos-extra" accept="image/*" multiple>
+            <span class="ico">{% include "veiculos/_icon.html" with i="camera_plus" s=30 %}</span>
+            <span class="txt"><span class="lbl">Adicionar fotos</span><span class="req" style="color:#6b7480;">opcional, até {{ max_extras }} fotos da câmera ou da galeria</span></span>
+          </label>
+        </div>
+        <div class="extras" id="extras"></div>
+      </section>
+    </div>
+
+    <div class="insp-col">
+      <section class="v-card">
+        <h3 class="step-h"><span class="step-n">3</span>Checklist</h3>
+        <p class="v-help" style="margin:-8px 0 4px;">Tudo começa como OK. Marque <b style="color:#c0392b;">Não OK</b> e descreva o problema.</p>
+        {% for secao, itens in secoes %}
+          <div class="ck-sec">{{ secao }}</div>
+          {% for it in itens %}
+            <div class="ck-row {% if it.status == 'nok' %}is-nok{% endif %}">
+              <span style="font-size:13.5px; font-weight:600; color:#12181f;">{{ it.label }}</span>
+              <div class="seg">
+                <input type="radio" name="item_{{ it.key }}" id="i_{{ it.key }}_ok" value="ok" {% if it.status == 'ok' %}checked{% endif %}><label for="i_{{ it.key }}_ok">OK</label>
+                <input type="radio" name="item_{{ it.key }}" id="i_{{ it.key }}_nok" value="nok" {% if it.status == 'nok' %}checked{% endif %}><label for="i_{{ it.key }}_nok">Não OK</label>
+                <input type="radio" name="item_{{ it.key }}" id="i_{{ it.key }}_na" value="na" {% if it.status == 'na' %}checked{% endif %}><label for="i_{{ it.key }}_na">N/A</label>
+              </div>
+              <input type="text" class="ck-obs" name="obs_{{ it.key }}" value="{{ it.obs }}" maxlength="255" placeholder="Descreva o problema">
+            </div>
+          {% endfor %}
+        {% endfor %}
+      </section>
+
+      <section class="v-card">
+        <h3 class="step-h"><span class="step-n">4</span>Observações</h3>
+        {{ form.observacoes }}
+      </section>
+
+      <section class="v-card" id="sec-assinatura">
+        <h3 class="step-h"><span class="step-n">5</span>Assinatura do motorista</h3>
+        <div class="sig-box" id="sig-box">
+          <canvas id="sig-canvas"></canvas>
+          <div class="sig-line"></div>
+          <div class="sig-hint" id="sig-hint">{% include "veiculos/_icon.html" with i="pen" s=18 %}Assine aqui com o dedo</div>
+        </div>
+        <div class="sig-foot">
+          <span class="v-help" id="sig-nome" style="margin:0;"></span>
+          <button type="button" class="v-btn-sm" id="sig-limpar">Limpar</button>
+        </div>
+        <input type="hidden" name="assinatura" id="assinatura">
+      </section>
+    </div>
+  </div>
+
+  <div class="submit-bar">
+    <button type="submit" class="v-btn orange" id="submit-btn">Registrar inspeção e enviar</button>
+  </div>
+</form>
+
+{{ veiculos_info|json_script:"veiculos-info" }}
+<script>
+(function () {
+  const info = JSON.parse(document.getElementById('veiculos-info').textContent);
+  const $ = (id) => document.getElementById(id);
+  const veic = $('id_veiculo'), tipo = $('id_tipo'), km = $('id_km'), mot = $('id_motorista');
+
+  // ---------- Dados ----------
+  function refresh() {
+    const v = info[veic.value];
+    $('wrap-com_carga').style.display = v && v.caminhonete ? '' : 'none';
+    $('km-hint').textContent = v ? `Último km registrado: ${v.km}` + (v.em_uso ? ' · veículo em uso (registre a chegada)' : '') : '';
+    $('sig-nome').textContent = mot.value ? mot.options[mot.selectedIndex].text : 'Selecione o motorista na etapa 1';
+  }
+  veic.addEventListener('change', () => {
+    const v = info[veic.value];
+    if (v) {
+      if (!km.value) km.value = v.km;
+      if (!mot.value && v.motorista) mot.value = v.motorista;
+      tipo.value = v.em_uso ? 'chegada' : (tipo.value === 'chegada' ? 'saida' : tipo.value);
+    }
+    refresh();
+  });
+  tipo.addEventListener('change', refresh);
+  mot.addEventListener('change', refresh);
+  if (veic.value && info[veic.value]) {
+    if (!km.value) km.value = info[veic.value].km;
+    if (!mot.value && info[veic.value].motorista) mot.value = info[veic.value].motorista;
+  }
+  refresh();
+
+  // ---------- Fotos ----------
+  // Reduz a foto no próprio celular antes de enviar (upload bem mais rápido no 4G).
+  function reduzir(file, max = 1600) {
+    return new Promise((resolve) => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        const r = Math.min(1, max / Math.max(img.width, img.height));
+        const c = document.createElement('canvas');
+        c.width = Math.round(img.width * r); c.height = Math.round(img.height * r);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url);
+        c.toBlob((b) => resolve(b ? new File([b], (file.name || 'foto').replace(/\.\w+$/, '') + '.jpg', { type: 'image/jpeg' }) : file), 'image/jpeg', 0.82);
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+      img.src = url;
+    });
+  }
+  async function trocarArquivos(input, files) {
+    try {
+      const dt = new DataTransfer();
+      for (const f of files) dt.items.add(await reduzir(f));
+      input.files = dt.files;
+    } catch (e) { /* navegador antigo: envia o original, o servidor reduz */ }
+    return input.files;
+  }
+
+  const CHECK_SVG = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
+  const slots = [...document.querySelectorAll('.foto-slot[data-key]')];
+  function contarFotos() {
+    const req = slots.filter((s) => s.dataset.req);
+    const feitas = req.filter((s) => s.querySelector('input').files.length).length;
+    $('foto-count').textContent = `${feitas} de ${req.length}`;
+    $('foto-bar').style.width = (req.length ? (feitas / req.length) * 100 : 100) + '%';
+  }
+  slots.forEach((slot) => {
+    const input = slot.querySelector('input');
+    input.addEventListener('change', async () => {
+      if (!input.files.length) return;
+      slot.classList.add('busy');
+      const [f] = await trocarArquivos(input, [input.files[0]]);
+      slot.classList.remove('busy', 'missing');
+      slot.classList.add('done');
+      slot.querySelectorAll('img,.tag,.ok').forEach((n) => n.remove());
+      slot.insertAdjacentHTML('beforeend', '<img alt=""><span class="ok">' + CHECK_SVG + '</span><span class="tag"></span>');
+      slot.querySelector('img').src = URL.createObjectURL(f);
+      slot.querySelector('.tag').textContent = slot.closest('.pneu-row') ? 'Trocar' : slot.dataset.label + ' · trocar';
+      contarFotos();
+    });
+  });
+  const extra = $('fotos-extra');
+  extra.addEventListener('change', async () => {
+    const box = $('extras'); box.innerHTML = '';
+    if (!extra.files.length) return;
+    $('slot-extra').classList.add('busy');
+    const files = await trocarArquivos(extra, [...extra.files]);
+    $('slot-extra').classList.remove('busy');
+    [...files].forEach((f) => { const i = document.createElement('img'); i.src = URL.createObjectURL(f); box.appendChild(i); });
+    $('slot-extra').querySelector('.req').textContent = `${files.length} foto${files.length > 1 ? 's' : ''} · trocar`;
+  });
+  contarFotos();
+
+  // ---------- Barras de porcentagem ----------
+  const cor = (v) => (v < 25 ? '#c0392b' : v < 50 ? '#d68910' : '#2f9e60');
+  document.querySelectorAll('.pct').forEach((box) => {
+    const range = box.querySelector('.pct-range'), hidden = box.querySelector('.pct-hidden'), val = box.querySelector('.pct-val');
+    const pintar = () => {
+      const v = Number(range.value);
+      box.style.setProperty('--p', v + '%');
+      box.style.setProperty('--c', cor(v));
+      val.textContent = v + '%';
+    };
+    if (hidden.value !== '') { range.value = hidden.value; pintar(); }
+    range.addEventListener('input', () => {
+      hidden.value = range.value;
+      box.classList.remove('unset', 'missing');
+      pintar();
+    });
+  });
+
+  // ---------- Checklist ----------
+  document.querySelectorAll('.seg input').forEach((r) => r.addEventListener('change', () => {
+    const row = r.closest('.ck-row');
+    row.classList.toggle('is-nok', r.value === 'nok');
+    if (r.value === 'nok') row.querySelector('.ck-obs').focus();
+  }));
+
+  // ---------- Assinatura com o dedo ----------
+  const canvas = $('sig-canvas'), box = $('sig-box'), ctx = canvas.getContext('2d');
+  let desenhando = false, assinado = false, ultimo = null;
+  function ajustarCanvas() {
+    const dpr = window.devicePixelRatio || 1, r = canvas.getBoundingClientRect();
+    const antes = assinado ? canvas.toDataURL() : null;
+    canvas.width = Math.round(r.width * dpr); canvas.height = Math.round(r.height * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.lineWidth = 2.4; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#0d1b2e';
+    if (antes) { const im = new Image(); im.onload = () => ctx.drawImage(im, 0, 0, r.width, r.height); im.src = antes; }
+  }
+  const pos = (e) => { const r = canvas.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+  canvas.addEventListener('pointerdown', (e) => {
+    e.preventDefault(); canvas.setPointerCapture(e.pointerId);
+    desenhando = true; ultimo = pos(e);
+    ctx.beginPath(); ctx.arc(ultimo.x, ultimo.y, 1.1, 0, Math.PI * 2); ctx.fillStyle = '#0d1b2e'; ctx.fill();
+  });
+  canvas.addEventListener('pointermove', (e) => {
+    if (!desenhando) return;
+    e.preventDefault();
+    const p = pos(e);
+    ctx.beginPath(); ctx.moveTo(ultimo.x, ultimo.y); ctx.lineTo(p.x, p.y); ctx.stroke();
+    ultimo = p;
+    if (!assinado) { assinado = true; $('sig-hint').style.display = 'none'; box.classList.add('signed'); box.classList.remove('missing'); }
+  });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach((ev) => canvas.addEventListener(ev, () => { desenhando = false; }));
+  $('sig-limpar').addEventListener('click', () => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    assinado = false; $('sig-hint').style.display = ''; box.classList.remove('signed');
+  });
+  window.addEventListener('resize', ajustarCanvas);
+  ajustarCanvas();
+
+  // ---------- Validação antes de enviar (evita perder fotos num erro do servidor) ----------
+  $('insp-form').addEventListener('submit', (e) => {
+    const erros = []; let primeiro = null;
+    const v = info[veic.value];
+    const marcar = (el) => { if (!primeiro) primeiro = el; };
+    if (!veic.value) { erros.push('Selecione o veículo.'); marcar(veic); }
+    if (!mot.value) { erros.push('Selecione o motorista.'); marcar(mot); }
+    if (km.value === '') { erros.push('Informe o km do painel.'); marcar(km); }
+    if (v && v.caminhonete && !document.querySelector('input[name=com_carga]:checked')) {
+      erros.push('Informe se a caminhonete leva carga.');
+      document.querySelector('#wrap-com_carga .seg').classList.add('missing');
+      marcar($('wrap-com_carga'));
+    }
+    const pctFaltando = [...document.querySelectorAll('.pct-hidden')].filter((h) => h.value === '');
+    pctFaltando.forEach((h) => h.closest('.pct').classList.add('missing'));
+    if (pctFaltando.length) { erros.push('Arraste a barra de: ' + pctFaltando.map((h) => h.dataset.label).join(', ') + '.'); marcar(pctFaltando[0].closest('.pct')); }
+    if (v && km.value !== '' && Number(km.value) < v.km && tipo.value !== 'chegada') { erros.push(`O km não pode ser menor que o último registrado (${v.km}).`); marcar(km); }
+    const faltam = slots.filter((s) => s.dataset.req && !s.querySelector('input').files.length);
+    faltam.forEach((s) => s.classList.add('missing'));
+    if (faltam.length) { erros.push('Faltam as fotos: ' + faltam.map((s) => s.dataset.label).join(', ') + '.'); marcar($('sec-fotos')); }
+    const semObs = [...document.querySelectorAll('.ck-row.is-nok')].filter((r) => !r.querySelector('.ck-obs').value.trim());
+    if (semObs.length) { erros.push('Descreva o problema nos itens marcados como "Não OK".'); marcar(semObs[0]); }
+    if (!assinado) { erros.push('Falta a assinatura do motorista.'); box.classList.add('missing'); marcar($('sec-assinatura')); }
+    if (erros.length) {
+      e.preventDefault();
+      const div = $('erros'); div.innerHTML = erros.join('<br>'); div.style.display = '';
+      (primeiro || div).scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+    $('assinatura').value = canvas.toDataURL('image/png');
+    const b = $('submit-btn'); b.disabled = true; b.textContent = 'Enviando fotos...';
+  });
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,63 @@
+{% extends "veiculos/_base.html" %}
+{% block veiculos_content %}
+<div style="display:flex; align-items:center; gap:12px; margin-bottom:18px; flex-wrap:wrap;">
+  <a href="{% url 'veiculos:veiculos' %}" class="v-btn-sm v-ico">{% include "veiculos/_icon.html" with i="arrow_left" s=14 w="2" %}Veículos</a>
+  <div>
+    <div style="font-family:'Sora',sans-serif; font-weight:800; font-size:18px; color:#0d1b2e;">{{ veiculo.placa }} · Manutenções</div>
+    <div style="font-size:12.5px; color:#6b7480;">{{ veiculo.marca }} {{ veiculo.modelo }} · km atual {{ veiculo.km_atual }}</div>
+  </div>
+</div>
+
+<div style="display:flex; gap:28px; flex-wrap:wrap; align-items:flex-start;">
+  <div class="v-card" style="flex:1; min-width:280px; max-width:400px;">
+    <h3 class="v-h3">{% if editing %}Editar{% else %}Nova{% endif %} manutenção</h3>
+    <p class="v-help" style="margin:-8px 0 14px;">Quando estiver perto do km ou da data, o aviso aparece no painel, no e-mail de cada inspeção desse carro e no resumo diário aos supervisores.</p>
+    <form method="post">
+      {% csrf_token %}
+      {% if editing %}<input type="hidden" name="editing_id" value="{{ editing.pk }}">{% endif %}
+      {% include "veiculos/_form_fields.html" %}
+      <div style="display:flex; gap:10px;">
+        <button type="submit" class="v-btn" style="flex:1;">{% if editing %}Salvar{% else %}Adicionar{% endif %}</button>
+        {% if editing %}<a href="{{ request.path }}" class="v-btn-sm" style="padding:11px 16px;">Cancelar</a>{% endif %}
+      </div>
+    </form>
+  </div>
+
+  <div style="flex:1.4; min-width:300px;">
+    {% for it in itens %}
+      <div class="v-card" style="margin-bottom:12px; padding:16px 18px;">
+        <div style="display:flex; justify-content:space-between; gap:10px; align-items:flex-start; flex-wrap:wrap;">
+          <div>
+            <div style="font-weight:800; font-size:15px; color:#0d1b2e;">{{ it.m.nome }}</div>
+            <div style="font-size:12.5px; color:#6b7480; margin-top:2px;">
+              {% if it.m.proximo_km %}Próxima no km {{ it.m.proximo_km }}{% if it.faltam_km is not None %} · {% if it.faltam_km < 0 %}<b style="color:#c0392b;">passou {{ it.faltam_km|stringformat:"d"|slice:"1:" }} km</b>{% else %}faltam {{ it.faltam_km }} km{% endif %}{% endif %}{% endif %}
+              {% if it.m.proximo_km and it.m.proxima_data %}<br>{% endif %}
+              {% if it.m.proxima_data %}Próxima em {{ it.m.proxima_data|date:"d/m/Y" }}{% endif %}
+            </div>
+            <div style="font-size:11.5px; color:#8b95a1; margin-top:2px;">
+              {% if it.m.intervalo_km %}A cada {{ it.m.intervalo_km }} km{% endif %}{% if it.m.intervalo_km and it.m.intervalo_meses %} ou {% endif %}{% if it.m.intervalo_meses %}a cada {{ it.m.intervalo_meses }} mes{{ it.m.intervalo_meses|pluralize:"es" }}{% endif %}
+              · avisa {{ it.m.aviso_km }} km / {{ it.m.aviso_dias }} dias antes
+            </div>
+          </div>
+          {% if it.alertas %}<span class="v-badge b-warn">Atenção</span>{% else %}<span class="v-badge b-ok">Em dia</span>{% endif %}
+        </div>
+        <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">
+          <form method="post" onsubmit="return confirm('Registrar {{ it.m.nome }} como feita no km {{ veiculo.km_atual }}?');">
+            {% csrf_token %}<input type="hidden" name="acao" value="feita"><input type="hidden" name="id" value="{{ it.m.pk }}">
+            <button type="submit" class="v-btn-sm green" {% if not it.m.intervalo_km and not it.m.intervalo_meses %}disabled title="Defina um intervalo para avançar automaticamente"{% endif %}>Marcar como feita</button>
+          </form>
+          <a href="?edit={{ it.m.pk }}" class="v-btn-sm blue">Editar</a>
+          <form method="post" onsubmit="return confirm('Remover {{ it.m.nome }}?');">
+            {% csrf_token %}<input type="hidden" name="acao" value="remover"><input type="hidden" name="id" value="{{ it.m.pk }}">
+            <button type="submit" class="v-btn-sm">Remover</button>
+          </form>
+        </div>
+      </div>
+    {% empty %}
+      <div class="v-card" style="font-size:13.5px; color:#6b7480;">
+        Nenhuma manutenção cadastrada. Exemplos: <b>Troca de óleo</b> a cada 10.000 km, <b>Filtro de ar</b> a cada 20.000 km, <b>Alinhamento</b> a cada 6 meses.
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

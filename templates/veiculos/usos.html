@@ -1,0 +1,34 @@
+{% extends "veiculos/_base.html" %}
+{% block veiculos_content %}
+<div class="v-card">
+  <div style="display:flex; justify-content:flex-end; margin-bottom:10px;">
+    {% if request.GET.abertos == '1' %}<a class="v-btn-sm" href="{% url 'veiculos:usos' %}">Mostrar todos</a>
+    {% else %}<a class="v-btn-sm" href="?abertos=1">Só veículos em uso</a>{% endif %}
+  </div>
+  <div class="v-scroll">
+  <table class="v-table v-stack">
+    <thead><tr><th>Veículo</th><th>Motorista</th><th>Carga</th><th>Saída</th><th>Chegada</th><th>Km rodados</th><th></th></tr></thead>
+    <tbody>
+    {% for u in usos %}
+      <tr>
+        <td><b>{{ u.veiculo.placa }}</b></td>
+        <td data-label="Motorista">{{ u.motorista|default:"—" }}</td>
+        <td data-label="Carga">{% if u.inspecao_saida.com_carga is not None %}{{ u.inspecao_saida.carga_label }}{% else %}{{ u.destino|default:"—" }}{% endif %}</td>
+        <td data-label="Saída" style="white-space:nowrap;">{{ u.saida_em|date:"d/m/Y H:i" }}<div style="font-size:11.5px; color:#8b95a1;">{{ u.km_saida }} km</div></td>
+        <td data-label="Chegada" style="white-space:nowrap;">
+          {% if u.chegada_em %}{{ u.chegada_em|date:"d/m/Y H:i" }}<div style="font-size:11.5px; color:#8b95a1;">{{ u.km_chegada }} km</div>
+          {% else %}<span class="v-badge b-info">Em uso</span>{% endif %}
+        </td>
+        <td data-label="Km rodados">{{ u.km_rodados|default_if_none:"—" }}</td>
+        <td class="v-actions" style="white-space:nowrap; text-align:right;">
+          {% if not u.chegada_em %}<a class="v-btn-sm blue" href="{% url 'veiculos:inspecao_nova' %}?veiculo={{ u.veiculo_id }}&tipo=chegada">Registrar chegada</a>{% endif %}
+        </td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="7" style="color:#6b7480;">Nenhum uso registrado. As saídas são criadas ao fazer uma inspeção do tipo "Saída".</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+{% endblock %}

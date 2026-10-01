@@ -1,0 +1,9 @@
+{% extends "veiculos/_cadastro.html" %}
+{% block nome_singular %}motorista{% endblock %}
+{% block form_intro %}<p class="v-help" style="margin:-8px 0 14px;">Com e-mail cadastrado, o motorista recebe o lembrete quando o checklist do veículo dele atrasar.</p>{% endblock %}
+{% block archive_url %}{% url 'veiculos:motorista_arquivar' obj.pk %}{% endblock %}
+{% block item %}
+  <div style="font-weight:700; font-size:14px; color:#0d1b2e;">{{ obj.name }}</div>
+  <div style="font-size:12.5px; color:#6b7480;">{{ obj.email|default:"sem e-mail" }}{% if obj.phone %} · {{ obj.phone }}{% endif %}</div>
+  {% if obj.cnh_validade %}<div style="font-size:12px; color:#8b95a1;">CNH {{ obj.cnh_numero }} · válida até {{ obj.cnh_validade|date:"d/m/Y" }}</div>{% endif %}
+{% endblock %}

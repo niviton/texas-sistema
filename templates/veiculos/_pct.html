@@ -1,0 +1,6 @@
+<div class="pct{% if value == None or value == '' %} unset{% endif %}" data-kind="{{ kind }}">
+  <div class="pct-top"><span class="pct-cap">{{ cap }}</span><b class="pct-val">{% if value == None or value == '' %}Arraste para informar{% else %}{{ value }}%{% endif %}</b></div>
+  <input type="range" class="pct-range" min="0" max="100" step="5" value="{% if value == None or value == '' %}50{% else %}{{ value }}{% endif %}" aria-label="{{ cap }}">
+  <input type="hidden" class="pct-hidden" name="{{ name }}" value="{{ value|default_if_none:'' }}" data-label="{{ label }}">
+  <div class="pct-scale">{% if kind == 'fuel' %}<span>Vazio</span><span>1/4</span><span>1/2</span><span>3/4</span><span>Cheio</span>{% else %}<span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span>{% endif %}</div>
+</div>
