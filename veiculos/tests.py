@@ -9,6 +9,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from unittest import mock
 from PIL import Image
 
 from accounts.models import User
@@ -33,7 +34,7 @@ def _assinatura():
     return 'data:image/png;base64,' + base64.b64encode(buf.getvalue()).decode()
 
 
-@override_settings(MEDIA_ROOT=TMP_MEDIA, EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
+@override_settings(MEDIA_ROOT=TMP_MEDIA, EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend', VEICULOS_EMAIL_ASYNC=False)
 class FluxoInspecaoTests(TestCase):
     @classmethod
     def tearDownClass(cls):
@@ -191,6 +192,20 @@ class FluxoInspecaoTests(TestCase):
         self.client.force_login(self.vist)
         self._post('rotina', 1000)
         self.assertIsNone(Inspecao.objects.get().com_carga)
+
+    def test_emails_vao_em_segundo_plano(self):
+        self.client.force_login(self.vist)
+        with override_settings(VEICULOS_EMAIL_ASYNC=True), mock.patch('veiculos.emails.threading.Thread') as Thread:
+            r = self._post('rotina', 1000)
+        self.assertEqual(r.status_code, 302)
+        self.assertEqual(len(mail.outbox), 0, 'a resposta não pode esperar o envio do e-mail')
+        Thread.assert_called_once()
+        Thread.return_value.start.assert_called_once()
+        # Executa o que a thread executaria: o comprovante sai normalmente.
+        alvo, args = Thread.call_args.kwargs['target'], Thread.call_args.kwargs['args']
+        alvo(*args)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertTrue(Inspecao.objects.get().email_enviado)
 
     def test_nao_ok_exige_descricao(self):
         self.client.force_login(self.vist)

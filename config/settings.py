@@ -178,5 +178,8 @@ EMAIL_USE_TLS = True
 EMAIL_TIMEOUT = 30
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', '') or f'Polaris Frota <{EMAIL_HOST_USER or "noreply@localhost"}>'
 
+# Envia os e-mails da vistoria em segundo plano (a tela não espera o Gmail).
+VEICULOS_EMAIL_ASYNC = True
+
 # Endereço usado nos links dos e-mails (ex: http://192.168.0.10:8000)
 SITE_URL = os.environ.get('SITE_URL', 'http://127.0.0.1:8000')

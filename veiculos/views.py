@@ -10,7 +10,9 @@ from django.utils import timezone
 
 from certificates.decorators import admin_required, veiculos_required
 
-from .emails import enviar_alertas, enviar_alertas_veiculo, enviar_inspecao, enviar_teste, supervisor_emails
+from .emails import (
+    enviar_alertas, enviar_emails_da_vistoria_em_segundo_plano, enviar_inspecao, enviar_teste, supervisor_emails,
+)
 from .forms import InspecaoForm, ManutencaoForm, MotoristaForm, SupervisorForm, VeiculoForm
 from .imagens import ImagemInvalida, assinatura_de_dataurl, comprimir_foto
 from .pdf import pdf_filename, render_inspecao_pdf
@@ -127,20 +129,11 @@ def inspecao_nova_view(request):
             except ImagemInvalida as exc:
                 form.add_error(None, str(exc))
             else:
-                try:
-                    if enviar_inspecao(inspecao):
-                        messages.success(request, 'Inspeção registrada e enviada por e-mail aos supervisores.')
-                    else:
-                        messages.success(request, 'Inspeção registrada. (Nenhum supervisor cadastrado para receber o e-mail.)')
-                except Exception:
-                    logger.exception('Falha ao enviar e-mail da inspeção %s', inspecao.pk)
-                    messages.error(request, 'Inspeção registrada, mas o e-mail não pôde ser enviado. Verifique a configuração do Gmail na aba E-mails.')
-                try:
-                    n = enviar_alertas_veiculo(inspecao.veiculo)
-                    if n:
-                        messages.success(request, f'Os supervisores foram avisados de {n} manutenção(ões) ou vencimento(s) próximos deste veículo.')
-                except Exception:
-                    logger.exception('Falha ao enviar aviso de manutenção do veículo %s', inspecao.veiculo_id)
+                if supervisor_emails():
+                    enviar_emails_da_vistoria_em_segundo_plano(inspecao.pk)
+                    messages.success(request, 'Vistoria registrada. O comprovante está sendo enviado aos supervisores.')
+                else:
+                    messages.success(request, 'Vistoria registrada. (Nenhum supervisor cadastrado para receber o e-mail.)')
                 return redirect('veiculos:inspecao_detalhe', pk=inspecao.pk)
     else:
         form = InspecaoForm(initial=initial)
