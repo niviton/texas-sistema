@@ -42,12 +42,14 @@
           {% if it.alertas %}<span class="v-badge b-warn">Atenção</span>{% else %}<span class="v-badge b-ok">Em dia</span>{% endif %}
         </div>
         <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">
-          <form method="post" onsubmit="return confirm('Registrar {{ it.m.nome }} como feita no km {{ veiculo.km_atual }}?');">
+          <form method="post" data-confirm-title="Registrar manutenção" data-confirm-ok="Registrar como feita"
+                data-confirm="{{ it.m.nome }} do veículo {{ veiculo.placa }} será registrada como feita com {{ veiculo.km_atual|floatformat:"0g" }} km. A próxima será recalculada a partir deste valor.">
             {% csrf_token %}<input type="hidden" name="acao" value="feita"><input type="hidden" name="id" value="{{ it.m.pk }}">
             <button type="submit" class="v-btn-sm green" {% if not it.m.intervalo_km and not it.m.intervalo_meses %}disabled title="Defina um intervalo para avançar automaticamente"{% endif %}>Marcar como feita</button>
           </form>
           <a href="?edit={{ it.m.pk }}" class="v-btn-sm blue">Editar</a>
-          <form method="post" onsubmit="return confirm('Remover {{ it.m.nome }}?');">
+          <form method="post" data-confirm-title="Remover manutenção" data-confirm-ok="Remover" data-confirm-danger
+                data-confirm="{{ it.m.nome }} deixará de gerar avisos para o veículo {{ veiculo.placa }}. Esta ação não pode ser desfeita.">
             {% csrf_token %}<input type="hidden" name="acao" value="remover"><input type="hidden" name="id" value="{{ it.m.pk }}">
             <button type="submit" class="v-btn-sm">Remover</button>
           </form>

@@ -42,7 +42,7 @@
               {% else %}
                 <span style="padding:7px 12px; font-size:11.5px; color:#b7bec7; text-align:center;">Sem PDF</span>
               {% endif %}
-              <button type="submit" formaction="{% url 'cert_admin:certificate_delete' c.pk %}" formmethod="post" onclick="return confirm('Apagar o certificado {{ c.code }}? Esta ação não pode ser desfeita.');" style="width:100%; padding:7px 10px; border-radius:8px; border:1.5px solid #e2534d; background:none; color:#c0392b; font-weight:700; font-size:12px; cursor:pointer;">Apagar</button>
+              <button type="submit" formaction="{% url 'cert_admin:certificate_delete' c.pk %}" formmethod="post" data-confirm-title="Apagar certificado" data-confirm-ok="Apagar certificado" data-confirm-danger data-confirm="O certificado {{ c.code }} será apagado permanentemente. Esta ação não pode ser desfeita." style="width:100%; padding:7px 10px; border-radius:8px; border:1.5px solid #e2534d; background:none; color:#c0392b; font-weight:700; font-size:12px; cursor:pointer;">Apagar</button>
             </div>
           {% endfor %}
         </div>

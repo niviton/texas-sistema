@@ -50,7 +50,7 @@
           {% if template.word_template %}
             <a href="{{ template.word_template.url }}" target="_blank" style="padding:7px 14px; border-radius:8px; border:1.5px solid #dfe3e8; background:none; color:#556072; font-weight:700; font-size:12px; text-decoration:none;">Baixar Word</a>
           {% endif %}
-          <form method="post" action="{% url 'cert_admin:modelo_remove' template.pk %}" onsubmit="return confirm('Remover {{ template.title }}?');">
+          <form method="post" action="{% url 'cert_admin:modelo_remove' template.pk %}" data-confirm-title="Remover modelo" data-confirm-ok="Remover modelo" data-confirm-danger data-confirm="O modelo {{ template.title }} será removido e não aparecerá mais na emissão de certificados.">
             {% csrf_token %}
             <button type="submit" style="padding:7px 14px; border-radius:8px; border:1.5px solid #e2534d; background:none; color:#c0392b; font-weight:700; font-size:12px; cursor:pointer;">Remover</button>
           </form>

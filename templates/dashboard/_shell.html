@@ -21,7 +21,22 @@
   .menu-btn span::before { top:-7px; } .menu-btn span::after { top:7px; }
   .shell-backdrop { display:none; }
 
+  /* Janela de confirmação (substitui o confirm() do navegador) */
+  .cdlg { border:none; padding:0; border-radius:14px; width:min(420px, calc(100vw - 32px)); box-shadow:0 18px 48px rgba(10,21,38,.28); color:#12181f; }
+  .cdlg::backdrop { background:rgba(10,21,38,.5); }
+  .cdlg form { padding:22px 22px 18px; margin:0; }
+  .cdlg h2 { margin:0 0 8px; font-family:'Sora',sans-serif; font-size:17px; font-weight:700; color:#0d1b2e; }
+  .cdlg p { margin:0 0 20px; font-size:14px; line-height:1.55; color:#475263; }
+  .cdlg-actions { display:flex; justify-content:flex-end; gap:10px; }
+  .cdlg-actions button { padding:11px 18px; border-radius:10px; font-family:'Manrope',sans-serif; font-weight:700; font-size:14px; cursor:pointer; }
+  .cdlg-cancel { border:1.5px solid #dfe3e8; background:#fff; color:#556072; }
+  .cdlg-ok { border:none; background:#0d2440; color:#fff; }
+  .cdlg-ok.danger { background:#b3261e; }
+  .cdlg-actions button:focus-visible { outline:3px solid #ffc000; outline-offset:2px; }
+
   @media (max-width: 860px) {
+    .cdlg-actions { flex-direction:column-reverse; }
+    .cdlg-actions button { width:100%; padding:13px; }
     .shell-side { position:fixed; top:0; left:0; bottom:0; z-index:50; transform:translateX(-100%); transition:transform .22s ease; box-shadow:4px 0 24px rgba(0,0,0,.25); overflow-y:auto; }
     .shell.menu-open .shell-side { transform:none; }
     .shell.menu-open .shell-backdrop { display:block; position:fixed; inset:0; background:rgba(10,21,38,.45); z-index:40; }
@@ -100,6 +115,47 @@
       {% endif %}
       {% block shell_content %}{% endblock %}
     </main>
+    <dialog class="cdlg" id="cdlg" aria-labelledby="cdlg-title" aria-describedby="cdlg-msg">
+      <form method="dialog">
+        <h2 id="cdlg-title"></h2>
+        <p id="cdlg-msg"></p>
+        <div class="cdlg-actions">
+          <button value="cancel" class="cdlg-cancel">Cancelar</button>
+          <button value="ok" class="cdlg-ok" id="cdlg-ok"></button>
+        </div>
+      </form>
+    </dialog>
+    <script>
+    /* Formulários ou botões com data-confirm pedem confirmação numa janela do próprio sistema.
+       data-confirm-title, data-confirm (texto), data-confirm-ok (rótulo do botão), data-confirm-danger. */
+    (function () {
+      const dlg = document.getElementById('cdlg');
+      if (!dlg || typeof dlg.showModal !== 'function') return;
+      const ok = document.getElementById('cdlg-ok');
+      let acao = null;
+      document.addEventListener('submit', (e) => {
+        const form = e.target, botao = e.submitter;
+        const el = botao && botao.hasAttribute('data-confirm') ? botao : (form.hasAttribute('data-confirm') ? form : null);
+        if (!el || form.dataset.confirmado) return;
+        e.preventDefault();
+        document.getElementById('cdlg-title').textContent = el.dataset.confirmTitle || 'Confirmar';
+        document.getElementById('cdlg-msg').textContent = el.dataset.confirm;
+        ok.textContent = el.dataset.confirmOk || 'Confirmar';
+        ok.classList.toggle('danger', el.hasAttribute('data-confirm-danger'));
+        acao = () => {
+          form.dataset.confirmado = '1';
+          if (botao) form.requestSubmit(botao); else form.requestSubmit();
+        };
+        dlg.returnValue = '';
+        dlg.showModal();
+        ok.focus();
+      }, true);
+      dlg.addEventListener('close', () => {
+        if (dlg.returnValue === 'ok' && acao) acao();
+        acao = null;
+      });
+    })();
+    </script>
   </div>
 </div>
 {% endblock %}

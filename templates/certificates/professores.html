@@ -117,7 +117,7 @@
             <button type="submit" style="padding:7px 12px; border-radius:8px; border:1.5px solid #2f9e60; background:none; color:#217a48; font-weight:700; font-size:12px; cursor:pointer;">Reativar</button>
           {% endif %}
         </form>
-        <form method="post" action="{% url 'cert_admin:professor_remove' professor.pk %}" onsubmit="return confirm('Remover {{ professor.full_name }} definitivamente?');">
+        <form method="post" action="{% url 'cert_admin:professor_remove' professor.pk %}" data-confirm-title="Remover professor" data-confirm-ok="Remover professor" data-confirm-danger data-confirm="{{ professor.full_name }} será removido definitivamente. Para manter o histórico, use Arquivar.">
           {% csrf_token %}
           <button type="submit" style="padding:7px 12px; border-radius:8px; border:1.5px solid #e2534d; background:none; color:#c0392b; font-weight:700; font-size:12px; cursor:pointer;">Remover</button>
         </form>

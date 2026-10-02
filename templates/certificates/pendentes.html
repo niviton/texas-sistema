@@ -26,7 +26,7 @@
                   {% csrf_token %}
                   <input type="hidden" name="registration_id" value="{{ c.pk }}">
                   <input type="hidden" name="action" value="reject">
-                  <button type="submit" onclick="return confirm('Rejeitar cadastro de {{ c.student_name }}?');" style="padding:8px 12px; border-radius:8px; border:1.5px solid #e2534d; background:none; color:#c0392b; font-weight:700; font-size:12px; cursor:pointer;">Rejeitar</button>
+                  <button type="submit" data-confirm-title="Rejeitar cadastro" data-confirm-ok="Rejeitar cadastro" data-confirm-danger data-confirm="O cadastro de {{ c.student_name }} será rejeitado e não gerará certificado." style="padding:8px 12px; border-radius:8px; border:1.5px solid #e2534d; background:none; color:#c0392b; font-weight:700; font-size:12px; cursor:pointer;">Rejeitar</button>
                 </form>
                 <form method="post" style="display:inline;">
                   {% csrf_token %}
