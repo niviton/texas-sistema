@@ -46,6 +46,18 @@
   .pct.missing .pct-range::-webkit-slider-runnable-track { box-shadow:0 0 0 2px #c0392b; }
   .pct.missing .pct-range::-moz-range-track { box-shadow:0 0 0 2px #c0392b; }
   .pct.missing .pct-val { color:#c0392b; }
+  .manut-box { margin:0 0 14px; padding:12px 14px; border:1.5px solid #dfe3e8; border-radius:10px; background:#fbfcfd; }
+  .manut-title { display:flex; align-items:center; gap:8px; font-size:12.5px; font-weight:700; color:#334051; margin-bottom:6px; }
+  .manut-title .ic { color:#365f91; }
+  .manut-row { display:flex; justify-content:space-between; align-items:baseline; gap:10px; padding:6px 0 6px 10px; border-left:3px solid #c9d1da; margin-top:4px; font-size:13px; }
+  .manut-row small { display:block; font-size:11.5px; color:#8b95a1; }
+  .manut-row b { white-space:nowrap; font-size:13px; }
+  .manut-row.ok b { color:#2f7d4f; }
+  .manut-row.perto { border-left-color:#d68910; background:#fff8ea; }
+  .manut-row.perto b { color:#a35f00; }
+  .manut-row.vencida { border-left-color:#b3261e; background:#fdf2f1; }
+  .manut-row.vencida b { color:#b3261e; }
+  .manut-note { margin-top:8px; font-size:12px; font-weight:600; color:#a35f00; }
   .fuel-box { margin:2px 0 6px; padding:12px 14px; border:1.5px solid #dfe3e8; border-radius:10px; }
   .fuel-title { display:flex; align-items:center; gap:8px; font-size:12.5px; font-weight:700; color:#334051; margin-bottom:2px; }
   .fuel-title .ic { color:#1e5c94; }
@@ -124,6 +136,11 @@
           {% endif %}{% endfor %}
         </div>
         <div class="v-help" id="km-hint" style="margin:-8px 0 12px;"></div>
+        <div class="manut-box" id="manut-box" hidden>
+          <div class="manut-title">{% include "veiculos/_icon.html" with i="wrench" s=16 w="2" %}Manutenção deste veículo</div>
+          <div id="manut-list"></div>
+          <div class="manut-note" id="manut-note" hidden>Ao registrar a vistoria, os supervisores recebem um aviso por e-mail.</div>
+        </div>
         <div class="v-field" id="wrap-com_carga" style="display:none;">
           <label class="v-label">A caminhonete leva carga?</label>
           <div class="seg seg-full">
@@ -246,6 +263,52 @@
     $('km-hint').textContent = v ? `Último km registrado: ${v.km}` + (v.em_uso ? ' · veículo em uso (registre a chegada)' : '') : '';
     $('sig-nome').textContent = mot.value ? mot.options[mot.selectedIndex].text : 'Selecione o motorista na etapa 1';
   }
+  // ---------- Manutenção: quanto falta, com o km digitado agora ----------
+  const fmt = (n) => Number(n).toLocaleString('pt-BR');
+  function renderManut() {
+    const v = info[veic.value], box = $('manut-box'), list = $('manut-list');
+    if (!v || (!v.manutencoes.length && !v.vencimentos.length)) { box.hidden = true; return; }
+    const kmAtual = km.value !== '' ? Number(km.value) : v.km;
+    let alerta = false;
+    const linhas = [];
+    v.manutencoes.forEach((m) => {
+      if (m.proximo_km !== null) {
+        const falta = m.proximo_km - kmAtual;
+        const cls = falta < 0 ? 'vencida' : (falta <= m.aviso_km ? 'perto' : 'ok');
+        if (cls !== 'ok') alerta = true;
+        const regra = m.intervalo_km ? `a cada ${fmt(m.intervalo_km)} km, ` : '';
+        linhas.push({ cls, nome: m.nome, det: `${regra}próxima no km ${fmt(m.proximo_km)}`,
+          val: falta < 0 ? `passou ${fmt(-falta)} km` : `faltam ${fmt(falta)} km` });
+      }
+      if (m.data) {
+        const cls = m.dias < 0 ? 'vencida' : (m.dias <= m.aviso_dias ? 'perto' : 'ok');
+        if (cls !== 'ok') alerta = true;
+        linhas.push({ cls, nome: m.nome, det: `até ${m.data}`, val: m.dias < 0 ? 'vencida' : `${m.dias} dia${m.dias === 1 ? '' : 's'}` });
+      }
+    });
+    v.vencimentos.forEach((d) => {
+      const cls = d.dias < 0 ? 'vencida' : (d.dias <= 30 ? 'perto' : 'ok');
+      if (cls === 'ok') return;
+      alerta = true;
+      linhas.push({ cls, nome: d.nome, det: `vence em ${d.data}`, val: d.dias < 0 ? 'vencido' : `${d.dias} dia${d.dias === 1 ? '' : 's'}` });
+    });
+    if (!linhas.length) { box.hidden = true; return; }
+    list.innerHTML = '';
+    linhas.forEach((l) => {
+      const row = document.createElement('div');
+      row.className = 'manut-row ' + l.cls;
+      const txt = document.createElement('div');
+      txt.textContent = l.nome;
+      const small = document.createElement('small'); small.textContent = l.det; txt.appendChild(small);
+      const val = document.createElement('b'); val.textContent = l.val;
+      row.append(txt, val);
+      list.appendChild(row);
+    });
+    $('manut-note').hidden = !alerta;
+    box.hidden = false;
+  }
+  km.addEventListener('input', renderManut);
+
   veic.addEventListener('change', () => {
     const v = info[veic.value];
     if (v) {
@@ -254,6 +317,7 @@
       tipo.value = v.em_uso ? 'chegada' : (tipo.value === 'chegada' ? 'saida' : tipo.value);
     }
     refresh();
+    renderManut();
   });
   tipo.addEventListener('change', refresh);
   mot.addEventListener('change', refresh);
@@ -262,6 +326,7 @@
     if (!mot.value && info[veic.value].motorista) mot.value = info[veic.value].motorista;
   }
   refresh();
+  renderManut();
 
   // ---------- Fotos ----------
   // Reduz a foto no próprio celular antes de enviar (upload bem mais rápido no 4G).

@@ -10,7 +10,7 @@ from django.utils import timezone
 
 from certificates.decorators import admin_required, veiculos_required
 
-from .emails import enviar_alertas, enviar_inspecao, enviar_teste, supervisor_emails
+from .emails import enviar_alertas, enviar_alertas_veiculo, enviar_inspecao, enviar_teste, supervisor_emails
 from .forms import InspecaoForm, ManutencaoForm, MotoristaForm, SupervisorForm, VeiculoForm
 from .imagens import ImagemInvalida, assinatura_de_dataurl, comprimir_foto
 from .pdf import pdf_filename, render_inspecao_pdf
@@ -135,6 +135,12 @@ def inspecao_nova_view(request):
                 except Exception:
                     logger.exception('Falha ao enviar e-mail da inspeção %s', inspecao.pk)
                     messages.error(request, 'Inspeção registrada, mas o e-mail não pôde ser enviado. Verifique a configuração do Gmail na aba E-mails.')
+                try:
+                    n = enviar_alertas_veiculo(inspecao.veiculo)
+                    if n:
+                        messages.success(request, f'Os supervisores foram avisados de {n} manutenção(ões) ou vencimento(s) próximos deste veículo.')
+                except Exception:
+                    logger.exception('Falha ao enviar aviso de manutenção do veículo %s', inspecao.veiculo_id)
                 return redirect('veiculos:inspecao_detalhe', pk=inspecao.pk)
     else:
         form = InspecaoForm(initial=initial)
@@ -144,6 +150,20 @@ def inspecao_nova_view(request):
         str(v.pk): {
             'km': v.km_atual, 'motorista': v.motorista_responsavel_id, 'em_uso': bool(v.uso_aberto),
             'caminhonete': v.categoria == CATEGORIA_CAMINHONETE,
+            'manutencoes': [
+                {
+                    'nome': m.nome, 'proximo_km': m.proximo_km, 'intervalo_km': m.intervalo_km, 'aviso_km': m.aviso_km,
+                    'data': m.proxima_data.strftime('%d/%m/%Y') if m.proxima_data else None,
+                    'dias': (m.proxima_data - timezone.localdate()).days if m.proxima_data else None,
+                    'aviso_dias': m.aviso_dias,
+                }
+                for m in v.manutencoes.filter(is_active=True)
+            ],
+            'vencimentos': [
+                {'nome': nome, 'data': d.strftime('%d/%m/%Y'), 'dias': (d - timezone.localdate()).days}
+                for nome, d in [('Licenciamento', v.licenciamento_validade), ('Seguro', v.seguro_validade), ('Revisão', v.revisao_data)]
+                if d
+            ],
         }
         for v in Veiculo.objects.filter(is_active=True)
     }

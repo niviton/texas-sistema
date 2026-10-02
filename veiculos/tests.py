@@ -86,15 +86,14 @@ class FluxoInspecaoTests(TestCase):
         self.assertEqual(len(mail.outbox), 1)
         m = mail.outbox[0]
         self.assertEqual(m.to, ['sup1@x.com'])
-        self.assertIn('problema', m.subject)
-        self.assertIn('João Motorista', m.subject)
+        self.assertEqual(m.subject, 'Comprovante de vistoria do veículo placa: ABC1D23 e condutor João Motorista')
         corpo = m.alternatives[0][0]
-        self.assertIn('Segue em anexo o PDF', corpo)
-        self.assertNotIn('Checklist completo', corpo)
+        self.assertIn('PDF segue em anexo', corpo)
+        self.assertNotIn('Checklist', corpo)
         self.assertEqual(len(m.attachments), 1)
         nome, conteudo, tipo = m.attachments[0]
         self.assertEqual(tipo, 'application/pdf')
-        self.assertTrue(nome.startswith('Checklist_ABC1D23_'))
+        self.assertTrue(nome.startswith('Comprovante_vistoria_ABC1D23_'))
         self.assertTrue(conteudo.startswith(b'%PDF'))
         r = self.client.get(reverse('veiculos:inspecao_pdf', args=[insp.pk]))
         self.assertEqual(r['Content-Type'], 'application/pdf')
@@ -116,7 +115,7 @@ class FluxoInspecaoTests(TestCase):
         self.assertEqual(r.status_code, 302)
         uso.refresh_from_db()
         self.assertEqual(uso.km_rodados, 150)
-        self.assertNotIn('problema', mail.outbox[-1].subject)
+        self.assertTrue(mail.outbox[-1].subject.startswith('Comprovante de vistoria do veículo placa: ABC1D23'))
 
     def test_fotos_e_assinatura_obrigatorias(self):
         self.client.force_login(self.vist)
@@ -136,12 +135,29 @@ class FluxoInspecaoTests(TestCase):
         m = Manutencao.objects.create(veiculo=self.v, nome='Troca de óleo', proximo_km=1500, intervalo_km=10000, aviso_km=1000)
         self.client.force_login(self.vist)
         self._post('rotina', 1499)
-        self.assertIn('Troca de óleo: faltam 1 km', mail.outbox[-1].alternatives[0][0])
+        aviso = mail.outbox[-1]
+        self.assertIn('Aviso de manutenção: veículo placa ABC1D23', aviso.subject)
+        self.assertIn('Troca de óleo: faltam 1 km', aviso.alternatives[0][0])
         self.client.force_login(self.admin)
         r = self.client.post(reverse('veiculos:manutencoes', args=[self.v.pk]), {'acao': 'feita', 'id': m.pk})
         self.assertEqual(r.status_code, 302)
         m.refresh_from_db()
         self.assertEqual(m.proximo_km, 1499 + 10000)
+
+    def test_aviso_imediato_quando_km_real_entra_na_faixa(self):
+        # Troca de óleo a cada 5.000 km, aviso quando faltarem 500 km; próxima no km 10.500.
+        Manutencao.objects.create(veiculo=self.v, nome='Troca de óleo', proximo_km=10500, intervalo_km=5000, aviso_km=500)
+        self.client.force_login(self.vist)
+        self._post('rotina', 9000)   # faltam 1.500 km: só o comprovante
+        self.assertEqual([m.subject.split(':')[0] for m in mail.outbox], ['Comprovante de vistoria do veículo placa'])
+        self._post('rotina', 10000)  # faltam 500 km: comprovante + aviso na hora
+        self.assertEqual(len(mail.outbox), 3)
+        self.assertIn('Aviso de manutenção', mail.outbox[-1].subject)
+        self.assertIn('faltam 500 km', mail.outbox[-1].alternatives[0][0])
+        self._post('rotina', 10100)  # mesmo aviso não se repete
+        self.assertEqual(len(mail.outbox), 4)
+        call_command('veiculos_alertas', stdout=io.StringIO())  # nem no resumo diário
+        self.assertFalse(any('vencimento' in m.subject for m in mail.outbox))
 
     def test_alerta_km_nao_repete_quando_km_muda(self):
         Manutencao.objects.create(veiculo=self.v, nome='Troca de óleo', proximo_km=1500, aviso_km=1000)
@@ -169,7 +185,7 @@ class FluxoInspecaoTests(TestCase):
         self.assertEqual(r.status_code, 302)
         insp = Inspecao.objects.get()
         self.assertIs(insp.com_carga, True)
-        self.assertIn('levando carga', mail.outbox[-1].alternatives[0][0])
+        self.assertIn('Comprovante de vistoria', mail.outbox[-1].subject)
 
     def test_carro_de_passeio_sem_pergunta_de_carga(self):
         self.client.force_login(self.vist)

@@ -46,20 +46,17 @@ def alertas_texto(veiculo):
     return linhas
 
 
+def titulo_comprovante(inspecao):
+    condutor = inspecao.motorista or inspecao.created_by
+    return f'Comprovante de vistoria do veículo placa: {inspecao.veiculo.placa} e condutor {condutor}'
+
+
 def enviar_inspecao(inspecao):
-    """Relatório de toda inspeção feita. Se houver item 'Não OK', o assunto destaca o problema."""
-    problemas = inspecao.itens_problema
-    v = inspecao.veiculo
-    quem = inspecao.motorista or inspecao.created_by
-    subject = f'Inspeção de {inspecao.get_tipo_display().lower()} · {v.placa} · {quem}'
-    if problemas:
-        subject = f'{subject} · {len(problemas)} item(ns) com problema'
-    # As fotos e a assinatura já vão dentro do PDF; o corpo fica curto.
+    """Comprovante de toda vistoria: só o título e o PDF em anexo (todo o detalhe está no PDF)."""
+    titulo = titulo_comprovante(inspecao)
     anexos = [(pdf_filename(inspecao), render_inspecao_pdf(inspecao), 'application/pdf')]
     enviado = _send(
-        subject, 'veiculos/email/inspecao.html',
-        {'inspecao': inspecao, 'problemas': problemas, 'alertas': alertas_texto(v)},
-        to=supervisor_emails(), attachments=anexos,
+        titulo, 'veiculos/email/inspecao.html', {'titulo': titulo}, to=supervisor_emails(), attachments=anexos,
     )
     if enviado:
         inspecao.email_enviado = True
@@ -76,6 +73,46 @@ def _marcar_enviado(*chaves):
         AlertaEnviado.objects.get_or_create(chave=chave)
 
 
+def _chave_vencimento(v, nome, data_venc, dias):
+    if dias is None:
+        # Itens por km: o texto muda a cada km rodado ("faltam 900 km"), então a chave usa
+        # só o nome da manutenção e o km alvo, entre parênteses no fim do texto.
+        return f'venc:{v.pk}:km:{nome.split(":")[0]}:{nome.rsplit("(", 1)[-1]}'
+    if dias < 0:
+        marco = 'vencido'
+    else:
+        marco = next(m for m in (0, 7, 15, 30) if dias <= m) if dias <= 30 else None
+    return f'venc:{v.pk}:{nome}:{data_venc}:{marco}'
+
+
+def _vencimentos_novos(v, dias_vencimento=30):
+    novos = []
+    for nome, data_venc, dias in v.vencimentos(dias_vencimento):
+        chave = _chave_vencimento(v, nome, data_venc, dias)
+        if not _ja_enviado(chave):
+            novos.append({'veiculo': v, 'nome': nome, 'data': data_venc, 'dias': dias, 'chave': chave})
+    return novos
+
+
+def enviar_alertas_veiculo(veiculo):
+    """
+    Chamado logo depois de uma vistoria, já com o km real do painel: se alguma manutenção ou
+    vencimento entrou na faixa de aviso configurada, avisa os supervisores na hora.
+    Usa as mesmas chaves do resumo diário, então o mesmo aviso nunca chega duas vezes.
+    """
+    novos = _vencimentos_novos(veiculo)
+    if not novos:
+        return 0
+    if len(novos) == 1:
+        assunto = f'Aviso de manutenção: veículo placa {veiculo.placa}, {novos[0]["nome"].split(" (no km")[0]}'
+    else:
+        assunto = f'Aviso de manutenção: veículo placa {veiculo.placa}, {len(novos)} itens'
+    if _send(assunto, 'veiculos/email/aviso_veiculo.html', {'veiculo': veiculo, 'avisos': novos}, to=supervisor_emails()):
+        _marcar_enviado(*(n['chave'] for n in novos))
+        return len(novos)
+    return 0
+
+
 def enviar_alertas(dias_vencimento=30):
     """
     Envia (1) um resumo de vencimentos próximos aos supervisores e (2) lembretes de
@@ -89,19 +126,7 @@ def enviar_alertas(dias_vencimento=30):
 
     novos_vencimentos = []
     for v in Veiculo.objects.filter(is_active=True).select_related('motorista_responsavel'):
-        for nome, data_venc, dias in v.vencimentos(dias_vencimento):
-            if dias is None:
-                # Itens por km: o texto muda a cada km rodado ("faltam 900 km"), então a chave usa
-                # só o nome da manutenção e o km alvo, entre parênteses no fim do texto.
-                chave = f'venc:{v.pk}:km:{nome.split(":")[0]}:{nome.rsplit("(", 1)[-1]}'
-            else:
-                if dias < 0:
-                    marco = 'vencido'
-                else:
-                    marco = next(m for m in (0, 7, 15, 30) if dias <= m) if dias <= 30 else None
-                chave = f'venc:{v.pk}:{nome}:{data_venc}:{marco}'
-            if not _ja_enviado(chave):
-                novos_vencimentos.append({'veiculo': v, 'nome': nome, 'data': data_venc, 'dias': dias, 'chave': chave})
+        novos_vencimentos += _vencimentos_novos(v, dias_vencimento)
     if novos_vencimentos and _send(
         f'[Frota] {len(novos_vencimentos)} vencimento(s) próximo(s)', 'veiculos/email/vencimentos.html',
         {'vencimentos': novos_vencimentos, 'hoje': hoje}, to=supervisores,

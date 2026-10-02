@@ -1,24 +1,6 @@
 {% extends "veiculos/email/_layout.html" %}
-{% block header %}Inspeção de {{ inspecao.get_tipo_display|lower }} · {{ inspecao.veiculo.placa }}{% endblock %}
+{% block header %}Comprovante de vistoria{% endblock %}
 {% block body %}
-<p style="margin:0 0 14px;">
-  Foi realizada uma inspeção de <b>{{ inspecao.get_tipo_display|lower }}</b> do veículo
-  <b>{{ inspecao.veiculo.placa }}</b> ({{ inspecao.veiculo.marca }} {{ inspecao.veiculo.modelo }})
-  por <b>{{ inspecao.motorista|default:inspecao.created_by }}</b> em {{ inspecao.created_at|date:"d/m/Y \à\s H:i" }}{% if inspecao.com_carga %}, levando carga{% elif inspecao.com_carga is False %}, sem carga{% endif %}.
-</p>
-
-{% if problemas %}
-  <p style="margin:0 0 14px; padding:8px 12px; border-left:3px solid #c0392b; background:#fdf2f1; color:#a5281b; font-weight:bold;">{{ problemas|length }} item(ns) com problema: {% for p in problemas %}{{ p.label }}{% if not forloop.last %}, {% endif %}{% endfor %}.</p>
-{% else %}
-  <p style="margin:0 0 14px; padding:8px 12px; border-left:3px solid #2f9e60; background:#f0f8f3; color:#1e7a4a; font-weight:bold;">Nenhum problema encontrado.</p>
-{% endif %}
-
-{% if alertas %}
-  <div style="border-left:3px solid #d68910; background:#fff8ea; padding:8px 12px; margin:0 0 14px; font-size:13.5px; color:#6b5216;">
-    <div style="font-size:12.5px; font-weight:bold; color:#8a6a2a; margin-bottom:4px;">Manutenção e vencimentos</div>
-    {% for a in alertas %}<div style="padding:2px 0;">{{ a }}</div>{% endfor %}
-  </div>
-{% endif %}
-
-<p style="margin:0;">Segue em anexo o PDF com o detalhamento da inspeção, fotos e assinatura.</p>
+<p style="margin:0 0 10px;">{{ titulo }}.</p>
+<p style="margin:0; color:#6b7480;">O comprovante em PDF segue em anexo.</p>
 {% endblock %}
