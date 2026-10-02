@@ -107,6 +107,11 @@ class Supervisor(models.Model):
 
 
 class Motorista(models.Model):
+    usuario = models.OneToOneField(
+        settings.AUTH_USER_MODEL, verbose_name='login do vistoriador', on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='motorista',
+        help_text='Quando o vistoriador faz a vistoria, ele mesmo é o motorista.',
+    )
     name = models.CharField('nome', max_length=150)
     email = models.EmailField('e-mail', blank=True)
     phone = models.CharField('telefone', max_length=20, blank=True)
@@ -122,6 +127,14 @@ class Motorista(models.Model):
 
     def __str__(self):
         return self.name
+
+
+def motorista_do_usuario(user):
+    """O cadastro de motorista do usuário logado (criado na primeira vistoria dele)."""
+    m = Motorista.objects.filter(usuario=user).first()
+    if m is None:
+        m = Motorista.objects.create(usuario=user, name=user.full_name or user.email, email=user.email)
+    return m
 
 
 def vehicle_photo_path(instance, filename):

@@ -3,6 +3,8 @@ from django.shortcuts import get_object_or_404, redirect, render
 
 from certificates.decorators import admin_required
 
+from dashboard.navigation import CONFIG_TABS
+
 from .forms import AdminUserEditForm
 from .models import User
 
@@ -28,6 +30,8 @@ def usuarios_view(request):
     users = User.objects.all().order_by('full_name')
     return render(request, 'accounts/usuarios.html', {
         'active_nav': 'configuracoes',
+        'config_tabs': CONFIG_TABS,
+        'active_tab': 'usuarios',
         'users': users,
         'editing': editing,
         'form': form,

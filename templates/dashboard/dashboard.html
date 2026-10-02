@@ -33,25 +33,32 @@
   {% if frota %}
     <div class="home-frota">
       <a class="home-cta" href="{% url 'veiculos:inspecao_nova' %}">
-        <div><b>Fazer uma inspeção</b><span>Checklist, fotos e assinatura antes de sair ou ao chegar com o veículo.</span></div>
-        <div class="go">Nova inspeção</div>
+        <div><b>Fazer uma vistoria</b><span>Checklist, fotos e assinatura antes de sair ou ao chegar com o veículo.</span></div>
+        <div class="go">Nova vistoria</div>
       </a>
 
+      {% if is_admin %}
       <div class="home-nums">
         <a class="home-num" href="{% url 'veiculos:painel' %}"><b>{{ frota.disponiveis }}</b><span>disponíveis</span></a>
         <a class="home-num" href="{% url 'veiculos:usos' %}?abertos=1"><b>{{ frota.em_uso|length }}</b><span>em uso</span></a>
         <a class="home-num{% if frota.n_alertas %} warn{% endif %}" href="{% url 'veiculos:painel' %}"><b>{{ frota.n_alertas }}</b><span>avisos</span></a>
       </div>
+      {% else %}
+      <div class="home-nums" style="grid-template-columns:repeat(2, minmax(0, 1fr));">
+        <a class="home-num" href="{% url 'veiculos:inspecao_nova' %}"><b>{{ frota.disponiveis }}</b><span>veículos disponíveis</span></a>
+        <a class="home-num" href="{% url 'veiculos:usos' %}"><b>{{ frota.em_uso|length }}</b><span>com você agora</span></a>
+      </div>
+      {% endif %}
 
       <div class="home-box">
-        <h3>Veículos em uso</h3>
+        <h3>{% if is_admin %}Veículos em uso{% else %}Com você agora{% endif %}</h3>
         {% for u in frota.em_uso %}
           <div class="home-row">
             <div><b>{{ u.veiculo.placa }}</b> {{ u.veiculo.modelo }}<small>{{ u.motorista|default:"Sem motorista" }}, saiu em {{ u.saida_em|date:"d/m \à\s H:i" }}</small></div>
             <a class="home-link" href="{% url 'veiculos:inspecao_nova' %}?veiculo={{ u.veiculo_id }}&tipo=chegada">Registrar chegada</a>
           </div>
         {% empty %}
-          <p class="home-empty">Nenhum veículo fora no momento.</p>
+          <p class="home-empty">{% if is_admin %}Nenhum veículo fora no momento.{% else %}Você não está com nenhum veículo.{% endif %}</p>
         {% endfor %}
       </div>
 
@@ -66,14 +73,14 @@
       {% endif %}
 
       <div class="home-box">
-        <h3>Minhas últimas inspeções</h3>
+        <h3>Minhas últimas vistorias</h3>
         {% for i in frota.minhas %}
           <div class="home-row">
             <div><b>{{ i.veiculo.placa }}</b> {{ i.get_tipo_display|lower }}<small>{{ i.created_at|date:"d/m/Y H:i" }}{% if i.tem_problema %}, com problema{% endif %}</small></div>
             <a class="home-link" href="{% url 'veiculos:inspecao_detalhe' i.pk %}">Abrir</a>
           </div>
         {% empty %}
-          <p class="home-empty">Você ainda não fez nenhuma inspeção.</p>
+          <p class="home-empty">Você ainda não fez nenhuma vistoria.</p>
         {% endfor %}
       </div>
     </div>

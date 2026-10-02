@@ -9,6 +9,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
 from certificates.decorators import admin_required, veiculos_required
+from dashboard.navigation import CONFIG_KEYS, CONFIG_TABS
 
 from .emails import (
     enviar_alertas, enviar_emails_da_vistoria_em_segundo_plano, enviar_inspecao, enviar_teste, supervisor_emails,
@@ -25,26 +26,48 @@ logger = logging.getLogger(__name__)
 
 _MAX_FOTOS_EXTRAS = 10
 
-TABS = [
-    ('painel', 'Painel', 'veiculos:painel', False),
-    ('nova', 'Nova inspeção', 'veiculos:inspecao_nova', False),
-    ('inspecoes', 'Inspeções', 'veiculos:inspecoes', False),
-    ('usos', 'Uso da frota', 'veiculos:usos', False),
-    ('veiculos', 'Veículos', 'veiculos:veiculos', True),
-    ('motoristas', 'Motoristas', 'veiculos:motoristas', True),
-    ('supervisores', 'Supervisores', 'veiculos:supervisores', True),
-    ('email', 'E-mails', 'veiculos:email', True),
+# Abas do dia a dia. Os cadastros ficam em "Configurações" (dashboard.navigation.CONFIG_TABS).
+TABS_ADMIN = [
+    ('painel', 'Painel', 'veiculos:painel'),
+    ('nova', 'Nova vistoria', 'veiculos:inspecao_nova'),
+    ('inspecoes', 'Vistorias', 'veiculos:inspecoes'),
+    ('usos', 'Uso da frota', 'veiculos:usos'),
+]
+TABS_VISTORIADOR = [
+    ('nova', 'Nova vistoria', 'veiculos:inspecao_nova'),
+    ('inspecoes', 'Minhas vistorias', 'veiculos:inspecoes'),
+    ('usos', 'Meus usos', 'veiculos:usos'),
 ]
 
 
 def _ctx(request, active_tab, **extra):
-    is_admin = request.user.role == 'admin'
-    tabs = [(k, label, url) for k, label, url, admin_only in TABS if is_admin or not admin_only]
-    return {'active_nav': 'veiculos', 'veic_tabs': tabs, 'active_tab': active_tab, 'is_admin': is_admin, **extra}
+    is_admin = request.user.is_admin_geral
+    if active_tab in CONFIG_KEYS:
+        base = {'active_nav': 'configuracoes', 'config_mode': True, 'config_tabs': CONFIG_TABS}
+    else:
+        base = {'active_nav': 'veiculos', 'veic_tabs': TABS_ADMIN if is_admin else TABS_VISTORIADOR}
+    return {**base, 'active_tab': active_tab, 'is_admin': is_admin, **extra}
+
+
+def _inspecoes_visiveis(user):
+    """Administrador vê todas; o vistoriador, só as próprias."""
+    qs = Inspecao.objects.all()
+    if not user.is_admin_geral:
+        qs = qs.filter(Q(created_by=user) | Q(motorista__usuario=user))
+    return qs
+
+
+def _usos_visiveis(user):
+    qs = Uso.objects.all()
+    if not user.is_admin_geral:
+        qs = qs.filter(Q(motorista__usuario=user) | Q(inspecao_saida__created_by=user))
+    return qs
 
 
 @veiculos_required
 def painel_view(request):
+    if not request.user.is_admin_geral:
+        return redirect('veiculos:inspecoes')
     veiculos = list(Veiculo.objects.filter(is_active=True).select_related('motorista_responsavel'))
     linhas = []
     alertas = []
@@ -91,7 +114,7 @@ def inspecao_nova_view(request):
         initial['tipo'] = request.GET['tipo']
 
     if request.method == 'POST':
-        form = InspecaoForm(request.POST)
+        form = InspecaoForm(request.POST, user=request.user)
         secoes = _checklist_from_post(request.POST)
         fotos = [(key, request.FILES.get(f'foto_{key}')) for key, _, _ in FOTO_POSICOES]
         extras = request.FILES.getlist('fotos_extra')
@@ -136,7 +159,7 @@ def inspecao_nova_view(request):
                     messages.success(request, 'Vistoria registrada. (Nenhum supervisor cadastrado para receber o e-mail.)')
                 return redirect('veiculos:inspecao_detalhe', pk=inspecao.pk)
     else:
-        form = InspecaoForm(initial=initial)
+        form = InspecaoForm(initial=initial, user=request.user)
         secoes = _checklist_from_post({})
 
     veiculos_info = {
@@ -163,6 +186,7 @@ def inspecao_nova_view(request):
     return render(request, 'veiculos/inspecao_form.html', _ctx(
         request, 'nova', form=form, secoes=secoes, veiculos_info=veiculos_info,
         foto_grupos=_foto_grupos(), max_extras=_MAX_FOTOS_EXTRAS,
+        nome_condutor='' if request.user.is_admin_geral else (request.user.full_name or request.user.email),
     ))
 
 
@@ -216,7 +240,7 @@ def _salvar_inspecao(request, data, secoes, fotos, extras, assinatura, pneus_pct
 
 @veiculos_required
 def inspecoes_view(request):
-    qs = Inspecao.objects.select_related('veiculo', 'motorista').prefetch_related('fotos')
+    qs = _inspecoes_visiveis(request.user).select_related('veiculo', 'motorista').prefetch_related('fotos')
     q = request.GET.get('q', '').strip()
     if q:
         qs = qs.filter(Q(veiculo__placa__icontains=q) | Q(motorista__name__icontains=q) | Q(veiculo__modelo__icontains=q))
@@ -230,7 +254,8 @@ def inspecoes_view(request):
 @veiculos_required
 def inspecao_detalhe_view(request, pk):
     inspecao = get_object_or_404(
-        Inspecao.objects.select_related('veiculo', 'motorista', 'created_by').prefetch_related('itens', 'fotos'), pk=pk,
+        _inspecoes_visiveis(request.user).select_related('veiculo', 'motorista', 'created_by').prefetch_related('itens', 'fotos'),
+        pk=pk,
     )
     labels = {k: l for _, itens in CHECKLIST_ITEMS for k, l in itens}
     por_item = {i.item: i for i in inspecao.itens.all()}
@@ -246,7 +271,7 @@ def inspecao_detalhe_view(request, pk):
 
 @veiculos_required
 def inspecao_pdf_view(request, pk):
-    inspecao = get_object_or_404(Inspecao.objects.select_related('veiculo', 'motorista', 'created_by'), pk=pk)
+    inspecao = get_object_or_404(_inspecoes_visiveis(request.user).select_related('veiculo', 'motorista', 'created_by'), pk=pk)
     response = HttpResponse(render_inspecao_pdf(inspecao), content_type='application/pdf')
     disposition = 'attachment' if request.GET.get('download') else 'inline'
     response['Content-Disposition'] = f'{disposition}; filename="{pdf_filename(inspecao)}"'
@@ -255,7 +280,7 @@ def inspecao_pdf_view(request, pk):
 
 @veiculos_required
 def inspecao_reenviar_view(request, pk):
-    inspecao = get_object_or_404(Inspecao, pk=pk)
+    inspecao = get_object_or_404(_inspecoes_visiveis(request.user), pk=pk)
     if request.method == 'POST':
         try:
             if enviar_inspecao(inspecao):
@@ -269,7 +294,7 @@ def inspecao_reenviar_view(request, pk):
 
 @veiculos_required
 def usos_view(request):
-    usos = Uso.objects.select_related('veiculo', 'motorista', 'inspecao_saida')
+    usos = _usos_visiveis(request.user).select_related('veiculo', 'motorista', 'inspecao_saida')
     if request.GET.get('abertos') == '1':
         usos = usos.filter(chegada_em__isnull=True)
     return render(request, 'veiculos/usos.html', _ctx(request, 'usos', usos=usos[:200]))

@@ -125,7 +125,7 @@
   <div class="insp-grid">
     <div class="insp-col">
       <section class="v-card">
-        <h3 class="step-h"><span class="step-n">1</span>Dados da inspeção</h3>
+        <h3 class="step-h"><span class="step-n">1</span>Dados da vistoria</h3>
         <div class="grid2">
           {% for field in form %}{% if field.name != 'observacoes' and field.name != 'combustivel_pct' and field.name != 'com_carga' %}
             <div class="v-field {% if field.name == 'veiculo' or field.name == 'motorista' %}full{% endif %}" id="wrap-{{ field.name }}">
@@ -245,7 +245,7 @@
   </div>
 
   <div class="submit-bar">
-    <button type="submit" class="v-btn orange" id="submit-btn">Registrar inspeção e enviar</button>
+    <button type="submit" class="v-btn orange" id="submit-btn">Registrar vistoria e enviar</button>
   </div>
 </form>
 
@@ -253,6 +253,7 @@
 <script>
 (function () {
   const info = JSON.parse(document.getElementById('veiculos-info').textContent);
+  const NOME_CONDUTOR = '{{ nome_condutor|escapejs }}';
   const $ = (id) => document.getElementById(id);
   const veic = $('id_veiculo'), tipo = $('id_tipo'), km = $('id_km'), mot = $('id_motorista');
 
@@ -261,7 +262,7 @@
     const v = info[veic.value];
     $('wrap-com_carga').style.display = v && v.caminhonete ? '' : 'none';
     $('km-hint').textContent = v ? `Último km registrado: ${v.km}` + (v.em_uso ? ' · veículo em uso (registre a chegada)' : '') : '';
-    $('sig-nome').textContent = mot.value ? mot.options[mot.selectedIndex].text : 'Selecione o motorista na etapa 1';
+    $('sig-nome').textContent = !mot ? NOME_CONDUTOR : (mot.value ? mot.options[mot.selectedIndex].text : 'Selecione o motorista na etapa 1');
   }
   // ---------- Manutenção: quanto falta, com o km digitado agora ----------
   const fmt = (n) => Number(n).toLocaleString('pt-BR');
@@ -313,17 +314,17 @@
     const v = info[veic.value];
     if (v) {
       if (!km.value) km.value = v.km;
-      if (!mot.value && v.motorista) mot.value = v.motorista;
+      if (mot && !mot.value && v.motorista) mot.value = v.motorista;
       tipo.value = v.em_uso ? 'chegada' : (tipo.value === 'chegada' ? 'saida' : tipo.value);
     }
     refresh();
     renderManut();
   });
   tipo.addEventListener('change', refresh);
-  mot.addEventListener('change', refresh);
+  if (mot) mot.addEventListener('change', refresh);
   if (veic.value && info[veic.value]) {
     if (!km.value) km.value = info[veic.value].km;
-    if (!mot.value && info[veic.value].motorista) mot.value = info[veic.value].motorista;
+    if (mot && !mot.value && info[veic.value].motorista) mot.value = info[veic.value].motorista;
   }
   refresh();
   renderManut();
@@ -454,7 +455,7 @@
     const v = info[veic.value];
     const marcar = (el) => { if (!primeiro) primeiro = el; };
     if (!veic.value) { erros.push('Selecione o veículo.'); marcar(veic); }
-    if (!mot.value) { erros.push('Selecione o motorista.'); marcar(mot); }
+    if (mot && !mot.value) { erros.push('Selecione o motorista.'); marcar(mot); }
     if (km.value === '') { erros.push('Informe o km do painel.'); marcar(km); }
     if (v && v.caminhonete && !document.querySelector('input[name=com_carga]:checked')) {
       erros.push('Informe se a caminhonete leva carga.');

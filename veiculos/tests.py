@@ -43,11 +43,11 @@ class FluxoInspecaoTests(TestCase):
 
     def setUp(self):
         self.admin = User.objects.create_superuser(email='admin@x.com', password='x', full_name='Admin Teste')
-        self.prof = User.objects.create_user(email='prof@x.com', password='x', full_name='Prof', is_approved=True)
         self.vist = User.objects.create_user(
             email='vist@x.com', password='x', full_name='Vist Oriador', is_approved=True, role=User.ROLE_VISTORIADOR,
         )
-        self.mot = Motorista.objects.create(name='João Motorista', email='joao@x.com')
+        self.prof = User.objects.create_user(email='prof@x.com', password='x', full_name='Prof', is_approved=True)
+        self.mot = Motorista.objects.create(name='João Motorista', email='joao@x.com', usuario=self.vist)
         self.v = Veiculo.objects.create(placa='abc 1d23', marca='Fiat', modelo='Strada', km_atual=1000, motorista_responsavel=self.mot)
         Supervisor.objects.create(name='Sup Um', email='sup1@x.com')
         Supervisor.objects.create(name='Sup Inativo', email='sup2@x.com', is_active=False)
@@ -169,6 +169,35 @@ class FluxoInspecaoTests(TestCase):
         call_command('veiculos_alertas', stdout=io.StringIO())
         self.assertEqual(sum('vencimento' in x.subject for x in mail.outbox), n)
 
+    def test_vistoriador_so_ve_o_proprio_historico(self):
+        outro = User.objects.create_user(
+            email='outro@x.com', password='x', full_name='Outro Vist', is_approved=True, role=User.ROLE_VISTORIADOR,
+        )
+        self.client.force_login(outro)
+        self._post('saida', 1000)
+        dele = Inspecao.objects.get()
+        self.assertEqual(dele.motorista.usuario, outro, 'o motorista é o próprio vistoriador')
+        self.client.force_login(self.vist)
+        self.assertNotContains(self.client.get(reverse('veiculos:inspecoes')), dele.veiculo.placa + '</b>')
+        self.assertEqual(self.client.get(reverse('veiculos:inspecao_detalhe', args=[dele.pk])).status_code, 404)
+        self.assertEqual(self.client.get(reverse('veiculos:inspecao_pdf', args=[dele.pk])).status_code, 404)
+        self.assertNotContains(self.client.get(reverse('veiculos:usos')), 'Outro Vist')
+        # e não pode registrar a chegada de um carro que outra pessoa retirou
+        r = self._post('chegada', 1100)
+        self.assertContains(r, 'em uso por outro condutor')
+        # o administrador vê tudo
+        self.client.force_login(self.admin)
+        self.assertEqual(self.client.get(reverse('veiculos:inspecao_detalhe', args=[dele.pk])).status_code, 200)
+
+    def test_configuracoes_reunem_os_cadastros(self):
+        self.client.force_login(self.admin)
+        for name in ['veiculos', 'motoristas', 'supervisores', 'email']:
+            r = self.client.get(reverse(f'veiculos:{name}'))
+            self.assertContains(r, '<h1', html=False)
+            self.assertContains(r, 'Configurações')
+            self.assertContains(r, 'Usuários')
+        self.assertContains(self.client.get(reverse('accounts_admin:usuarios')), 'E-mails da frota')
+
     def test_professor_nao_acessa_veiculos(self):
         self.client.force_login(self.prof)
         for name in ['painel', 'inspecao_nova', 'inspecoes', 'usos']:
@@ -240,10 +269,14 @@ class FluxoInspecaoTests(TestCase):
 
     def test_cadastros_so_admin(self):
         self.client.force_login(self.vist)
-        self.assertEqual(self.client.get(reverse('veiculos:painel')).status_code, 200)
+        self.assertRedirects(self.client.get(reverse('veiculos:painel')), reverse('veiculos:inspecoes'))
         home = self.client.get(reverse('dashboard:home'))
-        self.assertContains(home, 'Fazer uma inspeção')
+        self.assertContains(home, 'Fazer uma vistoria')
         self.assertNotContains(home, 'Certificados')
+        self.assertNotContains(home, 'Configurações')
+        form = self.client.get(reverse('veiculos:inspecao_nova'))
+        self.assertNotContains(form, 'name="motorista"')
+        self.assertEqual(self.client.get(reverse('accounts_admin:usuarios')).status_code, 403)
         for name in ['veiculos', 'motoristas', 'supervisores', 'email']:
             self.assertEqual(self.client.get(reverse(f'veiculos:{name}')).status_code, 403, name)
 

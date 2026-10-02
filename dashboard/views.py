@@ -17,21 +17,28 @@ _MONTHS = [
 
 def _resumo_veiculos(user):
     """Painel simples da frota para a tela inicial de quem tem acesso a veículos."""
+    from django.db.models import Q
+
     from veiculos.emails import alertas_texto
     from veiculos.models import Inspecao, Uso, Veiculo
 
     veiculos = list(Veiculo.objects.filter(is_active=True).select_related('motorista_responsavel'))
-    em_uso = list(Uso.objects.filter(chegada_em__isnull=True).select_related('veiculo', 'motorista').order_by('saida_em'))
+    abertos = Uso.objects.filter(chegada_em__isnull=True).select_related('veiculo', 'motorista').order_by('saida_em')
+    n_em_uso = abertos.count()
+    # O vistoriador só vê o que é dele; avisos de manutenção são assunto do administrador.
+    if not user.is_admin_geral:
+        abertos = abertos.filter(Q(motorista__usuario=user) | Q(inspecao_saida__created_by=user))
     alertas = []
-    for v in veiculos:
-        alertas += [(v, texto) for texto in alertas_texto(v)]
+    if user.is_admin_geral:
+        for v in veiculos:
+            alertas += [(v, texto) for texto in alertas_texto(v)]
     return {
         'total': len(veiculos),
-        'em_uso': em_uso,
-        'disponiveis': len(veiculos) - len(em_uso),
+        'em_uso': list(abertos),
+        'disponiveis': len(veiculos) - n_em_uso,
         'alertas': alertas[:5],
         'n_alertas': len(alertas),
-        'minhas': Inspecao.objects.filter(created_by=user).select_related('veiculo')[:5],
+        'minhas': Inspecao.objects.filter(Q(created_by=user) | Q(motorista__usuario=user)).select_related('veiculo')[:5],
     }
 
 

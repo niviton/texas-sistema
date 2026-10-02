@@ -47,7 +47,6 @@
       <a href="{% url 'dashboard:home' %}" class="nav-link {% if active_nav == 'inicio' %}active{% endif %}"><div class="dot"></div><span>Início</span></a>
       {% if request.user.role == 'admin' %}
       <a href="{% url 'cert_admin:emitir' %}" class="nav-link {% if active_nav == 'certificados' %}active{% endif %}"><div class="dot"></div><span>Certificados</span></a>
-      <a href="{% url 'accounts_admin:usuarios' %}" class="nav-link {% if active_nav == 'configuracoes' %}active{% endif %}"><div class="dot"></div><span>Configurações</span></a>
       {% endif %}
       {% if request.user.role == 'professor' %}
       <a href="{% url 'cert_prof:folders' %}" class="nav-link {% if active_nav == 'certificados_prof' %}active{% endif %}"><div class="dot"></div><span>Certificados</span></a>
@@ -56,7 +55,12 @@
       <a href="{% url 'veiculos:painel' %}" class="nav-link {% if active_nav == 'veiculos' %}active{% endif %}"><div class="dot"></div><span>Veículos</span></a>
       {% endif %}
     </div>
-    <div style="margin-top:auto; padding-top:16px; border-top:1px solid rgba(255,255,255,0.1); flex-shrink:0;">
+    {% if request.user.role == 'admin' %}
+    <div class="shell-nav" style="flex:0; margin-top:auto;">
+      <a href="{% url 'accounts_admin:usuarios' %}" class="nav-link {% if active_nav == 'configuracoes' %}active{% endif %}"><div class="dot"></div><span>Configurações</span></a>
+    </div>
+    {% endif %}
+    <div style="{% if request.user.role != 'admin' %}margin-top:auto; {% endif %}padding-top:16px; border-top:1px solid rgba(255,255,255,0.1); flex-shrink:0;">
       <form method="post" action="{% url 'accounts:logout' %}">
         {% csrf_token %}
         <button type="submit" style="width:100%; padding:11px 0; border:1.5px solid rgba(255,255,255,0.18); background:none; border-radius:10px; color:rgba(255,255,255,0.75); font-family:'Manrope',sans-serif; font-weight:600; font-size:13.5px; cursor:pointer;">Sair</button>

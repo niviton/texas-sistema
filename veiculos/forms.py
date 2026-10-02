@@ -2,6 +2,7 @@ from django import forms
 
 from .models import (
     CATEGORIA_CAMINHONETE, TIPO_CHEGADA, TIPO_CHOICES, TIPO_SAIDA, Manutencao, Motorista, Supervisor, Veiculo,
+    motorista_do_usuario,
 )
 
 _DATE = forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d')
@@ -16,8 +17,13 @@ class SupervisorForm(forms.ModelForm):
 class MotoristaForm(forms.ModelForm):
     class Meta:
         model = Motorista
-        fields = ['name', 'email', 'phone', 'cnh_numero', 'cnh_validade']
+        fields = ['name', 'usuario', 'email', 'phone', 'cnh_numero', 'cnh_validade']
         widgets = {'cnh_validade': _DATE}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        from accounts.models import User
+        self.fields['usuario'].queryset = User.objects.filter(role=User.ROLE_VISTORIADOR).order_by('full_name')
 
 
 class VeiculoForm(forms.ModelForm):
@@ -67,8 +73,17 @@ class InspecaoForm(forms.Form):
     )
     observacoes = forms.CharField(label='Observações gerais', required=False, widget=forms.Textarea)
 
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.user = user
+        # O vistoriador é o próprio motorista: não escolhe ninguém.
+        if user is not None and not user.is_admin_geral:
+            del self.fields['motorista']
+
     def clean(self):
         data = super().clean()
+        if 'motorista' not in self.fields and self.user is not None:
+            data['motorista'] = motorista_do_usuario(self.user)
         veiculo, tipo, km = data.get('veiculo'), data.get('tipo'), data.get('km')
         if veiculo and veiculo.categoria == CATEGORIA_CAMINHONETE and not data.get('com_carga'):
             self.add_error('com_carga', 'Informe se a caminhonete leva carga.')
@@ -82,6 +97,8 @@ class InspecaoForm(forms.Form):
         if tipo == TIPO_CHEGADA:
             if not uso:
                 raise forms.ValidationError(f'{veiculo.placa} não tem saída em aberto para registrar a chegada.')
+            if self.user is not None and not self.user.is_admin_geral and uso.motorista_id != data['motorista'].pk:
+                raise forms.ValidationError(f'{veiculo.placa} está em uso por outro condutor. Só quem registrou a saída pode registrar a chegada.')
             if km < uso.km_saida:
                 self.add_error('km', f'O km de chegada não pode ser menor que o de saída ({uso.km_saida}).')
         elif km < veiculo.km_atual:

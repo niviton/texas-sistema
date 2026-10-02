@@ -1,0 +1,6 @@
+<nav class="cfg-tabs" style="display:flex; gap:8px; margin-bottom:26px; flex-wrap:wrap;">
+  {% for key, label, url_name in config_tabs %}
+    <a href="{% url url_name %}" style="padding:9px 18px; border-radius:100px; border:1.5px solid {% if active_tab == key %}#0d2440{% else %}#dfe3e8{% endif %}; text-decoration:none; font-family:'Manrope',sans-serif; font-weight:700; font-size:13.5px; white-space:nowrap;
+      background:{% if active_tab == key %}#0d2440{% else %}#fff{% endif %}; color:{% if active_tab == key %}#fff{% else %}#556072{% endif %};">{{ label }}</a>
+  {% endfor %}
+</nav>

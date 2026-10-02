@@ -70,6 +70,10 @@ class User(AbstractUser):
         return (parts[0][0] + parts[-1][0]).upper()
 
     @property
+    def is_admin_geral(self):
+        return self.role == self.ROLE_ADMIN
+
+    @property
     def pode_veiculos(self):
         """Acesso ao módulo de veículos: administradores e vistoriadores."""
         return self.role in (self.ROLE_ADMIN, self.ROLE_VISTORIADOR)
