@@ -1,0 +1,66 @@
+{% extends "checklists/_base.html" %}
+{% block v_style %}
+  .det-fotos { display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:10px; }
+  .det-fotos img { width:100%; aspect-ratio:1; object-fit:cover; border-radius:10px; border:1px solid #e6e9ec; display:block; }
+  .det-fotos span { display:block; font-size:11.5px; font-weight:700; color:#334051; margin-top:4px; text-align:center; }
+  .kv td { padding:4px 0; vertical-align:top; } .kv td:first-child { color:#8b95a1; padding-right:14px; white-space:nowrap; }
+  @media (max-width: 860px) { .det-fotos { grid-template-columns:repeat(2, minmax(0, 1fr)); } }
+{% endblock %}
+{% block veiculos_content %}
+<div style="display:flex; gap:24px; flex-wrap:wrap; align-items:flex-start;">
+  <div class="v-card" style="flex:1; min-width:280px; max-width:420px;">
+    <div style="display:flex; justify-content:space-between; gap:10px; align-items:flex-start;">
+      <div>
+        <div style="font-family:'Sora',sans-serif; font-size:20px; font-weight:800; color:#0d1b2e;">{{ execucao.ativo.nome }}</div>
+        <div style="font-size:13px; color:#6b7480;">{{ execucao.ativo.tipo.nome }} · {{ execucao.ativo.identificacao }}</div>
+      </div>
+      {% if execucao.tem_problema %}<span class="v-badge b-nok">Não conforme</span>{% else %}<span class="v-badge b-ok">Conforme</span>{% endif %}
+    </div>
+    <div style="height:1px; background:#eef0f2; margin:16px 0;"></div>
+    <table class="kv" style="font-size:13.5px; width:100%;">
+      <tr><td>Checklist</td><td><b>{{ execucao.revisao.modelo.codigo }}</b> rev. {{ execucao.revisao.rotulo }}<br><span style="color:#6b7480;">{{ execucao.revisao.modelo.titulo }}</span></td></tr>
+      <tr><td>Data</td><td>{{ execucao.created_at|date:"d/m/Y H:i" }}</td></tr>
+      <tr><td>Técnico</td><td>{{ execucao.executor_nome }}</td></tr>
+      {% if execucao.medidor_label %}<tr><td>{{ execucao.ativo.tipo.get_medidor_display }}</td><td>{{ execucao.medidor_label }}</td></tr>{% endif %}
+    </table>
+    {% if execucao.observacoes %}<div style="margin-top:14px; padding:12px; background:#f7f8fa; border-radius:9px; font-size:13px; white-space:pre-wrap;">{{ execucao.observacoes }}</div>{% endif %}
+    <div style="height:1px; background:#eef0f2; margin:16px 0;"></div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+      {% if execucao.email_enviado %}<span class="v-badge b-ok">E-mail enviado</span>{% else %}<span class="v-badge b-mute">E-mail não enviado</span>{% endif %}
+      <a class="v-btn-sm blue" href="{% url 'checklists:execucao_pdf' execucao.pk %}" target="_blank">Ver PDF</a>
+      <a class="v-btn-sm" href="{% url 'checklists:execucao_pdf' execucao.pk %}?download=1">Baixar PDF</a>
+      <form method="post" action="{% url 'checklists:execucao_reenviar' execucao.pk %}">{% csrf_token %}<button class="v-btn-sm blue" type="submit">Reenviar aos supervisores</button></form>
+    </div>
+  </div>
+
+  <div style="flex:1.5; min-width:320px; display:flex; flex-direction:column; gap:24px;">
+    <div class="v-card">
+      <h3 class="v-h3">Verificação</h3>
+      {% for titulo, respostas in secoes %}
+        <div style="font-size:13.5px; font-weight:800; color:#365f91; margin:16px 0 2px; padding-bottom:6px; border-bottom:2px solid #ffc000;">{{ titulo }}</div>
+        {% for r in respostas %}
+          <div style="display:flex; justify-content:space-between; gap:10px; padding:8px 0; border-bottom:1px solid #f0f2f4; font-size:13.5px;">
+            <div>{{ r.item.texto }}{% if r.observacao %}<div style="font-size:12px; color:#c0392b; margin-top:2px;">{{ r.observacao }}</div>{% endif %}</div>
+            <span class="v-badge {% if r.negativa %}b-nok{% elif r.valor == 'na' %}b-mute{% else %}b-ok{% endif %}">{{ r.rotulo }}</span>
+          </div>
+        {% endfor %}
+      {% endfor %}
+    </div>
+    {% if fotos %}
+    <div class="v-card">
+      <h3 class="v-h3">Fotos ({{ fotos|length }})</h3>
+      <div class="det-fotos">
+        {% for f in fotos %}<a href="{{ f.imagem.url }}" target="_blank" style="text-decoration:none;"><img src="{{ f.imagem.url }}" alt="{{ f.titulo }}" loading="lazy"><span>{{ f.titulo }}</span></a>{% endfor %}
+      </div>
+    </div>
+    {% endif %}
+    {% if execucao.assinatura %}
+    <div class="v-card">
+      <h3 class="v-h3">Assinatura do técnico</h3>
+      <div style="border-bottom:1.5px solid #12181f; max-width:360px; padding:4px 0;"><img src="{{ execucao.assinatura.url }}" alt="Assinatura" style="max-width:100%; height:110px; object-fit:contain; display:block;"></div>
+      <div style="font-size:13px; font-weight:700; margin-top:6px;">{{ execucao.executor_nome }}</div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

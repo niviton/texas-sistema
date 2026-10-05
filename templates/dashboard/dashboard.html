@@ -30,6 +30,26 @@
   <h1 style="font-family:'Sora',sans-serif; font-size:26px; font-weight:800; margin:0 0 4px; color:#0d1b2e;">Bem-vindo(a), {{ request.user.first_name_display }}</h1>
   <p style="font-size:14.5px; color:#6b7480; margin:0 0 24px;">{{ today_label }}</p>
 
+  {% if checklists %}
+    <div class="home-frota">
+      <a class="home-cta" href="{% url 'checklists:executar' %}">
+        <div><b>Fazer um checklist</b><span>Pré-uso e inspeção de equipamentos, no padrão dos formulários TCB-OTB.</span></div>
+        <div class="go">Novo checklist</div>
+      </a>
+      <div class="home-box">
+        <h3>{% if is_admin %}Últimos checklists de equipamentos{% else %}Meus últimos checklists{% endif %}</h3>
+        {% for e in checklists.ultimas %}
+          <div class="home-row">
+            <div><b>{{ e.ativo.nome }}</b> {{ e.revisao.modelo.codigo }}<small>{{ e.created_at|date:"d/m/Y H:i" }}{% if is_admin %}, {{ e.executor_nome }}{% endif %}{% if e.tem_problema %}, com não conformidade{% endif %}</small></div>
+            <a class="home-link" href="{% url 'checklists:execucao' e.pk %}">Abrir</a>
+          </div>
+        {% empty %}
+          <p class="home-empty">Nenhum checklist feito ainda.</p>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
   {% if frota %}
     <div class="home-frota">
       <a class="home-cta" href="{% url 'veiculos:inspecao_nova' %}">
@@ -91,7 +111,7 @@
       <div style="font-family:'Sora',sans-serif; font-size:16px; font-weight:700; color:#0d1b2e; margin-bottom:6px;">Fundação do Polaris pronta</div>
       <div style="font-size:13.5px; color:#6b7480; line-height:1.6;">Autenticação, cadastro com aprovação, verificação de certificados e emissão de certificados já estão no ar.</div>
     </div>
-  {% elif not frota %}
+  {% elif not frota and not checklists %}
     <div style="background:#fff8ea; border:1px solid #f6dfa8; border-radius:14px; padding:24px 28px; max-width:520px;">
       <div style="font-family:'Sora',sans-serif; font-size:16px; font-weight:700; color:#7a5410; margin-bottom:6px;">Aguardando atribuições</div>
       <div style="font-size:13.5px; color:#8a6a2a; line-height:1.6;">Um administrador ainda não liberou suas permissões de acesso. Assim que isso acontecer, os módulos disponíveis aparecerão aqui.</div>

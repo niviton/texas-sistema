@@ -71,6 +71,7 @@ INSTALLED_APPS = [
     'certificates',
     'dashboard',
     'veiculos',
+    'checklists',
 ]
 
 AUTH_USER_MODEL = 'accounts.User'

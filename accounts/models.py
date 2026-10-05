@@ -34,10 +34,12 @@ class User(AbstractUser):
     ROLE_ADMIN = 'admin'
     ROLE_PROFESSOR = 'professor'
     ROLE_VISTORIADOR = 'vistoriador'
+    ROLE_TECNICO = 'tecnico'
     ROLE_CHOICES = [
         (ROLE_ADMIN, 'Administrador'),
         (ROLE_PROFESSOR, 'Professor'),
         (ROLE_VISTORIADOR, 'Vistoriador (mobilização)'),
+        (ROLE_TECNICO, 'Técnico de campo (checklists)'),
     ]
 
     username = None
@@ -77,6 +79,11 @@ class User(AbstractUser):
     def pode_veiculos(self):
         """Acesso ao módulo de veículos: administradores e vistoriadores."""
         return self.role in (self.ROLE_ADMIN, self.ROLE_VISTORIADOR)
+
+    @property
+    def pode_checklists(self):
+        """Acesso ao módulo de checklists de equipamentos: administradores e técnicos de campo."""
+        return self.role in (self.ROLE_ADMIN, self.ROLE_TECNICO)
 
     @property
     def role_label(self):

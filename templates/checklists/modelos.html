@@ -1,0 +1,43 @@
+{% extends "checklists/_base.html" %}
+{% block veiculos_content %}
+<div style="display:flex; gap:28px; flex-wrap:wrap; align-items:flex-start;">
+  <div style="flex:1; min-width:280px; max-width:400px; display:flex; flex-direction:column; gap:20px;">
+    <div class="v-card">
+      <h3 class="v-h3">Importar formulário TCB</h3>
+      <p class="v-help" style="margin:-8px 0 14px;">Envie o formulário em Word. O sistema lê do cabeçalho o código, a revisão, quem preparou e revisou, e cria um item para cada linha das tabelas "Item | OK | NOK".</p>
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}<input type="hidden" name="acao" value="importar">
+        {% include "veiculos/_form_fields.html" with form=importar_form %}
+        <button type="submit" class="v-btn" style="width:100%;">Importar formulário</button>
+      </form>
+    </div>
+    <details class="v-card">
+      <summary style="cursor:pointer; font-family:'Sora',sans-serif; font-weight:700; color:#0d1b2e;">Criar um modelo do zero</summary>
+      <form method="post" style="margin-top:14px;">
+        {% csrf_token %}<input type="hidden" name="acao" value="novo">
+        {% include "veiculos/_form_fields.html" with form=novo_form %}
+        <button type="submit" class="v-btn" style="width:100%;">Criar e adicionar itens</button>
+      </form>
+    </details>
+  </div>
+
+  <div style="flex:1.4; min-width:320px;">
+    {% for m in modelos %}
+      {% with rev=m.revisao_vigente %}
+      <a href="{% url 'checklists:modelo' m.pk %}" class="v-card" style="display:block; margin-bottom:12px; padding:16px 18px; text-decoration:none; color:#12181f;{% if not m.is_active %} opacity:.55;{% endif %}">
+        <div style="display:flex; justify-content:space-between; gap:10px; align-items:flex-start; flex-wrap:wrap;">
+          <div style="min-width:0;">
+            <div style="font-size:12.5px; font-weight:800; color:#365f91;">{{ m.codigo }}{% if rev %} · rev. {{ rev.rotulo }}{% endif %}</div>
+            <div style="font-weight:800; font-size:14.5px; margin-top:2px;">{{ m.titulo }}</div>
+            <div style="font-size:12.5px; color:#6b7480; margin-top:2px;">{% for t in m.tipos_ativo.all %}{{ t.nome }}{% if not forloop.last %}, {% endif %}{% empty %}Sem tipo de ativo: ninguém consegue executar{% endfor %}</div>
+          </div>
+          {% if not m.is_active %}<span class="v-badge b-mute">Indisponível</span>{% elif rev %}<span class="v-badge b-ok">{{ rev.itens.count }} itens</span>{% endif %}
+        </div>
+      </a>
+      {% endwith %}
+    {% empty %}
+      <div class="v-card"><p style="margin:0; font-size:14px; color:#556072;">Nenhum modelo de checklist ainda. Importe o primeiro formulário TCB ao lado.</p></div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

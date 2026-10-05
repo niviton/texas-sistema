@@ -1,0 +1,9 @@
+{% extends "veiculos/_cadastro.html" %}
+{% block nome_singular %}tipo de ativo{% endblock %}
+{% block form_intro %}<p class="v-help" style="margin:-8px 0 14px;">Uma família de equipamentos que segue os mesmos checklists, ex.: Gerador, Chave elétrica de torque, Transpaleteira.</p>{% endblock %}
+{% block archive_url %}{% url 'checklists:tipo_arquivar' obj.pk %}{% endblock %}
+{% block item %}
+  <div style="font-weight:700; font-size:14px; color:#0d1b2e;">{{ obj.nome }}</div>
+  <div style="font-size:12.5px; color:#6b7480;">{{ obj.get_medidor_display }} · {{ obj.ativos.count }} ativo{{ obj.ativos.count|pluralize }} · {{ obj.modelos.count }} checklist{{ obj.modelos.count|pluralize }}</div>
+  {% if obj.descricao %}<div style="font-size:12px; color:#8b95a1;">{{ obj.descricao }}</div>{% endif %}
+{% endblock %}

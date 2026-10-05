@@ -1,0 +1,30 @@
+{% extends "checklists/_base.html" %}
+{% block veiculos_content %}
+<div class="v-card">
+  <form method="get" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:16px;">
+    <input type="search" name="q" value="{{ q }}" placeholder="Buscar por equipamento, série, código ou técnico" aria-label="Buscar" style="flex:1; min-width:220px;">
+    <label style="display:flex; gap:6px; align-items:center; font-size:13px; font-weight:600; color:#334051;"><input type="checkbox" name="problema" value="1" {% if request.GET.problema == '1' %}checked{% endif %}> Só com não conformidade</label>
+    <button class="v-btn" type="submit">Filtrar</button>
+  </form>
+  <div class="v-scroll">
+  <table class="v-table v-stack">
+    <thead><tr><th>Data</th><th>Equipamento</th><th>Checklist</th>{% if is_admin %}<th>Técnico</th>{% endif %}<th>Resultado</th><th>E-mail</th><th></th></tr></thead>
+    <tbody>
+    {% for e in execucoes %}
+      <tr>
+        <td data-label="Data" style="white-space:nowrap;">{{ e.created_at|date:"d/m/Y H:i" }}</td>
+        <td><b>{{ e.ativo.nome }}</b> <span style="color:#8b95a1; font-size:12px;">{{ e.ativo.identificacao }}</span></td>
+        <td data-label="Checklist">{{ e.revisao.modelo.codigo }} <span style="color:#8b95a1; font-size:12px;">rev. {{ e.revisao.rotulo }}</span></td>
+        {% if is_admin %}<td data-label="Técnico">{{ e.executor_nome }}</td>{% endif %}
+        <td data-label="Resultado">{% if e.tem_problema %}<span class="v-badge b-nok">Não conforme</span>{% else %}<span class="v-badge b-ok">Conforme</span>{% endif %}</td>
+        <td data-label="E-mail">{% if e.email_enviado %}<span class="v-badge b-ok">Enviado</span>{% else %}<span class="v-badge b-mute">Não</span>{% endif %}</td>
+        <td class="v-actions" style="text-align:right;"><a class="v-btn-sm blue" href="{% url 'checklists:execucao' e.pk %}">Ver</a></td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="7" style="color:#6b7480;">{% if q %}Nenhum checklist encontrado para essa busca.{% else %}Nenhum checklist feito ainda. Comece em <a href="{% url 'checklists:executar' %}">Executar</a>.{% endif %}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+{% endblock %}

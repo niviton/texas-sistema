@@ -1,0 +1,43 @@
+{% extends "checklists/_base.html" %}
+{% block v_style %}
+  .eq-grupo { margin:0 0 22px; }
+  .eq-grupo h3 { margin:0 0 10px; font-size:13.5px; font-weight:800; color:#365f91; padding-bottom:6px; border-bottom:2px solid #ffc000; }
+  .eq-grupo h3 small { font-weight:600; color:#8b95a1; font-size:12px; margin-left:6px; }
+  .eq-lista { display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:10px; }
+  .eq { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:14px 16px; border:1.5px solid #e6e9ec; border-radius:12px; background:#fff; text-decoration:none; color:#12181f; min-height:64px; }
+  .eq:hover { border-color:#365f91; }
+  .eq:focus-visible { outline:3px solid #ffc000; outline-offset:2px; }
+  .eq b { display:block; font-size:14.5px; }
+  .eq small { display:block; font-size:12px; color:#8b95a1; }
+  .eq .go { flex-shrink:0; font-size:13px; font-weight:800; color:#365f91; }
+  .eq.off { opacity:.55; pointer-events:none; }
+{% endblock %}
+{% block veiculos_content %}
+<form method="get" style="display:flex; gap:10px; margin-bottom:20px; max-width:560px;">
+  <input class="v-input" type="search" name="q" value="{{ q }}" placeholder="Buscar equipamento por nome, série ou patrimônio" aria-label="Buscar equipamento">
+  <button class="v-btn" type="submit">Buscar</button>
+</form>
+
+{% for tipo, ativos in grupos.items %}
+  <div class="eq-grupo">
+    <h3>{{ tipo.nome }}<small>{{ ativos|length }} equipamento{{ ativos|length|pluralize }}</small></h3>
+    <div class="eq-lista">
+      {% for a in ativos %}
+        <a class="eq{% if not a.n_modelos %} off{% endif %}" href="{% url 'checklists:escolher_modelo' a.pk %}">
+          <div>
+            <b>{{ a.nome }}</b>
+            <small>{{ a.identificacao }}{% if a.patrimonio %} · patrimônio {{ a.patrimonio }}{% endif %}{% if a.status != 'disponivel' %} · {{ a.get_status_display }}{% endif %}</small>
+            {% if not a.n_modelos %}<small>Sem checklist cadastrado para este tipo</small>{% endif %}
+          </div>
+          <span class="go">Iniciar</span>
+        </a>
+      {% endfor %}
+    </div>
+  </div>
+{% empty %}
+  <div class="v-card" style="max-width:560px;">
+    <h3 class="v-h3">{% if q %}Nenhum equipamento encontrado{% else %}Nenhum equipamento cadastrado{% endif %}</h3>
+    <p style="margin:0; font-size:14px; color:#556072;">{% if q %}Confira o nome, a série ou o patrimônio digitado.{% elif is_admin %}Cadastre os equipamentos em <a href="{% url 'checklists:ativos' %}">Configurações → Ativos</a>.{% else %}Peça ao administrador para cadastrar os equipamentos.{% endif %}</p>
+  </div>
+{% endfor %}
+{% endblock %}

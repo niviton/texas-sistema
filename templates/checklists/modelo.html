@@ -1,0 +1,107 @@
+{% extends "checklists/_base.html" %}
+{% block v_style %}
+  .it-ed { display:grid; grid-template-columns:minmax(0, 1fr) 190px auto auto; gap:8px; align-items:center; padding:8px 0; border-bottom:1px solid #f0f2f4; }
+  .it-ed .v-input, .it-ed select { padding:9px 10px; font-size:13px; }
+  .it-ed .chk { display:flex; gap:6px; align-items:center; font-size:12.5px; font-weight:600; color:#334051; white-space:nowrap; }
+  .it-ed .row2 { grid-column:1 / -1; display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  .sec-ed { margin:0 0 22px; }
+  .sec-ed .sec-h { display:flex; gap:8px; align-items:center; padding-bottom:6px; border-bottom:2px solid #ffc000; margin-bottom:4px; }
+  .sec-ed .sec-h input { font-weight:800; color:#365f91; border:none; background:transparent; padding:6px 0; font-size:14px; flex:1; min-width:0; }
+  .lock { padding:12px 14px; border-radius:10px; background:#fff8ea; border:1px solid #f3dfb5; font-size:13.5px; color:#6b5216; margin-bottom:16px; }
+  @media (max-width: 860px) { .it-ed { grid-template-columns:minmax(0, 1fr); } }
+{% endblock %}
+{% block veiculos_content %}
+<div style="margin-bottom:16px;"><a href="{% url 'checklists:modelos' %}" class="v-btn-sm v-ico">{% include "veiculos/_icon.html" with i="arrow_left" s=14 w="2" %}Modelos de checklist</a></div>
+
+<div style="display:flex; gap:24px; flex-wrap:wrap; align-items:flex-start;">
+  <div class="v-card" style="flex:1; min-width:280px; max-width:400px;">
+    <h3 class="v-h3">{{ modelo.codigo }} · rev. {{ revisao.rotulo }}</h3>
+    <form method="post">
+      {% csrf_token %}<input type="hidden" name="acao" value="dados">
+      {% include "veiculos/_form_fields.html" with form=form %}
+      <div style="height:1px; background:#eef0f2; margin:6px 0 14px;"></div>
+      <div style="font-size:13px; font-weight:800; color:#365f91; margin-bottom:10px;">Controle da revisão {{ revisao.rotulo }}</div>
+      {% include "veiculos/_form_fields.html" with form=rform %}
+      <button type="submit" class="v-btn" style="width:100%;">Salvar dados</button>
+    </form>
+    <div style="height:1px; background:#eef0f2; margin:18px 0 14px;"></div>
+    <div style="font-size:13px; font-weight:800; color:#365f91; margin-bottom:8px;">Revisões</div>
+    {% for r in revisoes %}
+      <div style="display:flex; justify-content:space-between; font-size:13px; padding:5px 0; border-bottom:1px solid #f0f2f4;">
+        <span>rev. {{ r.rotulo }}{% if r.vigente %} <span class="v-badge b-ok">vigente</span>{% endif %}</span>
+        <span style="color:#8b95a1;">{{ r.n }} execuç{{ r.n|pluralize:"ão,ões" }}{% if r.data %} · {{ r.data|date:"d/m/Y" }}{% endif %}</span>
+      </div>
+    {% endfor %}
+  </div>
+
+  <div class="v-card" style="flex:1.6; min-width:320px;" id="secoes">
+    <h3 class="v-h3">Itens do checklist</h3>
+    {% if bloqueada %}
+      <div class="lock">
+        A revisão {{ revisao.rotulo }} já foi usada em {{ n_execucoes }} execuç{{ n_execucoes|pluralize:"ão,ões" }}, então os itens não podem mais mudar. Para alterar, crie a próxima revisão: as execuções antigas continuam ligadas à revisão {{ revisao.rotulo }}.
+        <form method="post" style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;"
+              data-confirm-title="Criar nova revisão" data-confirm-ok="Criar revisão {{ revisao.numero|add:1|stringformat:'02d' }}"
+              data-confirm="A revisão {{ revisao.numero|add:1|stringformat:'02d' }} será criada com os mesmos itens e passará a ser a vigente. Lembre-se de atualizar a data e quem revisou.">
+          {% csrf_token %}<input type="hidden" name="acao" value="nova_revisao">
+          <input class="v-input" name="notas" placeholder="O que vai mudar (opcional)" style="flex:1; min-width:180px;">
+          <button class="v-btn" type="submit">Criar nova revisão</button>
+        </form>
+      </div>
+    {% endif %}
+
+    {% for secao, itens in secoes %}
+      <div class="sec-ed">
+        <form method="post" class="sec-h">
+          {% csrf_token %}<input type="hidden" name="acao" value="secao"><input type="hidden" name="id" value="{{ secao.pk }}">
+          <input name="titulo" value="{{ secao.titulo }}" aria-label="Título da seção" {% if bloqueada %}disabled{% endif %}>
+          {% if not bloqueada %}
+            <button class="v-btn-sm" type="submit">Salvar</button>
+            <button class="v-btn-sm" type="submit" name="remover" value="1" data-confirm-title="Remover seção" data-confirm-ok="Remover seção" data-confirm-danger data-confirm="A seção {{ secao.titulo }} e os {{ itens|length }} itens dela serão removidos deste modelo.">Remover</button>
+          {% endif %}
+        </form>
+        {% for item in itens %}
+          <form method="post" class="it-ed">
+            {% csrf_token %}<input type="hidden" name="acao" value="item"><input type="hidden" name="id" value="{{ item.pk }}">
+            <input class="v-input" name="texto" value="{{ item.texto }}" aria-label="Texto do item" {% if bloqueada %}disabled{% endif %}>
+            <select name="tipo_resposta" aria-label="Tipo de resposta" {% if bloqueada %}disabled{% endif %}>
+              {% for v, l in tipos_resposta %}<option value="{{ v }}" {% if item.tipo_resposta == v %}selected{% endif %}>{{ l }}</option>{% endfor %}
+            </select>
+            <label class="chk"><input type="checkbox" name="exige_foto" {% if item.exige_foto %}checked{% endif %} {% if bloqueada %}disabled{% endif %}>Exige foto</label>
+            {% if not bloqueada %}
+              <div style="display:flex; gap:6px;">
+                <button class="v-btn-sm blue" type="submit">Salvar</button>
+                <button class="v-btn-sm" type="submit" name="remover" value="1" data-confirm-title="Remover item" data-confirm-ok="Remover item" data-confirm-danger data-confirm="O item {{ item.texto }} será removido deste modelo.">Remover</button>
+              </div>
+            {% endif %}
+            <div class="row2">
+              <label class="chk">Observação:
+                <select name="observacao" {% if bloqueada %}disabled{% endif %}>
+                  {% for v, l in obs_choices %}<option value="{{ v }}" {% if item.observacao == v %}selected{% endif %}>{{ l }}</option>{% endfor %}
+                </select>
+              </label>
+            </div>
+          </form>
+        {% endfor %}
+        {% if not bloqueada %}
+          <form method="post" class="it-ed" style="border-bottom:none;">
+            {% csrf_token %}<input type="hidden" name="acao" value="novo_item"><input type="hidden" name="secao" value="{{ secao.pk }}">
+            <input class="v-input" name="texto" placeholder="Novo item, ex.: Cabo de alimentação sem danos?" aria-label="Novo item" required>
+            <select name="tipo_resposta" aria-label="Tipo de resposta">{% for v, l in tipos_resposta %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select>
+            <label class="chk"><input type="checkbox" name="exige_foto">Exige foto</label>
+            <input type="hidden" name="observacao" value="se_negativo">
+            <button class="v-btn-sm green" type="submit">Adicionar</button>
+          </form>
+        {% endif %}
+      </div>
+    {% endfor %}
+
+    {% if not bloqueada %}
+      <form method="post" style="display:flex; gap:8px; flex-wrap:wrap; margin-top:6px;">
+        {% csrf_token %}<input type="hidden" name="acao" value="nova_secao">
+        <input class="v-input" name="titulo" placeholder="Nova seção, ex.: Verificação elétrica" aria-label="Nova seção" required style="flex:1; min-width:200px;">
+        <button class="v-btn-sm" type="submit">Adicionar seção</button>
+      </form>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

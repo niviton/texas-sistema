@@ -11,6 +11,7 @@ urlpatterns = [
     path('dashboard/certificados/', include('certificates.urls_admin')),
     path('dashboard/meus-certificados/', include('certificates.urls_professor')),
     path('dashboard/veiculos/', include('veiculos.urls')),
+    path('dashboard/checklists/', include('checklists.urls')),
     path('verificacao-certificados/', include('certificates.urls')),
 ]
 

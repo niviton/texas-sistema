@@ -42,6 +42,15 @@ def _resumo_veiculos(user):
     }
 
 
+def _resumo_checklists(user):
+    from checklists.models import Execucao
+
+    qs = Execucao.objects.select_related('revisao__modelo', 'ativo')
+    if not user.is_admin_geral:
+        qs = qs.filter(executor=user)
+    return {'ultimas': list(qs[:5])}
+
+
 @login_required
 def home(request):
     today = date.today()
@@ -52,5 +61,6 @@ def home(request):
         'today_label': today_label,
         'active_nav': 'inicio',
         'frota': _resumo_veiculos(request.user) if request.user.pode_veiculos else None,
+        'checklists': _resumo_checklists(request.user) if request.user.pode_checklists else None,
     }
     return render(request, 'dashboard/dashboard.html', context)

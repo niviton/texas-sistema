@@ -66,6 +66,9 @@
       {% if request.user.role == 'professor' %}
       <a href="{% url 'cert_prof:folders' %}" class="nav-link {% if active_nav == 'certificados_prof' %}active{% endif %}"><div class="dot"></div><span>Certificados</span></a>
       {% endif %}
+      {% if request.user.pode_checklists %}
+      <a href="{% url 'checklists:executar' %}" class="nav-link {% if active_nav == 'checklists' %}active{% endif %}"><div class="dot"></div><span>Checklists</span></a>
+      {% endif %}
       {% if request.user.pode_veiculos %}
       <a href="{% url 'veiculos:painel' %}" class="nav-link {% if active_nav == 'veiculos' %}active{% endif %}"><div class="dot"></div><span>Veículos</span></a>
       {% endif %}
