@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Certificado do Polaris · Texas Controls{% endblock %}
+{% block extra_style %}
+  .cert { max-width:640px; margin:0 auto; padding:28px 16px 48px; color:#12181f; }
+  .cert h1 { font-family:'Sora',sans-serif; font-size:24px; margin:16px 0 6px; color:#0d1b2e; }
+  .cert h2 { font-family:'Sora',sans-serif; font-size:17px; margin:26px 0 8px; color:#365f91; padding-bottom:6px; border-bottom:2px solid #ffc000; }
+  .cert p, .cert li { font-size:15px; line-height:1.6; }
+  .cert ol { padding-left:22px; }
+  .cert .baixar { display:block; text-align:center; margin:18px 0 6px; padding:15px; border-radius:12px; background:#0d2440; color:#fff; font-weight:800; text-decoration:none; font-size:15.5px; }
+  .cert .nota { font-size:13.5px; color:#6b7480; }
+  .cert .topo { background:#0d2440; border-radius:14px; padding:16px; display:flex; justify-content:center; }
+{% endblock %}
+{% block content %}
+<div class="cert">
+  <div class="topo"><img src="{% static 'assets/logo-texas-branco.png' %}" alt="Texas Controls" style="height:52px;"></div>
+  <h1>Certificado do Polaris para o celular</h1>
+  <p>O celular só libera o GPS (para o carimbo de local nas fotos) em sites seguros. Instale este certificado uma vez em cada celular: o aviso de "site não seguro" some e o Polaris passa a pedir a localização.</p>
+  {% if tem_certificado %}
+    <a class="baixar" href="?baixar=1">Baixar certificado do Polaris</a>
+    <p class="nota">Arquivo <b>polaris-ca.crt</b>. Ele vale só para o Polaris da rede da oficina.</p>
+  {% else %}
+    <p class="nota">O certificado ainda não foi gerado neste computador. O administrador deve rodar <code>python manage.py certificado_local</code>.</p>
+  {% endif %}
+
+  <h2>Android</h2>
+  <ol>
+    <li>Toque em <b>Baixar certificado do Polaris</b>.</li>
+    <li>Abra <b>Configurações → Segurança</b> (ou "Segurança e privacidade") <b>→ Mais configurações de segurança → Criptografia e credenciais → Instalar um certificado → Certificado de CA</b>.</li>
+    <li>Toque em <b>Instalar mesmo assim</b>, confirme com a senha do celular e escolha o arquivo <b>polaris-ca.crt</b> em Downloads.</li>
+    <li>Feche e abra o Chrome de novo e entre no Polaris pelo endereço com <b>https://</b>.</li>
+  </ol>
+
+  <h2>iPhone</h2>
+  <ol>
+    <li>Abra esta página no <b>Safari</b> e toque em <b>Baixar certificado do Polaris</b>; toque em <b>Permitir</b>.</li>
+    <li>Abra <b>Ajustes → Perfil baixado → Instalar</b> e confirme.</li>
+    <li>Abra <b>Ajustes → Geral → Sobre → Ajustes de Confiança de Certificados</b> e ative <b>Polaris - rede local</b>.</li>
+    <li>Entre no Polaris pelo endereço com <b>https://</b>.</li>
+  </ol>
+
+  <h2>Sem instalar</h2>
+  <p>Também dá para entrar sem instalar: no aviso de site não seguro, toque em <b>Avançado → Continuar para o site</b>. Em alguns celulares, porém, o GPS continua bloqueado assim; por isso a instalação é o caminho recomendado.</p>
+</div>
+{% endblock %}

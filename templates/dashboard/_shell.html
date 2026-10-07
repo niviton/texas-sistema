@@ -164,11 +164,11 @@
       </form>
     </dialog>
     <script>
-    /* Localização para o carimbo das fotos: formulários com data-geo pedem o GPS do celular e
-       enviam geo_lat/geo_lon. O navegador só libera o GPS em sites com HTTPS. */
+    /* Localização para o carimbo das fotos. Ao abrir qualquer tela o Polaris pede o GPS (o celular
+       lembra a permissão depois). Formulários com data-geo enviam geo_lat/geo_lon junto das fotos.
+       O navegador só libera o GPS em HTTPS: sem ele, o aviso aponta para a página do certificado. */
     (function () {
       const forms = document.querySelectorAll('form[data-geo]');
-      if (!forms.length) return;
       const avisos = [];
       forms.forEach((f) => {
         ['geo_lat', 'geo_lon', 'geo_acc'].forEach((n) => { const i = document.createElement('input'); i.type = 'hidden'; i.name = n; f.appendChild(i); });
@@ -178,30 +178,29 @@
         f.prepend(p);
         avisos.push(p);
       });
-      const dizer = (t, cor) => avisos.forEach((p) => { p.textContent = t; p.style.color = cor || '#6b7480'; });
+      const dizer = (html, cor) => avisos.forEach((p) => { p.innerHTML = html; p.style.color = cor || '#6b7480'; });
+      const preencher = (lat, lon, acc) => forms.forEach((f) => { f.elements.geo_lat.value = lat; f.elements.geo_lon.value = lon; f.elements.geo_acc.value = acc; });
+      if (!window.isSecureContext || !navigator.geolocation) {
+        dizer('Fotos com data e hora. Para o local entrar no carimbo, abra o Polaris pelo endereço <b>https://</b> (<a href="{% url 'certificado_celular' %}">como instalar no celular</a>).', '#a35f00');
+        return;
+      }
       let pedindo = false, ok = false;
       function pedir() {
         if (ok || pedindo) return;
-        if (!window.isSecureContext || !navigator.geolocation) {
-          dizer('Fotos com data e hora. O local só entra no carimbo quando o Polaris estiver em HTTPS.');
-          return;
-        }
         pedindo = true;
         dizer('Buscando sua localização para o carimbo das fotos…');
         navigator.geolocation.getCurrentPosition((pos) => {
           pedindo = false; ok = true;
-          forms.forEach((f) => {
-            f.elements.geo_lat.value = pos.coords.latitude;
-            f.elements.geo_lon.value = pos.coords.longitude;
-            f.elements.geo_acc.value = Math.round(pos.coords.accuracy);
-          });
+          preencher(pos.coords.latitude, pos.coords.longitude, Math.round(pos.coords.accuracy));
           dizer('Local registrado: as fotos levam data, hora e endereço.', '#1e7a4a');
-        }, () => {
+        }, (err) => {
           pedindo = false;
-          dizer('Sem permissão de localização: as fotos levam só data e hora. Toque em uma foto para tentar de novo.', '#a35f00');
+          dizer(err.code === 1
+            ? 'Localização bloqueada: as fotos levam só data e hora. Libere em <b>cadeado da barra de endereço → Permissões → Local</b>.'
+            : 'Não foi possível obter o GPS agora. Toque em uma foto para tentar de novo.', '#a35f00');
         }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 120000 });
       }
-      pedir();
+      pedir();  // pede a permissão já ao entrar no site
       document.addEventListener('change', (e) => { if (e.target.type === 'file') pedir(); }, true);
     })();
 

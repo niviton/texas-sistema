@@ -23,3 +23,6 @@ TCB-OTB-*
 
 # Formulários internos enviados para importação
 tcbs/
+
+# Certificados HTTPS da rede local (contém chaves privadas)
+ssl_local/

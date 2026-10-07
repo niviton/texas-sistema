@@ -23,6 +23,17 @@ python manage.py migrate
 python manage.py runserver 0.0.0.0:8000
 ```
 
+### HTTPS na rede da oficina (necessário para o GPS do carimbo das fotos)
+
+O celular só libera a localização em sites HTTPS. Para a rede local:
+
+```
+python manage.py certificado_local          # uma vez; gera ssl_local/ (não vai para o Git)
+python manage.py runserver_https            # https://<ip-do-computador>:8443
+```
+
+Em cada celular, instale o certificado pela página `https://<ip>:8443/certificado-celular/` (passo a passo para Android e iPhone). Se o IP do computador mudar, rode `certificado_local` de novo com o IP novo: a autoridade é reaproveitada e os celulares não precisam reinstalar. Em produção, use um domínio com certificado público (Let's Encrypt).
+
 Para importar formulários TCB-OTB em Word: `python manage.py importar_tcb tcbs/*.docx`
 (ou pela tela **Configurações → Modelos de checklist**).
 

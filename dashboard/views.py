@@ -49,6 +49,21 @@ def _resumo_checklists(user):
     return {'em_uso': list(em_uso), 'ultimos': ultimos[:5], 'n_avisos': n_avisos}
 
 
+def certificado_view(request):
+    """Página pública com o certificado da rede local para instalar no celular (tira o aviso de site inseguro)."""
+    from django.conf import settings
+    from django.http import Http404, HttpResponse
+
+    ca = settings.BASE_DIR / 'ssl_local' / 'polaris-ca.crt'
+    if request.GET.get('baixar'):
+        if not ca.exists():
+            raise Http404
+        resp = HttpResponse(ca.read_bytes(), content_type='application/x-x509-ca-cert')
+        resp['Content-Disposition'] = 'attachment; filename="polaris-ca.crt"'
+        return resp
+    return render(request, 'dashboard/certificado.html', {'tem_certificado': ca.exists()})
+
+
 @login_required
 def home(request):
     today = date.today()

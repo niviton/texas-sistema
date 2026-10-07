@@ -9,3 +9,6 @@ python-dotenv>=1.0
 msal>=1.28
 requests>=2.31
 reportlab>=4.2
+# HTTPS na rede local (python manage.py certificado_local + runserver_https)
+Werkzeug>=3.0
+cryptography>=42

@@ -2,6 +2,13 @@
 
 Escrito em linguagem simples, do mais recente para o mais antigo.
 
+## 07/10/2026 · HTTPS na rede local e GPS ao entrar
+
+- Novos comandos `certificado_local` (gera certificado para o IP da oficina) e `runserver_https` (Polaris em `https://<ip>:8443`, sem depurador interativo).
+- Página pública `/certificado-celular/` com o certificado e o passo a passo para Android e iPhone.
+- O Polaris pede a permissão de localização ao abrir qualquer tela; os formulários de foto avisam se o local foi registrado.
+- Carimbo de comprovação nas fotos (logo, data e hora do servidor, endereço) e escolha "Tirar foto agora" ou "Galeria" no celular.
+
 ## 07/10/2026 · Termos de entrada e saída
 
 - Novo módulo **Termos** (Administrador e Logística): termos de entrada (TCB-LO-01) e saída (TCB-LO-02) de material de cliente, com equipamentos, fotos e assinaturas da Texas e do cliente.
