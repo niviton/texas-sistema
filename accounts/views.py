@@ -1,8 +1,11 @@
+from django.contrib import messages
 from django.contrib.auth import login as auth_login
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LogoutView
 from django.shortcuts import redirect, render
 
 from .forms import EmailAuthenticationForm, RegisterForm
+from .models import FONTES, TEMA_CHOICES
 
 
 def auth_view(request):
@@ -43,3 +46,21 @@ def auth_view(request):
 
 class PolarisLogoutView(LogoutView):
     next_page = 'accounts:auth'
+
+
+@login_required
+def aparencia_view(request):
+    """Cada pessoa escolhe a fonte e o tema (claro, escuro ou automático) do próprio Polaris."""
+    if request.method == 'POST':
+        tema = request.POST.get('tema')
+        fonte = request.POST.get('fonte')
+        if tema in dict(TEMA_CHOICES) and fonte in FONTES:
+            request.user.tema = tema
+            request.user.fonte = fonte
+            request.user.save(update_fields=['tema', 'fonte'])
+            messages.success(request, 'Aparência salva.')
+        return redirect('accounts:aparencia')
+    fontes = [{'chave': k, 'rotulo': v[0], 'css': v[1], 'google': v[2]} for k, v in FONTES.items()]
+    return render(request, 'accounts/aparencia.html', {
+        'active_nav': 'aparencia', 'fontes': fontes, 'temas': TEMA_CHOICES,
+    })

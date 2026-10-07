@@ -1,0 +1,87 @@
+{% extends "dashboard/_shell.html" %}
+{% block title %}Aparência · Polaris{% endblock %}
+{% block extra_style %}
+  .ap { max-width:760px; }
+  .ap h2 { font-family:'Sora',sans-serif; font-size:16px; font-weight:700; color:#0d1b2e; margin:0 0 4px; }
+  .ap .sub { font-size:13.5px; color:#6b7480; margin:0 0 14px; }
+  .ap fieldset { border:none; padding:0; margin:0 0 30px; }
+  .opcoes { display:grid; gap:10px; }
+  .opcoes.temas { grid-template-columns:repeat(3, minmax(0, 1fr)); }
+  .opcoes.fontes { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+  .op { position:relative; display:block; cursor:pointer; }
+  .op input { position:absolute; opacity:0; pointer-events:none; }
+  .op .card { display:block; height:100%; padding:14px; border:2px solid #e6e9ec; border-radius:12px; background:#fff; }
+  .op input:checked + .card { border-color:#0d2440; box-shadow:0 0 0 3px rgba(255,192,0,.55); }
+  .op input:focus-visible + .card { outline:3px solid #ffc000; outline-offset:2px; }
+  .op .nome { display:block; font-size:13.5px; font-weight:700; color:#12181f; margin-top:10px; }
+  .op .amostra { display:block; font-size:22px; font-weight:700; color:#0d1b2e; line-height:1.2; }
+  .op .amostra small { display:block; font-size:14px; font-weight:400; color:#556072; margin-top:4px; }
+  .mini { display:flex; height:74px; border-radius:8px; overflow:hidden; border:1px solid #dfe3e8; }
+  .mini .lado { width:26%; background:#0d2440; }
+  .mini .corpo { flex:1; padding:9px; display:flex; flex-direction:column; gap:6px; }
+  .mini .corpo i { display:block; height:7px; border-radius:4px; }
+  .mini.claro .corpo { background:#f4f6f8; } .mini.claro .corpo i { background:#d5dbe2; } .mini.claro .corpo i:first-child { background:#0d2440; width:60%; }
+  .mini.escuro .corpo { background:#0b0907; } .mini.escuro .corpo i { background:#2a2f36; } .mini.escuro .corpo i:first-child { background:#e8edf4; width:60%; }
+  .mini.auto .corpo { background:linear-gradient(90deg, #f4f6f8 50%, #0b0907 50%); } .mini.auto .corpo i { background:linear-gradient(90deg, #d5dbe2 50%, #2a2f36 50%); }
+  .salvar { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+  @media (max-width: 640px) {
+    .opcoes.temas { grid-template-columns:minmax(0, 1fr); }
+    .opcoes.temas .card { display:flex; gap:14px; align-items:center; }
+    .opcoes.temas .mini { width:110px; flex-shrink:0; height:60px; }
+    .opcoes.temas .nome { margin-top:0; }
+    .opcoes.fontes { grid-template-columns:minmax(0, 1fr); }
+  }
+{% endblock %}
+{% block shell_content %}
+{% for f in fontes %}{% if f.google %}<link href="https://fonts.googleapis.com/css2?family={{ f.google }}&display=swap" rel="stylesheet">{% endif %}{% endfor %}
+<div class="ap">
+  <h1 style="font-family:'Sora',sans-serif; font-size:24px; font-weight:800; margin:0 0 4px; color:#0d1b2e;">Aparência</h1>
+  <p style="font-size:14px; color:#6b7480; margin:0 0 26px;">Escolha como o Polaris aparece para você. Vale só para a sua conta, em qualquer aparelho em que você entrar.</p>
+
+  <form method="post" id="ap-form">
+    {% csrf_token %}
+    <fieldset>
+      <legend><h2>Tema</h2></legend>
+      <p class="sub">O escuro cansa menos a vista à noite e economiza bateria em muitos celulares.</p>
+      <div class="opcoes temas">
+        {% for valor, rotulo in temas %}
+          <label class="op">
+            <input type="radio" name="tema" value="{{ valor }}" {% if request.user.tema == valor %}checked{% endif %}>
+            <span class="card">
+              <span class="mini {{ valor }}"><span class="lado"></span><span class="corpo"><i></i><i></i><i></i></span></span>
+              <span class="nome">{{ rotulo }}</span>
+            </span>
+          </label>
+        {% endfor %}
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend><h2>Fonte</h2></legend>
+      <p class="sub">A letra usada em todas as telas. "Leitura fácil" foi desenhada para quem enxerga com dificuldade.</p>
+      <div class="opcoes fontes">
+        {% for f in fontes %}
+          <label class="op">
+            <input type="radio" name="fonte" value="{{ f.chave }}" {% if request.user.fonte == f.chave %}checked{% endif %}>
+            <span class="card">
+              <span class="amostra" style="font-family:{{ f.css|safe }} !important;">Vistoria RQI6I62<small style="font-family:{{ f.css|safe }} !important;">Troca de óleo: faltam 500 km</small></span>
+              <span class="nome">{{ f.rotulo }}</span>
+            </span>
+          </label>
+        {% endfor %}
+      </div>
+    </fieldset>
+
+    <div class="salvar">
+      <button type="submit" class="v-btn" style="padding:12px 22px; border:none; border-radius:10px; background:#0d2440; color:#fff; font-family:'Sora',sans-serif; font-weight:700; font-size:14px; cursor:pointer;">Salvar aparência</button>
+      <span style="font-size:13px; color:#6b7480;">O tema já aparece na tela ao escolher; salve para manter.</span>
+    </div>
+  </form>
+</div>
+<script>
+  /* Mostra o tema escolhido na hora, antes de salvar. */
+  document.querySelectorAll('input[name=tema]').forEach((r) => r.addEventListener('change', () => {
+    document.documentElement.dataset.tema = r.value;
+  }));
+</script>
+{% endblock %}

@@ -2,6 +2,10 @@
 
 Escrito em linguagem simples, do mais recente para o mais antigo.
 
+## 07/10/2026 · Aparência por pessoa
+
+- Novo item **Aparência** no menu (para todos): tema Claro, Escuro ou Automático e escolha da fonte (Manrope, Inter, Roboto, Open Sans, Atkinson Hyperlegible, Lexend). Vale só para a própria conta.
+
 ## 07/10/2026 · Checklists num só lugar e novos papéis
 
 - Menu: **Checklists** virou um grupo com **Veículos** e **Pré-uso de equipamentos**; Veículos saiu do primeiro nível.

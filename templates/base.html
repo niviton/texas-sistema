@@ -1,15 +1,29 @@
 {% load static %}<!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-br"{% if request.user.is_authenticated %} data-tema="{{ request.user.tema }}" data-fonte="{{ request.user.fonte }}"{% endif %}>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{% block title %}Polaris · Texas Controls{% endblock %}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+{% if request.user.is_authenticated and request.user.fonte_google %}<link href="https://fonts.googleapis.com/css2?family={{ request.user.fonte_google }}&display=swap" rel="stylesheet">{% endif %}
 <style>
   @keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
   @keyframes floatStar { 0%,100% { transform:translateY(0) rotate(0deg); } 50% { transform:translateY(-14px) rotate(4deg); } }
   * { box-sizing: border-box; }
+  /* Fonte escolhida pela pessoa (Aparência). As telas usam fontes fixas nos estilos, por isso o !important. */
+  {% if request.user.is_authenticated and request.user.fonte != 'manrope' %}
+  html[data-fonte] body, html[data-fonte] body *:not(svg):not(svg *) { font-family: {{ request.user.fonte_css|safe }} !important; }
+  {% endif %}
+  /* Tema escuro: inverte as cores da página e desfaz a inversão no que precisa manter a cor real
+     (fotos, assinatura, menu lateral escuro, botões da marca). O filtro fica no elemento raiz, que
+     não altera o posicionamento dos elementos fixos (barra de enviar no celular). */
+  html[data-tema="escuro"] { filter: invert(1) hue-rotate(180deg); background:#fff; }
+  html[data-tema="escuro"] :is(img, video, canvas, picture, .shell-side, .acao, .v-btn, .home-cta, .step-n, .locator, .mini) { filter: invert(1) hue-rotate(180deg); }
+  @media (prefers-color-scheme: dark) {
+    html[data-tema="auto"] { filter: invert(1) hue-rotate(180deg); background:#fff; }
+    html[data-tema="auto"] :is(img, video, canvas, picture, .shell-side, .acao, .v-btn, .home-cta, .step-n, .locator, .mini) { filter: invert(1) hue-rotate(180deg); }
+  }
   body { margin:0; -webkit-font-smoothing:antialiased; font-family:'Manrope',system-ui,sans-serif; }
   ::selection { background:#f5a623; color:#0d1b2e; }
   input::placeholder, textarea::placeholder { color:#9aa3ad; }

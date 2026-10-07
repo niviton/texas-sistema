@@ -90,12 +90,13 @@
       </details>
       {% endif %}
     </div>
-    {% if request.user.role == 'admin' %}
     <div class="shell-nav" style="flex:0; margin-top:auto;">
+      <a href="{% url 'accounts:aparencia' %}" class="nav-link {% if active_nav == 'aparencia' %}active{% endif %}"><div class="dot"></div><span>Aparência</span></a>
+      {% if request.user.role == 'admin' %}
       <a href="{% url 'accounts_admin:usuarios' %}" class="nav-link {% if active_nav == 'configuracoes' %}active{% endif %}"><div class="dot"></div><span>Configurações</span></a>
+      {% endif %}
     </div>
-    {% endif %}
-    <div style="{% if request.user.role != 'admin' %}margin-top:auto; {% endif %}padding-top:16px; border-top:1px solid rgba(255,255,255,0.1); flex-shrink:0;">
+    <div style="padding-top:16px; border-top:1px solid rgba(255,255,255,0.1); flex-shrink:0;">
       <form method="post" action="{% url 'accounts:logout' %}">
         {% csrf_token %}
         <button type="submit" style="width:100%; padding:11px 0; border:1.5px solid rgba(255,255,255,0.18); background:none; border-radius:10px; color:rgba(255,255,255,0.75); font-family:'Manrope',sans-serif; font-weight:600; font-size:13.5px; cursor:pointer;">Sair</button>
