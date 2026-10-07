@@ -18,11 +18,15 @@
   /* Tema escuro: inverte as cores da página e desfaz a inversão no que precisa manter a cor real
      (fotos, assinatura, menu lateral escuro, botões da marca). O filtro fica no elemento raiz, que
      não altera o posicionamento dos elementos fixos (barra de enviar no celular). */
+  /* Cada elemento é desinvertido uma única vez: imagens dentro do menu ou dos botões já voltam
+     à cor real junto com eles (inverter de novo deixaria a logo branca escura). */
   html[data-tema="escuro"] { filter: invert(1) hue-rotate(180deg); background:#fff; }
-  html[data-tema="escuro"] :is(img, video, canvas, picture, .shell-side, .acao, .v-btn, .home-cta, .step-n, .locator, .mini) { filter: invert(1) hue-rotate(180deg); }
+  html[data-tema="escuro"] :is(.shell-side, .acao, .v-btn, .home-cta, .step-n),
+  html[data-tema="escuro"] :is(img, video, canvas, picture, .locator, .mini):not(:is(.shell-side, .acao, .v-btn, .home-cta, .step-n) *) { filter: invert(1) hue-rotate(180deg); }
   @media (prefers-color-scheme: dark) {
     html[data-tema="auto"] { filter: invert(1) hue-rotate(180deg); background:#fff; }
-    html[data-tema="auto"] :is(img, video, canvas, picture, .shell-side, .acao, .v-btn, .home-cta, .step-n, .locator, .mini) { filter: invert(1) hue-rotate(180deg); }
+    html[data-tema="auto"] :is(.shell-side, .acao, .v-btn, .home-cta, .step-n),
+    html[data-tema="auto"] :is(img, video, canvas, picture, .locator, .mini):not(:is(.shell-side, .acao, .v-btn, .home-cta, .step-n) *) { filter: invert(1) hue-rotate(180deg); }
   }
   body { margin:0; -webkit-font-smoothing:antialiased; font-family:'Manrope',system-ui,sans-serif; }
   ::selection { background:#f5a623; color:#0d1b2e; }
