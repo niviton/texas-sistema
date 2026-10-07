@@ -44,6 +44,10 @@
   .cdlg-ok { border:none; background:#0d2440; color:#fff; }
   .cdlg-ok.danger { background:#b3261e; }
   .cdlg-actions button:focus-visible { outline:3px solid #ffc000; outline-offset:2px; }
+  .foto-escolha { display:flex; flex-direction:column; gap:10px; margin-top:14px; }
+  .foto-escolha button { display:flex; align-items:center; justify-content:center; gap:10px; width:100%; padding:15px; border-radius:12px; font-family:'Manrope',sans-serif; font-weight:800; font-size:15px; cursor:pointer; }
+  .foto-escolha .foto-cancelar { border:none; background:none; color:#6b7480; font-weight:700; font-size:14px; padding:10px; }
+  .foto-escolha button:focus-visible { outline:3px solid #ffc000; outline-offset:2px; }
 
   @media (max-width: 860px) {
     .cdlg-actions { flex-direction:column-reverse; }
@@ -139,6 +143,16 @@
       {% endif %}
       {% block shell_content %}{% endblock %}
     </main>
+    <dialog class="cdlg" id="foto-dlg" aria-labelledby="foto-dlg-t">
+      <form method="dialog">
+        <h2 id="foto-dlg-t">Adicionar foto</h2>
+        <div class="foto-escolha">
+          <button value="camera" class="cdlg-ok">{% include "veiculos/_icon.html" with i="camera" s=22 w="2" %}Tirar foto agora</button>
+          <button value="galeria" class="cdlg-cancel">{% include "veiculos/_icon.html" with i="document" s=20 w="2" %}Escolher da galeria</button>
+          <button value="cancel" class="foto-cancelar">Cancelar</button>
+        </div>
+      </form>
+    </dialog>
     <dialog class="cdlg" id="cdlg" aria-labelledby="cdlg-title" aria-describedby="cdlg-msg">
       <form method="dialog">
         <h2 id="cdlg-title"></h2>
@@ -189,6 +203,44 @@
       }
       pedir();
       document.addEventListener('change', (e) => { if (e.target.type === 'file') pedir(); }, true);
+    })();
+
+    /* Fotos no celular: em vez de depender do seletor do sistema (o Android 14+ mostra só a galeria),
+       o toque numa moldura de foto abre a escolha "Tirar foto agora" (câmera direta) ou "Galeria". */
+    (function () {
+      const dlg = document.getElementById('foto-dlg');
+      const toque = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+      if (!dlg || !toque || typeof dlg.showModal !== 'function') return;
+      let alvo = null, abrindo = false;
+      const campoDoClique = (el) => {
+        const label = el.closest('label');
+        if (!label) return null;
+        const input = label.control || label.querySelector('input[type=file]');
+        return input && input.type === 'file' && (input.accept || '').startsWith('image') ? input : null;
+      };
+      document.addEventListener('click', (e) => {
+        if (abrindo || e.target.matches('input[type=file]')) return;
+        const input = campoDoClique(e.target);
+        if (!input) return;
+        e.preventDefault();
+        alvo = input;
+        dlg.returnValue = '';
+        dlg.showModal();
+      }, true);
+      // A câmera/galeria abre dentro do próprio toque no botão (o Safari do iPhone exige isso).
+      dlg.querySelectorAll('button[value=camera], button[value=galeria]').forEach((b) => b.addEventListener('click', (e) => {
+        e.preventDefault();
+        const input = alvo;
+        dlg.close();
+        if (!input) return;
+        if (b.value === 'camera') input.setAttribute('capture', 'environment');
+        else input.removeAttribute('capture');
+        abrindo = true;
+        input.click();
+        abrindo = false;
+        alvo = null;
+      }));
+      dlg.addEventListener('close', () => { if (dlg.returnValue === 'cancel') alvo = null; });
     })();
 
     /* Formulários ou botões com data-confirm pedem confirmação numa janela do próprio sistema.
