@@ -12,6 +12,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from certificates.decorators import admin_required, checklists_required
 from dashboard.navigation import CONFIG_KEYS, CONFIG_TABS
 from veiculos.emails import supervisor_emails
+from veiculos.carimbo import carimbo_da_requisicao
 from veiculos.imagens import ImagemInvalida, assinatura_de_dataurl, comprimir_foto
 from veiculos.views import _crud, _toggle_active
 
@@ -176,11 +177,12 @@ def _salvar(request, ativo, revisao, linhas, medidor, fotos, assinatura):
     Resposta.objects.bulk_create([
         Resposta(execucao=execucao, item=l['item'], valor=l['valor'], observacao=l['obs']) for l in linhas
     ])
+    carimbo = carimbo_da_requisicao(request)
     for l in linhas:
         if l['foto']:
-            FotoExecucao.objects.create(execucao=execucao, item=l['item'], imagem=comprimir_foto(l['foto']))
+            FotoExecucao.objects.create(execucao=execucao, item=l['item'], imagem=comprimir_foto(l['foto'], carimbo))
     for f in fotos:
-        FotoExecucao.objects.create(execucao=execucao, imagem=comprimir_foto(f))
+        FotoExecucao.objects.create(execucao=execucao, imagem=comprimir_foto(f, carimbo))
     if medidor is not None and (ativo.medidor_atual is None or medidor > ativo.medidor_atual):
         ativo.medidor_atual = medidor
         ativo.save(update_fields=['medidor_atual'])

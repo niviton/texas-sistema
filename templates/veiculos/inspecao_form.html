@@ -115,7 +115,7 @@
   }
 {% endblock %}
 {% block veiculos_content %}
-<form method="post" enctype="multipart/form-data" id="insp-form" novalidate>
+<form data-geo method="post" enctype="multipart/form-data" id="insp-form" novalidate>
   {% csrf_token %}
   <div id="erros" class="erro-box" {% if not form.errors %}style="display:none;"{% endif %}>
     {% for e in form.non_field_errors %}{{ e }}<br>{% endfor %}
@@ -341,7 +341,7 @@
         c.width = Math.round(img.width * r); c.height = Math.round(img.height * r);
         c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
         URL.revokeObjectURL(url);
-        c.toBlob((b) => resolve(b ? new File([b], (file.name || 'foto').replace(/\.\w+$/, '') + '.jpg', { type: 'image/jpeg' }) : file), 'image/jpeg', 0.82);
+        c.toBlob((b) => resolve(b ? new File([b], (file.name || 'foto').replace(/\.\w+$/, '') + '_t' + (file.lastModified || Date.now()) + '.jpg', { type: 'image/jpeg' }) : file), 'image/jpeg', 0.82);
       };
       img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
       img.src = url;

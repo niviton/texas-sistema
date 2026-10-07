@@ -13,6 +13,7 @@ from certificates.decorators import admin_required, termos_required
 from checklists.importador import FormularioInvalido, _ler_cabecalho, FormularioLido
 from dashboard.navigation import CONFIG_KEYS, CONFIG_TABS
 from veiculos.emails import supervisor_emails
+from veiculos.carimbo import carimbo_da_requisicao
 from veiculos.imagens import ImagemInvalida, assinatura_de_dataurl, comprimir_foto
 
 from .emails import enviar_em_segundo_plano, enviar_termo
@@ -147,8 +148,9 @@ def _salvar(request, form, itens, novas_fotos, remover, assinaturas):
     TermoItem.objects.bulk_create([TermoItem(termo=termo, ordem=n, **i) for n, i in enumerate(itens)])
     if remover:
         termo.fotos.filter(pk__in=remover).delete()
+    carimbo = carimbo_da_requisicao(request) if novas_fotos else None
     for f in novas_fotos:
-        TermoFoto.objects.create(termo=termo, imagem=comprimir_foto(f))
+        TermoFoto.objects.create(termo=termo, imagem=comprimir_foto(f, carimbo))
     return termo
 
 

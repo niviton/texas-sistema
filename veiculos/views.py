@@ -15,6 +15,7 @@ from .emails import (
     enviar_alertas, enviar_emails_da_vistoria_em_segundo_plano, enviar_inspecao, enviar_teste, supervisor_emails,
 )
 from .forms import InspecaoForm, ManutencaoForm, MotoristaForm, SupervisorForm, VeiculoForm
+from .carimbo import carimbo_da_requisicao
 from .imagens import ImagemInvalida, assinatura_de_dataurl, comprimir_foto
 from .pdf import pdf_filename, render_inspecao_pdf
 from .models import (
@@ -223,13 +224,14 @@ def _salvar_inspecao(request, data, secoes, fotos, extras, assinatura, pneus_pct
         InspecaoItem(inspecao=inspecao, item=l['key'], status=l['status'], observacao=l['obs'])
         for _, ls in secoes for l in ls
     ])
+    carimbo = carimbo_da_requisicao(request)
     for key, f in fotos:
         if f:
             InspecaoFoto.objects.create(
-                inspecao=inspecao, posicao=key, imagem=comprimir_foto(f), percentual=pneus_pct.get(key),
+                inspecao=inspecao, posicao=key, imagem=comprimir_foto(f, carimbo), percentual=pneus_pct.get(key),
             )
     for f in extras:
-        InspecaoFoto.objects.create(inspecao=inspecao, imagem=comprimir_foto(f))
+        InspecaoFoto.objects.create(inspecao=inspecao, imagem=comprimir_foto(f, carimbo))
 
     if data['tipo'] == TIPO_SAIDA:
         Uso.objects.create(

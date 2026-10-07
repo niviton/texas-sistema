@@ -150,6 +150,47 @@
       </form>
     </dialog>
     <script>
+    /* Localização para o carimbo das fotos: formulários com data-geo pedem o GPS do celular e
+       enviam geo_lat/geo_lon. O navegador só libera o GPS em sites com HTTPS. */
+    (function () {
+      const forms = document.querySelectorAll('form[data-geo]');
+      if (!forms.length) return;
+      const avisos = [];
+      forms.forEach((f) => {
+        ['geo_lat', 'geo_lon', 'geo_acc'].forEach((n) => { const i = document.createElement('input'); i.type = 'hidden'; i.name = n; f.appendChild(i); });
+        const p = document.createElement('p');
+        p.className = 'geo-aviso';
+        p.style.cssText = 'margin:0 0 4px; font-size:12.5px; font-weight:600; color:#6b7480;';
+        f.prepend(p);
+        avisos.push(p);
+      });
+      const dizer = (t, cor) => avisos.forEach((p) => { p.textContent = t; p.style.color = cor || '#6b7480'; });
+      let pedindo = false, ok = false;
+      function pedir() {
+        if (ok || pedindo) return;
+        if (!window.isSecureContext || !navigator.geolocation) {
+          dizer('Fotos com data e hora. O local só entra no carimbo quando o Polaris estiver em HTTPS.');
+          return;
+        }
+        pedindo = true;
+        dizer('Buscando sua localização para o carimbo das fotos…');
+        navigator.geolocation.getCurrentPosition((pos) => {
+          pedindo = false; ok = true;
+          forms.forEach((f) => {
+            f.elements.geo_lat.value = pos.coords.latitude;
+            f.elements.geo_lon.value = pos.coords.longitude;
+            f.elements.geo_acc.value = Math.round(pos.coords.accuracy);
+          });
+          dizer('Local registrado: as fotos levam data, hora e endereço.', '#1e7a4a');
+        }, () => {
+          pedindo = false;
+          dizer('Sem permissão de localização: as fotos levam só data e hora. Toque em uma foto para tentar de novo.', '#a35f00');
+        }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 120000 });
+      }
+      pedir();
+      document.addEventListener('change', (e) => { if (e.target.type === 'file') pedir(); }, true);
+    })();
+
     /* Formulários ou botões com data-confirm pedem confirmação numa janela do próprio sistema.
        data-confirm-title, data-confirm (texto), data-confirm-ok (rótulo do botão), data-confirm-danger. */
     (function () {

@@ -14,14 +14,20 @@ class ImagemInvalida(ValueError):
     pass
 
 
-def comprimir_foto(upload):
-    """Gira conforme o EXIF, limita a 1920px e salva como JPEG (fotos de celular têm 4–8 MB)."""
+def comprimir_foto(upload, carimbo=None):
+    """
+    Gira conforme o EXIF, limita a 1920px e salva como JPEG (fotos de celular têm 4–8 MB).
+    Com `carimbo` (veiculos.carimbo.Carimbo), grava logo, data, hora e local na própria foto.
+    """
     try:
         img = Image.open(upload)
         img = ImageOps.exif_transpose(img).convert('RGB')
     except (UnidentifiedImageError, OSError) as exc:
         raise ImagemInvalida(f'O arquivo "{getattr(upload, "name", "")}" não é uma imagem válida.') from exc
     img.thumbnail((FOTO_MAX_PX, FOTO_MAX_PX))
+    if carimbo is not None:
+        from .carimbo import aplicar
+        img = aplicar(img, carimbo, getattr(upload, 'name', ''))
     buf = io.BytesIO()
     img.save(buf, 'JPEG', quality=82, optimize=True)
     return ContentFile(buf.getvalue(), name=f'{uuid.uuid4().hex[:12]}.jpg')

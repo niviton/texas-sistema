@@ -313,3 +313,35 @@ class FluxoInspecaoTests(TestCase):
         })
         self.assertRedirects(r, reverse('veiculos:veiculos'))
         self.assertTrue(Veiculo.objects.filter(placa='XYZ9A87').exists())
+
+
+class CarimboTests(TestCase):
+    """Carimbo de comprovação nas fotos (logo, data e hora do servidor, local)."""
+
+    def test_carimbo_altera_a_foto_e_usa_coordenadas_sem_rede(self):
+        from django.test import RequestFactory
+        from django.utils import timezone
+
+        from .carimbo import Carimbo, aplicar, carimbo_da_requisicao, data_extenso
+        req = RequestFactory().post('/', {'geo_lat': '-5.9172', 'geo_lon': '-35.2633'})
+        with override_settings(CARIMBO_ENDERECO=False):
+            c = carimbo_da_requisicao(req)
+        self.assertEqual(c.local, ['Lat -5.91720, Lon -35.26330'])
+        self.assertTrue((timezone.now() - c.quando).total_seconds() < 5, 'hora vem do servidor')
+        self.assertRegex(data_extenso(c.quando), r'^\d{1,2} de [a-z]{3}\. de \d{4} \d{2}:\d{2}:\d{2}$')
+        original = Image.new('RGB', (800, 600), (40, 40, 40))
+        carimbada = aplicar(original, c, 'foto.jpg')
+        self.assertNotEqual(list(original.getdata()), list(carimbada.getdata()))
+
+    def test_sem_gps_e_foto_antiga_da_galeria(self):
+        import time
+
+        from django.test import RequestFactory
+
+        from .carimbo import _origem_do_arquivo, carimbo_da_requisicao
+        c = carimbo_da_requisicao(RequestFactory().post('/', {}))
+        self.assertEqual(c.local, [])
+        ts = int((time.time() - 2 * 86400) * 1000)
+        origem = _origem_do_arquivo(f'IMG_123_t{ts}.jpg')
+        self.assertTrue((c.quando - origem).days >= 1)
+        self.assertIsNone(_origem_do_arquivo('sem_data.jpg'))

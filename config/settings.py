@@ -180,6 +180,9 @@ EMAIL_USE_TLS = True
 EMAIL_TIMEOUT = 30
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', '') or f'Polaris Frota <{EMAIL_HOST_USER or "noreply@localhost"}>'
 
+# Carimbo das fotos: converte o GPS do celular em endereço pelo OpenStreetMap (desligue com CARIMBO_ENDERECO=0).
+CARIMBO_ENDERECO = os.environ.get('CARIMBO_ENDERECO', '1') == '1'
+
 # Envia os e-mails da vistoria em segundo plano (a tela não espera o Gmail).
 VEICULOS_EMAIL_ASYNC = True
 
