@@ -6,6 +6,8 @@ Formulários controlados da empresa e sua situação no Polaris. Atualize esta t
 |---|---|---|---|---|---|
 | TCB-OTB-80 | Checklist de pré-uso – Bancada de calibração RAD 02, 24, 47 e 716 | 00 (20/05/2025) | conforme o formulário | Bancada de calibração | **Importado** em 05/10/2026, 7 itens; ativos RAD 02, 24, 47 e 716 cadastrados |
 | TCB-OTB-113 | Checklist de inspeção – Transpaleteira | 00 (22/10/2025) | conforme o formulário | Transpaleteira | **Importado** em 05/10/2026, 6 itens; falta cadastrar as transpaleteiras |
+| TCB-LO-01 | Termo de entrada – material cliente | 01 (20/06/2024) | conforme o formulário | — | **Módulo Termos**, cabeçalho importado em 07/10/2026 |
+| TCB-LO-02 | Termo de saída – material cliente | 01 (20/06/2024) | conforme o formulário | — | **Módulo Termos**, cabeçalho importado em 07/10/2026 |
 | a definir | Vistoria veicular (saída, chegada, rotina) | — | — | Veículo | Funciona no módulo Veículos; migração para o motor na Fase 1 |
 | TCB-OTB-24 | Checklist de geradores | — | — | Gerador | A importar |
 | TCB-OTB-26 | Checklist geral da empilhadeira | — | — | Empilhadeira | A importar (tem verificação por dia da semana) |

@@ -9,6 +9,7 @@ O Polaris é o portal da Texas Controls Brasil. É uma plataforma com **módulos
 | A visão geral e o plano | [arquitetura/plataforma.md](arquitetura/plataforma.md) |
 | Quem pode fazer o quê | [arquitetura/permissoes.md](arquitetura/permissoes.md) |
 | Como funciona o motor de checklists | [modulos/checklists.md](modulos/checklists.md) |
+| Como funcionam os termos de entrada e saída | [modulos/termos.md](modulos/termos.md) |
 | Quais formulários TCB-OTB já estão no sistema | [checklists/catalogo.md](checklists/catalogo.md) |
 | Por que uma escolha foi feita | [decisoes/](decisoes/) |
 | O que mudou em cada versão | [../CHANGELOG.md](../CHANGELOG.md) |

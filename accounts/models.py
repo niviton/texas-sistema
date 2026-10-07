@@ -109,6 +109,11 @@ class User(AbstractUser):
         return self.pode_checklists
 
     @property
+    def pode_termos(self):
+        """Termos de entrada e saída de material: Administrador e Logística."""
+        return self.role in (self.ROLE_ADMIN, self.ROLE_LOGISTICA)
+
+    @property
     def ve_todo_historico(self):
         """Administrador e Logística veem o histórico de todos; o Técnico, só o próprio."""
         return self.role in (self.ROLE_ADMIN, self.ROLE_LOGISTICA)

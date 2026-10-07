@@ -11,6 +11,8 @@
   @keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
   @keyframes floatStar { 0%,100% { transform:translateY(0) rotate(0deg); } 50% { transform:translateY(-14px) rotate(4deg); } }
   * { box-sizing: border-box; }
+  /* Campo de foto invisível que continua respondendo ao toque (display:none trava a câmera em alguns celulares). */
+  .file-oculto { position:absolute !important; width:1px !important; height:1px !important; opacity:0 !important; overflow:hidden; clip:rect(0 0 0 0); pointer-events:none; }
   /* Fonte escolhida pela pessoa (Aparência). As telas usam fontes fixas nos estilos, por isso o !important. */
   {% if request.user.is_authenticated and request.user.fonte != 'manrope' %}
   html[data-fonte] body, html[data-fonte] body *:not(svg):not(svg *) { font-family: {{ request.user.fonte_css|safe }} !important; }

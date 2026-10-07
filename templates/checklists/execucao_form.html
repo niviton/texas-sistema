@@ -28,12 +28,12 @@
   .it-obs { margin-top:8px; }
   .it-obs[hidden] { display:none !important; }
   .foto-it { display:flex; align-items:center; gap:10px; margin-top:8px; padding:10px 12px; border:2px dashed #c5ccd4; border-radius:10px; cursor:pointer; font-size:13px; font-weight:700; color:#334051; background:#f9fafb; }
-  .foto-it input { display:none; }
+  .foto-it { position:relative; }
   .foto-it img { width:44px; height:44px; object-fit:cover; border-radius:6px; }
   .foto-it.done { border-style:solid; border-color:#2f9e60; }
   .foto-it.falta { border-color:#c0392b; }
   .fotos-ger { display:flex; align-items:center; justify-content:center; gap:10px; min-height:84px; padding:14px; border:2px dashed #c5ccd4; border-radius:12px; cursor:pointer; font-weight:700; color:#334051; background:#f9fafb; text-align:center; }
-  .fotos-ger input { display:none; }
+  .fotos-ger { position:relative; }
   .fotos-ger.falta { border-color:#c0392b; }
   .thumbs { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
   .thumbs img { width:64px; height:64px; object-fit:cover; border-radius:8px; border:1px solid #e6e9ec; }
@@ -101,7 +101,7 @@
           {% include "veiculos/_icon.html" with i="camera_plus" s=28 %}
           <span id="fotos-txt">Tirar fotos ou escolher da galeria<br><small style="font-weight:600; color:#6b7480;">pelo menos 1, até {{ max_fotos }}</small></span>
         </label>
-        <input type="file" name="fotos" id="fotos" accept="image/*" multiple hidden>
+        <input type="file" name="fotos" id="fotos" accept="image/*" multiple class="file-oculto">
         <div class="thumbs" id="thumbs"></div>
       </section>
     </div>
@@ -133,7 +133,7 @@
                      {% if item.observacao != 'sempre' %}hidden{% endif %}>
               {% if item.exige_foto %}
                 <label class="foto-it">
-                  <input type="file" name="foto_{{ item.pk }}" accept="image/*" capture="environment">
+                  <input type="file" name="foto_{{ item.pk }}" accept="image/*" class="file-oculto">
                   {% include "veiculos/_icon.html" with i="camera" s=22 %}<span>Foto deste item (obrigatória)</span>
                 </label>
               {% endif %}

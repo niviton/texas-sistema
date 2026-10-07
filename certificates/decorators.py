@@ -36,6 +36,16 @@ def checklists_required(view_func):
     return wrapper
 
 
+def termos_required(view_func):
+    @wraps(view_func)
+    @login_required
+    def wrapper(request, *args, **kwargs):
+        if not request.user.pode_termos:
+            raise PermissionDenied
+        return view_func(request, *args, **kwargs)
+    return wrapper
+
+
 def professor_required(view_func):
     @wraps(view_func)
     @login_required

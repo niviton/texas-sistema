@@ -15,7 +15,7 @@ Interface única (computador e celular)
   Início · Executar · Histórico · Configurações
         │
 Módulos de negócio
-  Certificados · Checklists (motor genérico) · Veículos* · Termos (planejado)
+  Certificados · Checklists (motor genérico) · Veículos* · Termos
         │
 Núcleo comum
   Acessos · Documentos controlados e PDF TCB-OTB · Notificações · Fotos · Assinaturas · Auditoria (planejado)
@@ -43,7 +43,7 @@ Núcleo comum
 | 0 | Servidor com HTTPS, núcleo extraído, permissões por módulo, `docs/` | `docs/` e perfil Técnico feitos; servidor e núcleo pendentes |
 | 1 | Motor de checklists; veículos migrados para o motor | **Motor feito**; migração de veículos pendente |
 | 2 | Checklist de equipamentos (TCB-OTB-80), importação do Checklist Pro | TCB-OTB-80 e TCB-OTB-113 importados; dados do Base44 pendentes |
-| 3 | Termos de entrada e saída com assinatura dupla | Não iniciado |
+| 3 | Termos de entrada e saída com assinatura dupla | **Feito** (TCB-LO-01 e TCB-LO-02) |
 | 4 | QR code no ativo, rascunho offline, painel gerencial | Não iniciado |
 
 ## Decisões em aberto

@@ -2,6 +2,13 @@
 
 Escrito em linguagem simples, do mais recente para o mais antigo.
 
+## 07/10/2026 · Termos de entrada e saída
+
+- Novo módulo **Termos** (Administrador e Logística): termos de entrada (TCB-LO-01) e saída (TCB-LO-02) de material de cliente, com equipamentos, fotos e assinaturas da Texas e do cliente.
+- Rascunho para colher assinaturas depois; ao finalizar, o termo trava e o PDF no layout do formulário vai aos supervisores.
+- Cabeçalho dos formulários importado do Word em **Configurações → Termos**.
+- Fotos: os campos de foto deixaram de forçar a câmera e de ficar ocultos de um jeito que alguns celulares ignoravam o toque; agora o celular oferece "tirar foto" ou "galeria".
+
 ## 07/10/2026 · Aparência por pessoa
 
 - Novo item **Aparência** no menu (para todos): tema Claro, Escuro ou Automático e escolha da fonte (Manrope, Inter, Roboto, Open Sans, Atkinson Hyperlegible, Lexend). Vale só para a própria conta.

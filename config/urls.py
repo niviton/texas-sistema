@@ -12,6 +12,7 @@ urlpatterns = [
     path('dashboard/meus-certificados/', include('certificates.urls_professor')),
     path('dashboard/veiculos/', include('veiculos.urls')),
     path('dashboard/checklists/', include('checklists.urls')),
+    path('dashboard/termos/', include('termos.urls')),
     path('verificacao-certificados/', include('certificates.urls')),
 ]
 

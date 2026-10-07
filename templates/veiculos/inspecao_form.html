@@ -14,7 +14,7 @@
   .foto-slot.wide .txt { display:flex; flex-direction:column; gap:2px; }
   .foto-slot { position:relative; aspect-ratio:1; border:2px dashed #c5ccd4; border-radius:12px; background:#f7f8fa; cursor:pointer; overflow:hidden;
     display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; padding:8px; text-align:center; user-select:none; -webkit-tap-highlight-color:transparent; }
-  .foto-slot input { display:none; }
+  .foto-slot input { position:absolute; width:1px; height:1px; opacity:0; overflow:hidden; clip:rect(0 0 0 0); }
   .foto-slot .ico { color:#365f91; line-height:0; }
   .foto-slot .ic.flip { transform:scaleX(-1); }
   .foto-slot .lbl { font-size:12px; font-weight:700; color:#334051; line-height:1.25; }
@@ -167,7 +167,7 @@
             {% for f in itens %}
               <div class="pneu-row">
                 <label class="foto-slot" data-key="{{ f.key }}" data-label="{{ f.label }}" {% if f.req %}data-req="1"{% endif %}>
-                  <input type="file" name="foto_{{ f.key }}" accept="image/*" capture="environment">
+                  <input type="file" name="foto_{{ f.key }}" accept="image/*" class="file-oculto">
                   <span class="ico">{% include "veiculos/_locator.html" with p=f.key s=38 %}</span>
                   <span class="lbl">Tirar foto</span>
                 </label>
@@ -181,7 +181,7 @@
             <div class="fotos-grid">
               {% for f in itens %}
                 <label class="foto-slot{% if f.key == 'painel' %} wide{% endif %}" data-key="{{ f.key }}" data-label="{{ f.label }}" {% if f.req %}data-req="1"{% endif %}>
-                  <input type="file" name="foto_{{ f.key }}" accept="image/*" capture="environment">
+                  <input type="file" name="foto_{{ f.key }}" accept="image/*" class="file-oculto">
                   <span class="ico">{% if f.key == 'cnh' %}{% include "veiculos/_icon.html" with i="id_card" s=32 %}{% elif f.key == 'documento' %}{% include "veiculos/_icon.html" with i="document" s=32 %}{% elif f.key == 'painel' %}{% include "veiculos/_icon.html" with i="gauge" s=32 %}{% else %}{% include "veiculos/_locator.html" with p=f.key s=46 %}{% endif %}</span>
                   {% if f.key == 'painel' %}<span class="txt"><span class="lbl">{{ f.label }}</span>{% if f.req %}<span class="req">obrigatória · com o motor ligado, mostrando km e combustível</span>{% endif %}</span>
                   {% else %}<span class="lbl">{{ f.label }}</span>
@@ -194,7 +194,7 @@
         <div class="foto-grupo">Avarias e outras fotos</div>
         <div class="fotos-grid">
           <label class="foto-slot wide" id="slot-extra">
-            <input type="file" name="fotos_extra" id="fotos-extra" accept="image/*" multiple>
+            <input type="file" name="fotos_extra" id="fotos-extra" accept="image/*" multiple class="file-oculto">
             <span class="ico">{% include "veiculos/_icon.html" with i="camera_plus" s=30 %}</span>
             <span class="txt"><span class="lbl">Adicionar fotos</span><span class="req" style="color:#6b7480;">opcional, até {{ max_extras }} fotos da câmera ou da galeria</span></span>
           </label>

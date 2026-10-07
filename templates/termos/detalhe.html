@@ -1,0 +1,86 @@
+{% extends "termos/_base.html" %}
+{% block v_style %}
+  .kv td { padding:5px 0; vertical-align:top; font-size:13.5px; } .kv td:first-child { color:#8b95a1; padding-right:14px; white-space:nowrap; }
+  .det-fotos { display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:10px; }
+  .det-fotos img { width:100%; aspect-ratio:1; object-fit:cover; border-radius:10px; border:1px solid #e6e9ec; display:block; }
+  .assin { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:16px; }
+  .assin > div { border-bottom:1.5px solid #12181f; padding-bottom:6px; }
+  .assin img { height:80px; max-width:100%; object-fit:contain; display:block; }
+  .pend { padding:12px 14px; border-radius:10px; background:#fff8ea; border:1px solid #f3dfb5; color:#6b5216; font-size:13.5px; margin-bottom:14px; }
+  @media (max-width: 640px) { .assin { grid-template-columns:minmax(0, 1fr); } .det-fotos { grid-template-columns:repeat(2, minmax(0, 1fr)); } }
+{% endblock %}
+{% block veiculos_content %}
+<div style="display:flex; gap:24px; flex-wrap:wrap; align-items:flex-start;">
+  <div class="v-card" style="flex:1; min-width:280px; max-width:420px;">
+    <div style="display:flex; justify-content:space-between; gap:10px; align-items:flex-start;">
+      <div>
+        <div style="font-size:12.5px; font-weight:800; color:#365f91;">Termo de {{ termo.get_tipo_display|lower }}</div>
+        <div style="font-family:'Sora',sans-serif; font-size:22px; font-weight:800; color:#0d1b2e;">Nº {{ termo.numero }}</div>
+      </div>
+      {% if termo.finalizado %}<span class="v-badge b-ok">Finalizado</span>{% else %}<span class="v-badge b-warn">Rascunho</span>{% endif %}
+    </div>
+    <div style="height:1px; background:#eef0f2; margin:14px 0;"></div>
+    <table class="kv" style="width:100%;">
+      <tr><td>Nº do assunto</td><td>{{ termo.numero_assunto|default:"—" }}</td></tr>
+      <tr><td>{{ termo.rotulos.motivo }}</td><td>{{ termo.motivo|default:"—" }}</td></tr>
+      <tr><td>{{ termo.rotulos.data }}</td><td>{{ termo.data|date:"d/m/Y" }}</td></tr>
+      <tr><td>Cliente e contato</td><td><b>{{ termo.cliente_contato }}</b></td></tr>
+      <tr><td>Origem</td><td>{{ termo.origem|default:"—" }}</td></tr>
+      <tr><td>Transporte</td><td>{{ termo.transporte|default:"—" }}</td></tr>
+    </table>
+    {% if termo.observacoes %}<div style="margin-top:12px; padding:12px; background:#f7f8fa; border-radius:9px; font-size:13px; white-space:pre-wrap;">{{ termo.observacoes }}</div>{% endif %}
+    <div style="height:1px; background:#eef0f2; margin:14px 0;"></div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+      {% if termo.finalizado %}
+        {% if termo.email_enviado %}<span class="v-badge b-ok">E-mail enviado</span>{% else %}<span class="v-badge b-mute">E-mail não enviado</span>{% endif %}
+        <a class="v-btn-sm blue" href="{% url 'termos:pdf' termo.pk %}" target="_blank">Ver PDF</a>
+        <a class="v-btn-sm" href="{% url 'termos:pdf' termo.pk %}?download=1">Baixar PDF</a>
+        <form method="post" action="{% url 'termos:reenviar' termo.pk %}">{% csrf_token %}<button class="v-btn-sm blue" type="submit">Reenviar aos supervisores</button></form>
+      {% else %}
+        <a class="v-btn" href="{% url 'termos:editar' termo.pk %}">Continuar o termo</a>
+        <a class="v-btn-sm" href="{% url 'termos:pdf' termo.pk %}" target="_blank">Prévia do PDF</a>
+      {% endif %}
+      {% if not termo.finalizado or is_admin %}
+        <form method="post" action="{% url 'termos:excluir' termo.pk %}" data-confirm-title="Excluir termo" data-confirm-ok="Excluir termo" data-confirm-danger
+              data-confirm="O termo nº {{ termo.numero }} de {{ termo.cliente_contato }} será excluído, com fotos e assinaturas. Esta ação não pode ser desfeita.">
+          {% csrf_token %}<button class="v-btn-sm" type="submit">Excluir</button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+
+  <div style="flex:1.5; min-width:300px; display:flex; flex-direction:column; gap:20px;">
+    {% if faltas %}<div class="pend">Para finalizar: {{ faltas|join:"; " }}.</div>{% endif %}
+    <div class="v-card">
+      <h3 class="v-h3">Equipamentos ({{ termo.itens.count }})</h3>
+      <div class="v-scroll">
+      <table class="v-table v-stack">
+        <thead><tr><th>Equipamento</th><th>Referência</th><th>Qtd.</th><th>Informação</th></tr></thead>
+        <tbody>
+        {% for it in termo.itens.all %}
+          <tr><td><b>{{ forloop.counter }}- {{ it.descricao }}</b></td><td data-label="Referência">{{ it.referencia|default:"—" }}</td><td data-label="Quantidade">{{ it.quantidade }}</td><td data-label="Informação">{{ it.informacao|default:"—" }}</td></tr>
+        {% empty %}
+          <tr><td colspan="4" style="color:#6b7480;">Nenhum equipamento incluído.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      </div>
+    </div>
+    {% if termo.fotos.all %}
+    <div class="v-card">
+      <h3 class="v-h3">Registro fotográfico ({{ termo.fotos.count }})</h3>
+      <div class="det-fotos">{% for f in termo.fotos.all %}<a href="{{ f.imagem.url }}" target="_blank"><img src="{{ f.imagem.url }}" alt="Foto {{ forloop.counter }}" loading="lazy"></a>{% endfor %}</div>
+    </div>
+    {% endif %}
+    <div class="v-card">
+      <h3 class="v-h3">Assinaturas</h3>
+      <div class="assin">
+        <div>{% if termo.assinatura_texas %}<img src="{{ termo.assinatura_texas.url }}" alt="Assinatura Texas">{% else %}<div style="height:80px; display:flex; align-items:center; color:#9aa3ad; font-size:13px;">Sem assinatura</div>{% endif %}
+          <div style="font-size:12.5px; font-weight:700;">Responsável Texas{% if termo.responsavel_texas %}: {{ termo.responsavel_texas }}{% endif %}</div></div>
+        <div>{% if termo.assinatura_cliente %}<img src="{{ termo.assinatura_cliente.url }}" alt="Assinatura do cliente">{% else %}<div style="height:80px; display:flex; align-items:center; color:#9aa3ad; font-size:13px;">Sem assinatura</div>{% endif %}
+          <div style="font-size:12.5px; font-weight:700;">Cliente{% if termo.nome_cliente %}: {{ termo.nome_cliente }}{% endif %}{% if termo.telefone_cliente %} · {{ termo.telefone_cliente }}{% endif %}</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

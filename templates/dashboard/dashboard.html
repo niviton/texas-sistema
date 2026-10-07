@@ -2,7 +2,7 @@
 {% block title %}Início · Polaris{% endblock %}
 {% block extra_style %}
   .home { max-width:720px; }
-  .acoes { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:14px; margin:0 0 26px; }
+  .acoes { display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:14px; margin:0 0 26px; }
   .acao { display:flex; flex-direction:column; gap:14px; padding:22px; border-radius:14px; background:#0d2440; color:#fff; text-decoration:none; border-bottom:4px solid #ffc000; min-height:168px; }
   .acao:hover { background:#12305a; color:#fff; }
   .acao:focus-visible { outline:3px solid #ffc000; outline-offset:3px; }
@@ -43,6 +43,13 @@
         <div><b>Pré-uso de equipamento</b><span>Checklists TCB-OTB</span></div>
         <div class="go">Começar</div>
       </a>
+      {% if request.user.pode_termos %}
+      <a class="acao" href="{% url 'termos:novo' %}">
+        <div class="ico">{% include "veiculos/_icon.html" with i="pen" s=26 w="1.8" %}</div>
+        <div><b>Termo de entrada ou saída</b><span>Material de cliente, com assinaturas</span></div>
+        <div class="go">Começar</div>
+      </a>
+      {% endif %}
     </div>
 
     {% if resumo.em_uso %}

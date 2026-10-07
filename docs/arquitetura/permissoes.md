@@ -8,7 +8,7 @@ O administrador geral define o papel de cada pessoa em **Configurações → Usu
 |---|---|---|---|---|---|
 | **Administrador** | Sim | De todos | Sim | Sim | Sim |
 | **Técnico** (executor) | Sim | Só o próprio | Não | Não | Não |
-| **Logística** | Sim | De todos | Sim (módulo em construção) | Não | Não |
+| **Logística** | Sim | De todos | Sim (rascunhos; excluir finalizado só o admin) | Não | Não |
 | **Professor** | Não | — | Não | Os próprios grupos | Não |
 
 Regras gerais:
@@ -26,6 +26,8 @@ Certificados                 ← Administrador e Professor
 Checklists ▾                 ← Administrador, Técnico, Logística
    Veículos
    Pré-uso de equipamentos
+Termos                       ← Administrador e Logística
+Aparência (no rodapé)        ← todos
 Configurações (no rodapé)    ← só Administrador
 ```
 

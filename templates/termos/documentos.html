@@ -1,0 +1,25 @@
+{% extends "termos/_base.html" %}
+{% block veiculos_content %}
+<div style="display:flex; gap:24px; flex-wrap:wrap; align-items:flex-start;">
+  {% for tipo, rotulo, form in blocos %}
+    <div class="v-card" style="flex:1; min-width:280px; max-width:400px;">
+      <h3 class="v-h3">Termo de {{ rotulo|lower }}</h3>
+      <p class="v-help" style="margin:-8px 0 14px;">Cabeçalho do PDF. Termos já finalizados guardam a revisão em que foram emitidos.</p>
+      <form method="post">
+        {% csrf_token %}<input type="hidden" name="acao" value="{{ tipo }}">
+        {% include "veiculos/_form_fields.html" with form=form %}
+        <button type="submit" class="v-btn" style="width:100%;">Salvar</button>
+      </form>
+    </div>
+  {% endfor %}
+  <div class="v-card" style="flex:1; min-width:280px; max-width:400px;">
+    <h3 class="v-h3">Importar do formulário Word</h3>
+    <p class="v-help" style="margin:-8px 0 14px;">Envie o TCB-LO-01 ou TCB-LO-02 (.docx). O sistema lê o código, a revisão, quem preparou, quem revisou e a data, e identifica se é de entrada ou de saída pelo título.</p>
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}<input type="hidden" name="acao" value="importar">
+      {% include "veiculos/_form_fields.html" with form=importar %}
+      <button type="submit" class="v-btn" style="width:100%;">Importar</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -8,5 +8,6 @@ CONFIG_TABS = [
     ('tipos', 'Tipos de ativo', 'checklists:tipos'),
     ('ativos', 'Ativos', 'checklists:ativos'),
     ('modelos', 'Modelos de checklist', 'checklists:modelos'),
+    ('termos_doc', 'Termos', 'termos:documentos'),
 ]
 CONFIG_KEYS = {k for k, _, _ in CONFIG_TABS}

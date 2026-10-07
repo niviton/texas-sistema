@@ -1,0 +1,50 @@
+{% extends "termos/_base.html" %}
+{% block v_style %}
+  .filtros { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
+  .filtro { padding:8px 14px; border-radius:100px; border:1.5px solid #dfe3e8; background:#fff; color:#556072; font-weight:700; font-size:13px; text-decoration:none; }
+  .filtro b { color:#0d1b2e; margin-left:4px; }
+  .filtro.on { background:#365f91; border-color:#365f91; color:#fff; }
+  .filtro.on b { color:#ffc000; }
+  .tipo-e { color:#1e5c94; background:#e9eff7; } .tipo-s { color:#8a5a00; background:#fff3d6; }
+{% endblock %}
+{% block veiculos_content %}
+<div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:18px;">
+  <a class="v-btn" href="{% url 'termos:novo' %}?tipo=entrada">Novo termo de entrada</a>
+  <a class="v-btn orange" href="{% url 'termos:novo' %}?tipo=saida">Novo termo de saída</a>
+</div>
+<div class="v-card">
+  <div class="filtros">
+    <a class="filtro {% if not tipo %}on{% endif %}" href="?q={{ q|urlencode }}">Todos<b>{{ contagem.todos }}</b></a>
+    <a class="filtro {% if tipo == 'entrada' %}on{% endif %}" href="?tipo=entrada&q={{ q|urlencode }}">Entradas<b>{{ contagem.entrada }}</b></a>
+    <a class="filtro {% if tipo == 'saida' %}on{% endif %}" href="?tipo=saida&q={{ q|urlencode }}">Saídas<b>{{ contagem.saida }}</b></a>
+  </div>
+  <form method="get" style="display:flex; gap:10px; margin-bottom:14px;">
+    {% if tipo %}<input type="hidden" name="tipo" value="{{ tipo }}">{% endif %}
+    <input type="search" name="q" value="{{ q }}" placeholder="Buscar por cliente, assunto, motivo, origem ou equipamento" aria-label="Buscar termos" style="flex:1; min-width:0;">
+    <button class="v-btn" type="submit">Buscar</button>
+  </form>
+  <div class="v-scroll">
+  <table class="v-table v-stack">
+    <thead><tr><th>Nº</th><th>Tipo</th><th>Cliente</th><th>Motivo</th><th>Data</th><th>Situação</th><th></th></tr></thead>
+    <tbody>
+    {% for t in termos %}
+      <tr>
+        <td style="white-space:nowrap;"><b>{{ t.numero }}</b>{% if t.numero_assunto %}<div style="font-size:11.5px; color:#8b95a1;">{{ t.numero_assunto }}</div>{% endif %}</td>
+        <td data-label="Tipo"><span class="v-badge {% if t.tipo == 'entrada' %}tipo-e{% else %}tipo-s{% endif %}">{{ t.get_tipo_display }}</span></td>
+        <td data-label="Cliente">{{ t.cliente_contato }}<div style="font-size:11.5px; color:#8b95a1;">{{ t.n_itens }} equipamento{{ t.n_itens|pluralize }}</div></td>
+        <td data-label="Motivo">{{ t.motivo|default:"—" }}</td>
+        <td data-label="Data" style="white-space:nowrap;">{{ t.data|date:"d/m/Y" }}</td>
+        <td data-label="Situação">{% if t.status == 'finalizado' %}<span class="v-badge b-ok">Finalizado</span>{% else %}<span class="v-badge b-warn">Rascunho</span>{% endif %}</td>
+        <td class="v-actions" style="text-align:right; white-space:nowrap;">
+          {% if t.status == 'rascunho' %}<a class="v-btn-sm" href="{% url 'termos:editar' t.pk %}">Continuar</a>{% else %}<a class="v-btn-sm" href="{% url 'termos:pdf' t.pk %}" target="_blank">PDF</a>{% endif %}
+          <a class="v-btn-sm blue" href="{% url 'termos:detalhe' t.pk %}">Ver</a>
+        </td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="7" style="color:#6b7480;">{% if q or tipo %}Nenhum termo encontrado com esse filtro.{% else %}Nenhum termo ainda. Comece por "Novo termo de entrada" ou "Novo termo de saída".{% endif %}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+{% endblock %}
