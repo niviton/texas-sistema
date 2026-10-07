@@ -2,6 +2,11 @@
 
 Escrito em linguagem simples, do mais recente para o mais antigo.
 
+## 07/10/2026 – 36 checklists de equipamentos importados
+
+- Importados os formulários TCB-OTB 38 a 49, 65 a 85, 114 e 127 (pré-uso, inspeção e manutenção). Cada família de equipamento tem um tipo de ativo único, compartilhado pelos três formulários.
+- Ficam pendentes os formulários com layout diferente (TCB-OTB-02 a 06, 24, 26, 28 e 53); veja `docs/checklists/catalogo.md`.
+
 ## 07/10/2026 · HTTPS na rede local e GPS ao entrar
 
 - Novos comandos `certificado_local` (gera certificado para o IP da oficina) e `runserver_https` (Polaris em `https://<ip>:8443`, sem depurador interativo).
