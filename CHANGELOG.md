@@ -2,6 +2,12 @@
 
 Escrito em linguagem simples, do mais recente para o mais antigo.
 
+## 07/10/2026 · Checklists num só lugar e novos papéis
+
+- Menu: **Checklists** virou um grupo com **Veículos** e **Pré-uso de equipamentos**; Veículos saiu do primeiro nível.
+- Tela inicial minimalista: dois botões (Vistoria de veículo, Pré-uso de equipamento), veículos para registrar chegada e os últimos registros.
+- Papéis reorganizados: **Administrador**, **Técnico** (faz checklists e vê o próprio histórico), **Logística** (faz checklists e vê o histórico de todos) e **Professor**. Quem era Vistoriador virou Técnico.
+
 ## 05/10/2026 · Início da plataforma de checklists
 
 - Novo módulo **Checklists**: um único motor executa qualquer formulário TCB-OTB.

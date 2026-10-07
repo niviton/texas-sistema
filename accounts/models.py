@@ -33,13 +33,14 @@ class UserManager(BaseUserManager):
 class User(AbstractUser):
     ROLE_ADMIN = 'admin'
     ROLE_PROFESSOR = 'professor'
-    ROLE_VISTORIADOR = 'vistoriador'
     ROLE_TECNICO = 'tecnico'
+    ROLE_LOGISTICA = 'logistica'
+    ROLE_VISTORIADOR = 'vistoriador'  # legado: migrado para Técnico (accounts 0004)
     ROLE_CHOICES = [
         (ROLE_ADMIN, 'Administrador'),
+        (ROLE_TECNICO, 'Técnico (executor de checklists)'),
+        (ROLE_LOGISTICA, 'Logística'),
         (ROLE_PROFESSOR, 'Professor'),
-        (ROLE_VISTORIADOR, 'Vistoriador (mobilização)'),
-        (ROLE_TECNICO, 'Técnico de campo (checklists)'),
     ]
 
     username = None
@@ -76,14 +77,18 @@ class User(AbstractUser):
         return self.role == self.ROLE_ADMIN
 
     @property
-    def pode_veiculos(self):
-        """Acesso ao módulo de veículos: administradores e vistoriadores."""
-        return self.role in (self.ROLE_ADMIN, self.ROLE_VISTORIADOR)
+    def pode_checklists(self):
+        """Faz checklists (vistoria de veículos e pré-uso de equipamentos)."""
+        return self.role in (self.ROLE_ADMIN, self.ROLE_TECNICO, self.ROLE_LOGISTICA)
 
     @property
-    def pode_checklists(self):
-        """Acesso ao módulo de checklists de equipamentos: administradores e técnicos de campo."""
-        return self.role in (self.ROLE_ADMIN, self.ROLE_TECNICO)
+    def pode_veiculos(self):
+        return self.pode_checklists
+
+    @property
+    def ve_todo_historico(self):
+        """Administrador e Logística veem o histórico de todos; o Técnico, só o próprio."""
+        return self.role in (self.ROLE_ADMIN, self.ROLE_LOGISTICA)
 
     @property
     def role_label(self):

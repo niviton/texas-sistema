@@ -108,9 +108,9 @@ class Supervisor(models.Model):
 
 class Motorista(models.Model):
     usuario = models.OneToOneField(
-        settings.AUTH_USER_MODEL, verbose_name='login do vistoriador', on_delete=models.SET_NULL,
+        settings.AUTH_USER_MODEL, verbose_name='login do técnico', on_delete=models.SET_NULL,
         null=True, blank=True, related_name='motorista',
-        help_text='Quando o vistoriador faz a vistoria, ele mesmo é o motorista.',
+        help_text='Quando essa pessoa faz a vistoria, ela mesma é o motorista.',
     )
     name = models.CharField('nome', max_length=150)
     email = models.EmailField('e-mail', blank=True)

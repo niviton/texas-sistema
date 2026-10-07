@@ -12,6 +12,17 @@
   .nav-link.active { background:rgba(245,166,35,0.14); border-left-color:#f5a623; }
   .nav-link.active .dot { background:#f5a623; }
   .nav-link.active span { font-weight:700; color:#fff; }
+  .nav-group summary { list-style:none; cursor:pointer; }
+  .nav-group summary::-webkit-details-marker { display:none; }
+  .nav-group summary .chev { margin-left:auto; color:rgba(255,255,255,0.5); transition:transform .15s; }
+  .nav-group[open] summary .chev { transform:rotate(180deg); }
+  .nav-group summary.in span { color:#fff; font-weight:700; }
+  .nav-group summary.in .dot { background:#f5a623; }
+  .nav-group summary:focus-visible { outline:3px solid #ffc000; outline-offset:-3px; }
+  .nav-sub { display:flex; flex-direction:column; gap:2px; margin:2px 0 6px 21px; padding-left:12px; border-left:1px solid rgba(255,255,255,0.14); }
+  .nav-sublink { display:block; padding:9px 12px; border-radius:8px; text-decoration:none; font-size:13.5px; font-weight:500; color:rgba(255,255,255,0.62); }
+  .nav-sublink:hover { color:#fff; background:rgba(255,255,255,0.05); }
+  .nav-sublink.active { color:#fff; font-weight:700; background:rgba(245,166,35,0.14); box-shadow:inset 3px 0 0 #f5a623; }
   .shell-main { flex:1; display:flex; flex-direction:column; min-width:0; }
   .shell-top { height:64px; background:#fff; border-bottom:1px solid #e6e9ec; display:flex; align-items:center; justify-content:space-between; padding:0 32px; gap:8px; }
   .shell-content { flex:1; overflow:auto; padding:32px; }
@@ -67,10 +78,16 @@
       <a href="{% url 'cert_prof:folders' %}" class="nav-link {% if active_nav == 'certificados_prof' %}active{% endif %}"><div class="dot"></div><span>Certificados</span></a>
       {% endif %}
       {% if request.user.pode_checklists %}
-      <a href="{% url 'checklists:executar' %}" class="nav-link {% if active_nav == 'checklists' %}active{% endif %}"><div class="dot"></div><span>Checklists</span></a>
-      {% endif %}
-      {% if request.user.pode_veiculos %}
-      <a href="{% url 'veiculos:painel' %}" class="nav-link {% if active_nav == 'veiculos' %}active{% endif %}"><div class="dot"></div><span>Veículos</span></a>
+      <details class="nav-group" {% if active_nav == 'veiculos' or active_nav == 'checklists' %}open{% endif %}>
+        <summary class="nav-link {% if active_nav == 'veiculos' or active_nav == 'checklists' %}in{% endif %}">
+          <div class="dot"></div><span>Checklists</span>
+          <svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+        </summary>
+        <div class="nav-sub">
+          <a href="{% url 'veiculos:painel' %}" class="nav-sublink {% if active_nav == 'veiculos' %}active{% endif %}">Veículos</a>
+          <a href="{% url 'checklists:executar' %}" class="nav-sublink {% if active_nav == 'checklists' %}active{% endif %}">Pré-uso de equipamentos</a>
+        </div>
+      </details>
       {% endif %}
     </div>
     {% if request.user.role == 'admin' %}

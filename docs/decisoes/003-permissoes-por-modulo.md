@@ -4,7 +4,7 @@
 
 ## Contexto
 
-Hoje cada pessoa tem um único papel (Administrador, Professor, Vistoriador, Técnico de campo). Com mais módulos, uma mesma pessoa pode precisar executar checklists de equipamentos e também vistorias de veículo, ou supervisionar só um módulo.
+Hoje cada pessoa tem um único papel (Administrador, Técnico, Logística, Professor). Com mais módulos, uma mesma pessoa pode precisar executar checklists de equipamentos e também vistorias de veículo, ou supervisionar só um módulo.
 
 ## Decisão
 
@@ -21,4 +21,4 @@ Opcionalmente, o executor pode ser restrito a alguns tipos de ativo.
 
 ## Situação atual
 
-Enquanto a mudança não é feita, cada papel equivale a um nível fixo: Vistoriador = Executor de Veículos; Técnico de campo = Executor de Checklists; Professor = Executor de Certificados. A migração preserva esses acessos.
+Enquanto a mudança não é feita, cada papel equivale a um nível fixo: Técnico = Executor de Checklists (veículos e equipamentos); Logística = Supervisor de Checklists e Termos; Professor = Executor de Certificados. A migração preserva esses acessos.

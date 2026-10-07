@@ -23,7 +23,7 @@ class MotoristaForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         from accounts.models import User
-        self.fields['usuario'].queryset = User.objects.filter(role=User.ROLE_VISTORIADOR).order_by('full_name')
+        self.fields['usuario'].queryset = User.objects.filter(role__in=[User.ROLE_TECNICO, User.ROLE_LOGISTICA]).order_by('full_name')
 
 
 class VeiculoForm(forms.ModelForm):
@@ -76,7 +76,7 @@ class InspecaoForm(forms.Form):
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.user = user
-        # O vistoriador é o próprio motorista: não escolhe ninguém.
+        # Quem faz a vistoria (Técnico ou Logística) é o próprio motorista: não escolhe ninguém.
         if user is not None and not user.is_admin_geral:
             del self.fields['motorista']
 

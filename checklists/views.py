@@ -44,14 +44,14 @@ def _ctx(request, active_tab, **extra):
     if active_tab in CONFIG_KEYS:
         base = {'active_nav': 'configuracoes', 'config_mode': True, 'config_tabs': CONFIG_TABS}
     else:
-        base = {'active_nav': 'checklists', 'mod_tabs': TABS_ADMIN if is_admin else TABS_TECNICO}
-    return {**base, 'active_tab': active_tab, 'is_admin': is_admin, **extra}
+        base = {'active_nav': 'checklists', 'mod_tabs': TABS_ADMIN if request.user.ve_todo_historico else TABS_TECNICO}
+    return {**base, 'active_tab': active_tab, 'is_admin': is_admin, 've_tudo': request.user.ve_todo_historico, **extra}
 
 
 def _execucoes_visiveis(user):
-    """Administrador vê todas; o técnico, só as próprias."""
+    """Administrador e Logística veem todas; o Técnico, só as próprias."""
     qs = Execucao.objects.select_related('revisao__modelo', 'ativo__tipo')
-    if not user.is_admin_geral:
+    if not user.ve_todo_historico:
         qs = qs.filter(executor=user)
     return qs
 

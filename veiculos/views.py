@@ -38,6 +38,11 @@ TABS_VISTORIADOR = [
     ('inspecoes', 'Minhas vistorias', 'veiculos:inspecoes'),
     ('usos', 'Meus usos', 'veiculos:usos'),
 ]
+TABS_LOGISTICA = [
+    ('nova', 'Nova vistoria', 'veiculos:inspecao_nova'),
+    ('inspecoes', 'Vistorias', 'veiculos:inspecoes'),
+    ('usos', 'Uso da frota', 'veiculos:usos'),
+]
 
 
 def _ctx(request, active_tab, **extra):
@@ -45,21 +50,27 @@ def _ctx(request, active_tab, **extra):
     if active_tab in CONFIG_KEYS:
         base = {'active_nav': 'configuracoes', 'config_mode': True, 'config_tabs': CONFIG_TABS}
     else:
-        base = {'active_nav': 'veiculos', 'veic_tabs': TABS_ADMIN if is_admin else TABS_VISTORIADOR}
-    return {**base, 'active_tab': active_tab, 'is_admin': is_admin, **extra}
+        if is_admin:
+            tabs = TABS_ADMIN
+        elif request.user.ve_todo_historico:
+            tabs = TABS_LOGISTICA
+        else:
+            tabs = TABS_VISTORIADOR
+        base = {'active_nav': 'veiculos', 'veic_tabs': tabs}
+    return {**base, 'active_tab': active_tab, 'is_admin': is_admin, 've_tudo': request.user.ve_todo_historico, **extra}
 
 
 def _inspecoes_visiveis(user):
-    """Administrador vê todas; o vistoriador, só as próprias."""
+    """Administrador e Logística veem todas; o Técnico, só as próprias."""
     qs = Inspecao.objects.all()
-    if not user.is_admin_geral:
+    if not user.ve_todo_historico:
         qs = qs.filter(Q(created_by=user) | Q(motorista__usuario=user))
     return qs
 
 
 def _usos_visiveis(user):
     qs = Uso.objects.all()
-    if not user.is_admin_geral:
+    if not user.ve_todo_historico:
         qs = qs.filter(Q(motorista__usuario=user) | Q(inspecao_saida__created_by=user))
     return qs
 

@@ -173,6 +173,17 @@ class ChecklistsTests(TestCase):
         self.client.force_login(self.admin)
         self.assertEqual(self.client.get(reverse('checklists:execucao', args=[dele.pk])).status_code, 200)
 
+    def test_logistica_ve_execucoes_de_todos(self):
+        self._post(user=self.outro)
+        ex = Execucao.objects.get()
+        log = User.objects.create_user(email='log@x.com', password='x', full_name='Lara', is_approved=True, role=User.ROLE_LOGISTICA)
+        self.client.force_login(log)
+        r = self.client.get(reverse('checklists:historico'))
+        self.assertContains(r, 'GD-4471')
+        self.assertContains(r, 'Outro Técnico')
+        self.assertEqual(self.client.get(reverse('checklists:execucao_pdf', args=[ex.pk])).status_code, 200)
+        self.assertEqual(self.client.get(reverse('checklists:modelos')).status_code, 403)
+
     # ---- Controle de revisão ----
     def test_revisao_usada_fica_bloqueada_e_nova_revisao_preserva_historico(self):
         self._post()
@@ -214,18 +225,18 @@ class ChecklistsTests(TestCase):
 
     # ---- Permissões ----
     def test_permissoes(self):
-        vist = User.objects.create_user(email='v@x.com', password='x', full_name='V', is_approved=True, role=User.ROLE_VISTORIADOR)
         prof = User.objects.create_user(email='p@x.com', password='x', full_name='P', is_approved=True)
-        for u in (vist, prof):
-            self.client.force_login(u)
-            self.assertEqual(self.client.get(reverse('checklists:executar')).status_code, 403)
+        self.client.force_login(prof)
+        self.assertEqual(self.client.get(reverse('checklists:executar')).status_code, 403)
+        self.assertEqual(self.client.get(reverse('veiculos:inspecao_nova')).status_code, 403)
         self.client.force_login(self.tec)
         self.assertContains(self.client.get(reverse('checklists:executar')), 'Gerador 01')
         for name in ['tipos', 'ativos', 'modelos']:
             self.assertEqual(self.client.get(reverse(f'checklists:{name}')).status_code, 403, name)
         home = self.client.get(reverse('dashboard:home'))
-        self.assertContains(home, 'Fazer um checklist')
-        self.assertNotContains(home, 'Veículos')
+        self.assertContains(home, 'Pré-uso de equipamento')
+        self.assertContains(home, 'Vistoria de veículo')
+        self.assertNotContains(home, 'Configurações')
         self.client.force_login(self.admin)
         for name in ['tipos', 'ativos', 'modelos']:
             self.assertContains(self.client.get(reverse(f'checklists:{name}')), 'Modelos de checklist')

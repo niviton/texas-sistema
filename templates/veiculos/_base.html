@@ -59,8 +59,8 @@
 <p style="font-size:14px; color:#6b7480; margin:0 0 24px;">Cadastros e permissões, feitos pelo administrador geral.</p>
 {% include "dashboard/_config_tabs.html" %}
 {% else %}
-<h1 style="font-family:'Sora',sans-serif; font-size:24px; font-weight:800; margin:0 0 4px; color:#0d1b2e;">Veículos</h1>
-<p style="font-size:14px; color:#6b7480; margin:0 0 24px;">{% if is_admin %}Vistorias, uso da frota e vencimentos.{% else %}Suas vistorias e os veículos que você usou.{% endif %}</p>
+<h1 style="font-family:'Sora',sans-serif; font-size:24px; font-weight:800; margin:0 0 4px; color:#0d1b2e;">Vistoria de veículos</h1>
+<p style="font-size:14px; color:#6b7480; margin:0 0 24px;">{% if is_admin %}Vistorias, uso da frota e vencimentos.{% elif ve_tudo %}Vistorias e uso da frota de toda a equipe.{% else %}Suas vistorias e os veículos que você usou.{% endif %}</p>
 <nav class="v-tabs">
   {% for key, label, url_name in veic_tabs %}
     <a href="{% url url_name %}" class="{% if active_tab == key %}on{% endif %}">{{ label }}</a>

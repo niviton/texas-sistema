@@ -44,7 +44,7 @@ class FluxoInspecaoTests(TestCase):
     def setUp(self):
         self.admin = User.objects.create_superuser(email='admin@x.com', password='x', full_name='Admin Teste')
         self.vist = User.objects.create_user(
-            email='vist@x.com', password='x', full_name='Vist Oriador', is_approved=True, role=User.ROLE_VISTORIADOR,
+            email='vist@x.com', password='x', full_name='Vist Oriador', is_approved=True, role=User.ROLE_TECNICO,
         )
         self.prof = User.objects.create_user(email='prof@x.com', password='x', full_name='Prof', is_approved=True)
         self.mot = Motorista.objects.create(name='João Motorista', email='joao@x.com', usuario=self.vist)
@@ -171,7 +171,7 @@ class FluxoInspecaoTests(TestCase):
 
     def test_vistoriador_so_ve_o_proprio_historico(self):
         outro = User.objects.create_user(
-            email='outro@x.com', password='x', full_name='Outro Vist', is_approved=True, role=User.ROLE_VISTORIADOR,
+            email='outro@x.com', password='x', full_name='Outro Vist', is_approved=True, role=User.ROLE_TECNICO,
         )
         self.client.force_login(outro)
         self._post('saida', 1000)
@@ -188,6 +188,31 @@ class FluxoInspecaoTests(TestCase):
         # o administrador vê tudo
         self.client.force_login(self.admin)
         self.assertEqual(self.client.get(reverse('veiculos:inspecao_detalhe', args=[dele.pk])).status_code, 200)
+
+    def test_logistica_ve_todo_historico_sem_configuracoes(self):
+        self.client.force_login(self.vist)
+        self._post('saida', 1000)
+        insp = Inspecao.objects.get()
+        log = User.objects.create_user(email='log@x.com', password='x', full_name='Lara Logística', is_approved=True, role=User.ROLE_LOGISTICA)
+        self.client.force_login(log)
+        self.assertEqual(self.client.get(reverse('veiculos:inspecao_detalhe', args=[insp.pk])).status_code, 200)
+        self.assertContains(self.client.get(reverse('veiculos:usos')), 'João Motorista')
+        self.assertContains(self.client.get(reverse('veiculos:inspecoes')), 'ABC1D23')
+        home = self.client.get(reverse('dashboard:home'))
+        self.assertContains(home, 'Últimos registros')
+        self.assertContains(home, 'Registrar chegada')
+        self.assertNotContains(home, 'Configurações')
+        for name in ['veiculos', 'motoristas', 'supervisores', 'email']:
+            self.assertEqual(self.client.get(reverse(f'veiculos:{name}')).status_code, 403, name)
+        # Logística também faz vistoria em nome próprio
+        self.assertNotContains(self.client.get(reverse('veiculos:inspecao_nova')), 'name="motorista"')
+
+    def test_menu_checklists_agrupa_veiculos_e_pre_uso(self):
+        self.client.force_login(self.vist)
+        r = self.client.get(reverse('veiculos:inspecoes'))
+        self.assertContains(r, 'class="nav-group" open')
+        self.assertContains(r, 'Pré-uso de equipamentos')
+        self.assertContains(r, 'nav-sublink active">Veículos')
 
     def test_configuracoes_reunem_os_cadastros(self):
         self.client.force_login(self.admin)
@@ -271,7 +296,8 @@ class FluxoInspecaoTests(TestCase):
         self.client.force_login(self.vist)
         self.assertRedirects(self.client.get(reverse('veiculos:painel')), reverse('veiculos:inspecoes'))
         home = self.client.get(reverse('dashboard:home'))
-        self.assertContains(home, 'Fazer uma vistoria')
+        self.assertContains(home, 'Vistoria de veículo')
+        self.assertContains(home, 'Pré-uso de equipamento')
         self.assertNotContains(home, 'Certificados')
         self.assertNotContains(home, 'Configurações')
         form = self.client.get(reverse('veiculos:inspecao_nova'))

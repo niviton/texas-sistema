@@ -8,14 +8,14 @@
   </form>
   <div class="v-scroll">
   <table class="v-table v-stack">
-    <thead><tr><th>Data</th><th>Equipamento</th><th>Checklist</th>{% if is_admin %}<th>Técnico</th>{% endif %}<th>Resultado</th><th>E-mail</th><th></th></tr></thead>
+    <thead><tr><th>Data</th><th>Equipamento</th><th>Checklist</th>{% if ve_tudo %}<th>Técnico</th>{% endif %}<th>Resultado</th><th>E-mail</th><th></th></tr></thead>
     <tbody>
     {% for e in execucoes %}
       <tr>
         <td data-label="Data" style="white-space:nowrap;">{{ e.created_at|date:"d/m/Y H:i" }}</td>
         <td><b>{{ e.ativo.nome }}</b> <span style="color:#8b95a1; font-size:12px;">{{ e.ativo.identificacao }}</span></td>
         <td data-label="Checklist">{{ e.revisao.modelo.codigo }} <span style="color:#8b95a1; font-size:12px;">rev. {{ e.revisao.rotulo }}</span></td>
-        {% if is_admin %}<td data-label="Técnico">{{ e.executor_nome }}</td>{% endif %}
+        {% if ve_tudo %}<td data-label="Técnico">{{ e.executor_nome }}</td>{% endif %}
         <td data-label="Resultado">{% if e.tem_problema %}<span class="v-badge b-nok">Não conforme</span>{% else %}<span class="v-badge b-ok">Conforme</span>{% endif %}</td>
         <td data-label="E-mail">{% if e.email_enviado %}<span class="v-badge b-ok">Enviado</span>{% else %}<span class="v-badge b-mute">Não</span>{% endif %}</td>
         <td class="v-actions" style="text-align:right;"><a class="v-btn-sm blue" href="{% url 'checklists:execucao' e.pk %}">Ver</a></td>
