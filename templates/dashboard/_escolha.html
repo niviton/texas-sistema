@@ -14,7 +14,7 @@ com o caminho já escolhido no topo. Recebe `e` = {passos, pergunta, ajuda, opco
   .esc-op .txt { flex:1; min-width:0; }
   .esc-op b { display:block; font-size:15.5px; font-weight:800; color:#0d1b2e; }
   .esc-op small { display:block; font-size:12.5px; color:#7b8591; margin-top:3px; }
-  .esc-op .selo { flex-shrink:0; font-size:11.5px; font-weight:800; padding:4px 9px; border-radius:100px; background:#fff4d6; color:#8a5a00; }
+  .esc-op .selo { display:inline-block; margin-top:7px; font-size:11.5px; font-weight:800; padding:4px 9px; border-radius:100px; background:#fff4d6; color:#8a5a00; }
   .esc-op .seta { flex-shrink:0; color:#365f91; }
   .esc-op.off { opacity:.5; pointer-events:none; background:#fafbfc; }
   @media (max-width:600px) { .esc-lista { grid-template-columns:1fr; } .esc-op { min-height:68px; padding:16px; } }
@@ -35,8 +35,7 @@ com o caminho já escolhido no topo. Recebe `e` = {passos, pergunta, ajuda, opco
 <div class="esc-lista">
   {% for op in e.opcoes %}
     <a class="esc-op{% if op.off %} off{% endif %}" href="{{ op.url }}"{% if op.off %} aria-disabled="true" tabindex="-1"{% endif %}>
-      <div class="txt"><b>{{ op.titulo }}</b>{% if op.detalhe %}<small>{{ op.detalhe }}</small>{% endif %}</div>
-      {% if op.selo %}<span class="selo">{{ op.selo }}</span>{% endif %}
+      <div class="txt"><b>{{ op.titulo }}</b>{% if op.detalhe %}<small>{{ op.detalhe }}</small>{% endif %}{% if op.selo %}<span class="selo">{{ op.selo }}</span>{% endif %}</div>
       <svg class="seta" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
     </a>
   {% empty %}

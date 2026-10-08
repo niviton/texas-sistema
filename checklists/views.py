@@ -115,10 +115,10 @@ def executar_view(request):
         }
         return render(request, 'checklists/executar.html', _ctx(request, 'executar', escolha=escolha))
 
-    tipos_com_equip = set(_ativos_executaveis().values_list('tipo_id', flat=True))
+    tipos_ativos = set(TipoAtivo.objects.filter(is_active=True).values_list('pk', flat=True))
     opcoes = []
     for valor, rotulo in FINALIDADE_CHOICES:
-        tipos = set(_modelos_executaveis().filter(finalidade=valor).values_list('tipos_ativo', flat=True)) & tipos_com_equip
+        tipos = set(_modelos_executaveis().filter(finalidade=valor).values_list('tipos_ativo', flat=True)) & tipos_ativos
         if tipos:
             opcoes.append({'titulo': rotulo, 'detalhe': f'{FINALIDADE_DESCRICAO[valor]} · {_plural(len(tipos), "tipo", "tipos")} de equipamento',
                            'url': reverse('checklists:passo_tipo', args=[valor])})
@@ -137,13 +137,23 @@ def passo_tipo_view(request, finalidade):
     tipo_ids = _modelos_executaveis().filter(finalidade=finalidade).values_list('tipos_ativo', flat=True)
     tipos = (TipoAtivo.objects.filter(pk__in=tipo_ids, is_active=True)
              .annotate(n=Count('ativos', filter=Q(ativos__is_active=True) & ~Q(ativos__status=STATUS_INATIVO)))
-             .filter(n__gt=0).order_by('nome'))
+             .order_by('-n', 'nome'))
+    admin = request.user.is_admin_geral
+    opcoes = []
+    for t in tipos:
+        if t.n:
+            opcoes.append({'titulo': t.nome, 'detalhe': _plural(t.n, 'equipamento', 'equipamentos'),
+                           'url': reverse('checklists:passo_ativo', args=[finalidade, t.pk])})
+        elif admin:  # o administrador já cai no cadastro com o tipo escolhido
+            opcoes.append({'titulo': t.nome, 'detalhe': 'Nenhum equipamento cadastrado', 'selo': 'Cadastrar',
+                           'url': reverse('checklists:ativos') + f'?tipo={t.pk}'})
+        else:
+            opcoes.append({'titulo': t.nome, 'detalhe': 'Nenhum equipamento cadastrado', 'off': True, 'url': '#'})
     escolha = {
         'passos': _passos(finalidade), 'pergunta': 'Qual equipamento?',
         'ajuda': f'Checklist de {_FINALIDADES[finalidade].lower()}. Escolha o tipo de equipamento.',
-        'opcoes': [{'titulo': t.nome, 'detalhe': _plural(t.n, 'equipamento', 'equipamentos'),
-                    'url': reverse('checklists:passo_ativo', args=[finalidade, t.pk])} for t in tipos],
-        'vazio': 'Nenhum equipamento cadastrado para este checklist.',
+        'opcoes': opcoes,
+        'vazio': 'Nenhum tipo de equipamento com este checklist.',
     }
     return render(request, 'checklists/executar.html', _ctx(request, 'executar', escolha=escolha))
 

@@ -378,7 +378,8 @@ def _crud(request, model, form_class, template, tab, redirect_name, success_msg,
             return redirect(redirect_name)
         editing = instance
     else:
-        form = form_class(instance=editing)
+        inicial = None if editing else {k: v for k, v in request.GET.items() if k in form_class.base_fields}
+        form = form_class(instance=editing, initial=inicial)
     show_archived = request.GET.get('arquivados') == '1'
     objects = model.objects.all() if show_archived else model.objects.filter(is_active=True)
     return render(request, template, _ctx(

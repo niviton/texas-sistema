@@ -114,6 +114,16 @@ class ChecklistsTests(TestCase):
         r = self.client.get(reverse('checklists:execucao_nova', args=[self.ativo.pk, self.modelo.pk]))
         self.assertContains(r, 'class="passos"')
         self.assertContains(r, 'Pré-uso')
+        # tipo sem equipamento aparece bloqueado para o técnico e leva ao cadastro para o administrador
+        vazio = TipoAtivo.objects.create(nome='Talha vazia')
+        self.modelo.tipos_ativo.add(vazio)
+        r = self.client.get(passo_tipo)
+        self.assertContains(r, 'Talha vazia')
+        self.assertContains(r, 'esc-op off')
+        self.client.force_login(self.admin)
+        r = self.client.get(passo_tipo)
+        self.assertContains(r, reverse('checklists:ativos') + f'?tipo={vazio.pk}')
+        self.assertContains(self.client.get(reverse('checklists:ativos'), {'tipo': vazio.pk}), f'<option value="{vazio.pk}" selected')
         # finalidade sem checklist volta ao início
         self.assertRedirects(self.client.get(reverse('checklists:passo_ativo', args=['manutencao', self.tipo.pk])),
                              reverse('checklists:executar'))
