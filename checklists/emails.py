@@ -20,7 +20,7 @@ def titulo_comprovante(execucao):
 def enviar_execucao(execucao):
     titulo = titulo_comprovante(execucao)
     enviado = _send(
-        titulo, 'checklists/email/comprovante.html', {'titulo': titulo}, to=supervisor_emails(),
+        titulo, 'checklists/email/comprovante.html', {'titulo': titulo}, to=supervisor_emails('checklists', execucao.ativo.tipo),
         attachments=[(pdf_filename(execucao), render_execucao_pdf(execucao), 'application/pdf')],
     )
     if enviado:

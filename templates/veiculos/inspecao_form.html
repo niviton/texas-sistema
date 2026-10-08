@@ -1,4 +1,5 @@
 {% extends "veiculos/_base.html" %}
+{% load static %}
 {% block v_style %}
   .insp-grid { display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1.25fr); gap:24px; align-items:start; }
   .insp-col { display:flex; flex-direction:column; gap:24px; min-width:0; }
@@ -250,6 +251,7 @@
 </form>
 
 {{ veiculos_info|json_script:"veiculos-info" }}
+<script src="{% static 'js/polaris-campo.js' %}"></script>
 <script>
 (function () {
   const info = JSON.parse(document.getElementById('veiculos-info').textContent);
@@ -329,32 +331,8 @@
   refresh();
   renderManut();
 
-  // ---------- Fotos ----------
-  // Reduz a foto no próprio celular antes de enviar (upload bem mais rápido no 4G).
-  function reduzir(file, max = 1600) {
-    return new Promise((resolve) => {
-      const url = URL.createObjectURL(file);
-      const img = new Image();
-      img.onload = () => {
-        const r = Math.min(1, max / Math.max(img.width, img.height));
-        const c = document.createElement('canvas');
-        c.width = Math.round(img.width * r); c.height = Math.round(img.height * r);
-        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-        URL.revokeObjectURL(url);
-        c.toBlob((b) => resolve(b ? new File([b], (file.name || 'foto').replace(/\.\w+$/, '') + '_t' + (file.lastModified || Date.now()) + '.jpg', { type: 'image/jpeg' }) : file), 'image/jpeg', 0.82);
-      };
-      img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
-      img.src = url;
-    });
-  }
-  async function trocarArquivos(input, files) {
-    try {
-      const dt = new DataTransfer();
-      for (const f of files) dt.items.add(await reduzir(f));
-      input.files = dt.files;
-    } catch (e) { /* navegador antigo: envia o original, o servidor reduz */ }
-    return input.files;
-  }
+  // ---------- Fotos (reduzidas no celular: static/js/polaris-campo.js) ----------
+  const trocarArquivos = Polaris.trocarArquivos;
 
   const CHECK_SVG = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
   const slots = [...document.querySelectorAll('.foto-slot[data-key]')];
@@ -417,37 +395,12 @@
   }));
 
   // ---------- Assinatura com o dedo ----------
-  const canvas = $('sig-canvas'), box = $('sig-box'), ctx = canvas.getContext('2d');
-  let desenhando = false, assinado = false, ultimo = null;
-  function ajustarCanvas() {
-    const dpr = window.devicePixelRatio || 1, r = canvas.getBoundingClientRect();
-    const antes = assinado ? canvas.toDataURL() : null;
-    canvas.width = Math.round(r.width * dpr); canvas.height = Math.round(r.height * dpr);
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.lineWidth = 2.4; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#0d1b2e';
-    if (antes) { const im = new Image(); im.onload = () => ctx.drawImage(im, 0, 0, r.width, r.height); im.src = antes; }
-  }
-  const pos = (e) => { const r = canvas.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
-  canvas.addEventListener('pointerdown', (e) => {
-    e.preventDefault(); canvas.setPointerCapture(e.pointerId);
-    desenhando = true; ultimo = pos(e);
-    ctx.beginPath(); ctx.arc(ultimo.x, ultimo.y, 1.1, 0, Math.PI * 2); ctx.fillStyle = '#0d1b2e'; ctx.fill();
+  const box = $('sig-box');
+  const sig = Polaris.assinatura($('sig-canvas'), {
+    aoAssinar: () => { $('sig-hint').style.display = 'none'; box.classList.add('signed'); box.classList.remove('missing'); },
+    aoLimpar: () => { $('sig-hint').style.display = ''; box.classList.remove('signed'); },
   });
-  canvas.addEventListener('pointermove', (e) => {
-    if (!desenhando) return;
-    e.preventDefault();
-    const p = pos(e);
-    ctx.beginPath(); ctx.moveTo(ultimo.x, ultimo.y); ctx.lineTo(p.x, p.y); ctx.stroke();
-    ultimo = p;
-    if (!assinado) { assinado = true; $('sig-hint').style.display = 'none'; box.classList.add('signed'); box.classList.remove('missing'); }
-  });
-  ['pointerup', 'pointercancel', 'pointerleave'].forEach((ev) => canvas.addEventListener(ev, () => { desenhando = false; }));
-  $('sig-limpar').addEventListener('click', () => {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    assinado = false; $('sig-hint').style.display = ''; box.classList.remove('signed');
-  });
-  window.addEventListener('resize', ajustarCanvas);
-  ajustarCanvas();
+  $('sig-limpar').addEventListener('click', sig.limpar);
 
   // ---------- Validação antes de enviar (evita perder fotos num erro do servidor) ----------
   $('insp-form').addEventListener('submit', (e) => {
@@ -471,14 +424,14 @@
     if (faltam.length) { erros.push('Faltam as fotos: ' + faltam.map((s) => s.dataset.label).join(', ') + '.'); marcar($('sec-fotos')); }
     const semObs = [...document.querySelectorAll('.ck-row.is-nok')].filter((r) => !r.querySelector('.ck-obs').value.trim());
     if (semObs.length) { erros.push('Descreva o problema nos itens marcados como "Não OK".'); marcar(semObs[0]); }
-    if (!assinado) { erros.push('Falta a assinatura do motorista.'); box.classList.add('missing'); marcar($('sec-assinatura')); }
+    if (!sig.assinado) { erros.push('Falta a assinatura do motorista.'); box.classList.add('missing'); marcar($('sec-assinatura')); }
     if (erros.length) {
       e.preventDefault();
       const div = $('erros'); div.innerHTML = erros.join('<br>'); div.style.display = '';
       (primeiro || div).scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
-    $('assinatura').value = canvas.toDataURL('image/png');
+    $('assinatura').value = sig.dataURL();
     const b = $('submit-btn'); b.disabled = true; b.textContent = 'Enviando fotos...';
   });
 })();

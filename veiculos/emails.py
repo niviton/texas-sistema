@@ -14,8 +14,8 @@ from .pdf import pdf_filename, render_inspecao_pdf
 logger = logging.getLogger(__name__)
 
 
-def supervisor_emails():
-    return list(Supervisor.objects.filter(is_active=True).values_list('email', flat=True))
+def supervisor_emails(modulo=None, tipo_ativo=None):
+    return Supervisor.emails(modulo, tipo_ativo)
 
 
 def _send(subject, template, context, to, cc=None, attachments=(), connection=None):
@@ -60,7 +60,7 @@ def enviar_inspecao(inspecao, connection=None):
     titulo = titulo_comprovante(inspecao)
     anexos = [(pdf_filename(inspecao), render_inspecao_pdf(inspecao), 'application/pdf')]
     enviado = _send(
-        titulo, 'veiculos/email/inspecao.html', {'titulo': titulo}, to=supervisor_emails(), attachments=anexos,
+        titulo, 'veiculos/email/inspecao.html', {'titulo': titulo}, to=supervisor_emails('veiculos'), attachments=anexos,
         connection=connection,
     )
     if enviado:
@@ -142,7 +142,7 @@ def enviar_alertas_veiculo(veiculo, connection=None):
         assunto = f'Aviso de manutenção: veículo placa {veiculo.placa}, {novos[0]["nome"].split(" (no km")[0]}'
     else:
         assunto = f'Aviso de manutenção: veículo placa {veiculo.placa}, {len(novos)} itens'
-    if _send(assunto, 'veiculos/email/aviso_veiculo.html', {'veiculo': veiculo, 'avisos': novos}, to=supervisor_emails(),
+    if _send(assunto, 'veiculos/email/aviso_veiculo.html', {'veiculo': veiculo, 'avisos': novos}, to=supervisor_emails('veiculos'),
              connection=connection):
         _marcar_enviado(*(n['chave'] for n in novos))
         return len(novos)
@@ -158,7 +158,7 @@ def enviar_alertas(dias_vencimento=30):
     Retorna (qtde_vencimentos, qtde_lembretes).
     """
     hoje = date.today()
-    supervisores = supervisor_emails()
+    supervisores = supervisor_emails('veiculos')
 
     novos_vencimentos = []
     for v in Veiculo.objects.filter(is_active=True).select_related('motorista_responsavel'):

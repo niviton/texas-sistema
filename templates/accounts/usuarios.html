@@ -3,7 +3,7 @@
 {% block shell_content %}
 <h1 style="font-family:'Sora',sans-serif; font-size:24px; font-weight:800; margin:0 0 4px; color:#0d1b2e;">Configurações</h1>
 <p style="font-size:14px; color:#6b7480; margin:0 0 24px;">Cadastros e permissões, feitos pelo administrador geral.</p>
-{% include "dashboard/_config_tabs.html" %}
+{% load polaris_nav %}{% config_nav active_tab %}
 <p style="font-size:13.5px; color:#556072; margin:-8px 0 18px; max-width:680px;">Defina o papel de cada pessoa: <b>Administrador</b> acessa tudo. <b>Técnico</b> faz os checklists (vistoria de veículos e pré-uso de equipamentos) e vê só o próprio histórico. <b>Logística</b> faz os checklists e vê o histórico de todos. <b>Professor</b> acessa só certificados. Só o administrador entra em Configurações.</p>
 
 <div style="display:flex; gap:32px; flex-wrap:wrap;">

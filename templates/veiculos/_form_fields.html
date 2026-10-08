@@ -1,6 +1,6 @@
 {% for field in form %}
   <div class="v-field">
-    {% if field.field.widget.input_type == 'checkbox' %}
+    {% if field.field.widget.input_type == 'checkbox' and not field.field.widget.allow_multiple_selected %}
       <label style="display:flex; gap:8px; align-items:center; font-size:13px; font-weight:600; color:#334051;">{{ field }} {{ field.label }}</label>
     {% else %}
       <label class="v-label" for="{{ field.id_for_label }}">{{ field.label }}{% if not field.field.required %} <span style="color:#9aa3ad; font-weight:500;">(opcional)</span>{% endif %}</label>

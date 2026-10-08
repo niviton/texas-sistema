@@ -165,11 +165,11 @@ def _finalizar(request, termo):
     termo.documento_revisao = doc.revisao
     termo.finalizado_em = timezone.now()
     termo.save(update_fields=['status', 'documento', 'documento_revisao', 'finalizado_em'])
-    if supervisor_emails():
+    if supervisor_emails('termos'):
         enviar_em_segundo_plano(termo.pk)
         messages.success(request, f'Termo nº {termo.numero} finalizado. O PDF está sendo enviado aos supervisores.')
     else:
-        messages.success(request, f'Termo nº {termo.numero} finalizado. (Nenhum supervisor cadastrado para receber o e-mail.)')
+        messages.success(request, f'Termo nº {termo.numero} finalizado. (Ninguém cadastrado para receber o e-mail dos termos.)')
     return redirect('termos:detalhe', pk=termo.pk)
 
 
@@ -198,7 +198,7 @@ def reenviar_view(request, pk):
             if enviar_termo(termo):
                 messages.success(request, 'Termo reenviado aos supervisores.')
             else:
-                messages.error(request, 'Nenhum supervisor ativo cadastrado.')
+                messages.error(request, 'Ninguém cadastrado para receber este e-mail (Configurações → Notificações).')
         except Exception as exc:
             messages.error(request, f'Falha ao enviar o e-mail: {exc}')
     return redirect('termos:detalhe', pk=pk)

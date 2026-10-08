@@ -20,7 +20,7 @@ def titulo_termo(termo):
 
 def enviar_termo(termo):
     titulo = titulo_termo(termo)
-    enviado = _send(titulo, 'termos/email/termo.html', {'titulo': titulo}, to=supervisor_emails(),
+    enviado = _send(titulo, 'termos/email/termo.html', {'titulo': titulo}, to=supervisor_emails('termos'),
                     attachments=[(pdf_filename(termo), render_termo_pdf(termo), 'application/pdf')])
     if enviado:
         termo.email_enviado = True

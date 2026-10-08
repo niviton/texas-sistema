@@ -164,11 +164,11 @@ def inspecao_nova_view(request):
             except ImagemInvalida as exc:
                 form.add_error(None, str(exc))
             else:
-                if supervisor_emails():
+                if supervisor_emails('veiculos'):
                     enviar_emails_da_vistoria_em_segundo_plano(inspecao.pk)
                     messages.success(request, 'Vistoria registrada. O comprovante está sendo enviado aos supervisores.')
                 else:
-                    messages.success(request, 'Vistoria registrada. (Nenhum supervisor cadastrado para receber o e-mail.)')
+                    messages.success(request, 'Vistoria registrada. (Ninguém cadastrado para receber o e-mail das vistorias.)')
                 return redirect('veiculos:inspecao_detalhe', pk=inspecao.pk)
     else:
         form = InspecaoForm(initial=initial, user=request.user)
@@ -299,7 +299,7 @@ def inspecao_reenviar_view(request, pk):
             if enviar_inspecao(inspecao):
                 messages.success(request, 'E-mail reenviado aos supervisores.')
             else:
-                messages.error(request, 'Nenhum supervisor ativo cadastrado.')
+                messages.error(request, 'Ninguém cadastrado para receber este e-mail (Configurações → Notificações).')
         except Exception as exc:
             messages.error(request, f'Falha ao enviar e-mail: {exc}')
     return redirect('veiculos:inspecao_detalhe', pk=pk)
@@ -405,7 +405,7 @@ def motorista_arquivar_view(request, pk):
 
 @admin_required
 def supervisores_view(request):
-    return _crud(request, Supervisor, SupervisorForm, 'veiculos/supervisores.html', 'supervisores', 'veiculos:supervisores', 'Supervisor salvo.')
+    return _crud(request, Supervisor, SupervisorForm, 'veiculos/supervisores.html', 'supervisores', 'veiculos:supervisores', 'Destinatário salvo.')
 
 
 @admin_required

@@ -3,7 +3,7 @@
 {% block modulo_header %}{% if config_mode %}
 <h1 style="font-family:'Sora',sans-serif; font-size:24px; font-weight:800; margin:0 0 4px; color:#0d1b2e;">Configurações</h1>
 <p style="font-size:14px; color:#6b7480; margin:0 0 24px;">Cadastros e permissões, feitos pelo administrador geral.</p>
-{% include "dashboard/_config_tabs.html" %}
+{% load polaris_nav %}{% config_nav active_tab %}
 {% else %}
 <h1 style="font-family:'Sora',sans-serif; font-size:24px; font-weight:800; margin:0 0 4px; color:#0d1b2e;">Termos de entrada e saída</h1>
 <p style="font-size:14px; color:#6b7480; margin:0 0 24px;">Material de cliente que entra na Texas ou é entregue, com fotos e as assinaturas da Texas e do cliente.</p>

@@ -91,19 +91,40 @@ COMBUSTIVEL_CHOICES = [
 ]
 
 
+MODULO_VEICULOS, MODULO_CHECKLISTS, MODULO_TERMOS = 'veiculos', 'checklists', 'termos'
+
+
 class Supervisor(models.Model):
+    """Destinatário dos e-mails do Polaris. Escolhe de quais módulos (e, nos checklists, de quais tipos) recebe."""
     name = models.CharField('nome', max_length=150)
     email = models.EmailField('e-mail', unique=True)
+    recebe_veiculos = models.BooleanField('vistorias de veículos e avisos da frota', default=True)
+    recebe_checklists = models.BooleanField('checklists de equipamentos', default=True)
+    tipos_ativo = models.ManyToManyField(
+        'checklists.TipoAtivo', verbose_name='só destes tipos de equipamento', blank=True, related_name='destinatarios',
+        help_text='Deixe tudo desmarcado para receber de todos os tipos.',
+    )
+    recebe_termos = models.BooleanField('termos de entrada e saída', default=True)
     is_active = models.BooleanField('ativo', default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        verbose_name = 'supervisor'
-        verbose_name_plural = 'supervisores'
+        verbose_name = 'destinatário'
+        verbose_name_plural = 'destinatários'
         ordering = ['name']
 
     def __str__(self):
         return f'{self.name} <{self.email}>'
+
+    @classmethod
+    def emails(cls, modulo=None, tipo_ativo=None):
+        """E-mails de quem recebe o módulo; nos checklists, filtra pelo tipo de equipamento."""
+        qs = cls.objects.filter(is_active=True)
+        if modulo:
+            qs = qs.filter(**{f'recebe_{modulo}': True})
+        if tipo_ativo is not None:
+            qs = qs.filter(models.Q(tipos_ativo=None) | models.Q(tipos_ativo=tipo_ativo))
+        return list(qs.values_list('email', flat=True).distinct())
 
 
 class Motorista(models.Model):

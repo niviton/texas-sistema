@@ -2,6 +2,12 @@
 
 Escrito em linguagem simples, do mais recente para o mais antigo.
 
+## 08/10/2026 – Configurações por assunto e e-mails por módulo
+
+- Configurações reorganizadas em quatro áreas que valem para todos os módulos: Pessoas, Equipamentos, Formulários e Notificações.
+- Supervisores viraram "destinatários": cada um escolhe se recebe vistorias de veículos, checklists e termos; nos checklists, pode limitar a alguns tipos de equipamento.
+- Fotos reduzidas no celular e assinatura com o dedo agora vêm de um único arquivo (`static/js/polaris-campo.js`), usado pela vistoria, pelo checklist e pelo termo.
+
 ## 07/10/2026 – 36 checklists de equipamentos importados
 
 - Importados os formulários TCB-OTB 38 a 49, 65 a 85, 114 e 127 (pré-uso, inspeção e manutenção). Cada família de equipamento tem um tipo de ativo único, compartilhado pelos três formulários.

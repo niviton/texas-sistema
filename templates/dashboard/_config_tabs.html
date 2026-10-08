@@ -1,6 +1,21 @@
-<nav class="cfg-tabs" style="display:flex; gap:8px; margin-bottom:26px; flex-wrap:wrap;">
-  {% for key, label, url_name in config_tabs %}
-    <a href="{% url url_name %}" style="padding:9px 18px; border-radius:100px; border:1.5px solid {% if active_tab == key %}#0d2440{% else %}#dfe3e8{% endif %}; text-decoration:none; font-family:'Manrope',sans-serif; font-weight:700; font-size:13.5px; white-space:nowrap;
-      background:{% if active_tab == key %}#0d2440{% else %}#fff{% endif %}; color:{% if active_tab == key %}#fff{% else %}#556072{% endif %};">{{ label }}</a>
+<nav class="cfg-areas" aria-label="Áreas das configurações">
+  {% for key, label, url_name in areas %}
+    <a href="{% url url_name %}" class="{% if key == area_ativa %}on{% endif %}">{{ label }}</a>
   {% endfor %}
 </nav>
+{% if abas|length > 1 %}
+<nav class="cfg-sub">
+  {% for key, label, url_name in abas %}
+    <a href="{% url url_name %}" class="{% if key == active_tab %}on{% endif %}">{{ label }}</a>
+  {% endfor %}
+</nav>
+{% endif %}
+<style>
+  .cfg-areas { display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; }
+  .cfg-areas a { padding:9px 18px; border-radius:100px; border:1.5px solid #dfe3e8; background:#fff; color:#556072; text-decoration:none; font-weight:700; font-size:13.5px; white-space:nowrap; }
+  .cfg-areas a.on { background:#0d2440; border-color:#0d2440; color:#fff; }
+  .cfg-sub { display:flex; gap:22px; margin-bottom:24px; border-bottom:1px solid #e4e8ed; flex-wrap:wrap; }
+  .cfg-sub a { padding:8px 2px 10px; margin-bottom:-1px; color:#6b7480; text-decoration:none; font-weight:700; font-size:13.5px; border-bottom:2.5px solid transparent; }
+  .cfg-sub a.on { color:#0d2440; border-bottom-color:#ffc000; }
+  @media (max-width:600px) { .cfg-areas { flex-wrap:nowrap; overflow-x:auto; padding-bottom:4px; } .cfg-sub { gap:16px; } }
+</style>

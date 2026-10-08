@@ -239,5 +239,5 @@ class ChecklistsTests(TestCase):
         self.assertNotContains(home, 'Configurações')
         self.client.force_login(self.admin)
         for name in ['tipos', 'ativos', 'modelos']:
-            self.assertContains(self.client.get(reverse(f'checklists:{name}')), 'Modelos de checklist')
+            self.assertContains(self.client.get(reverse(f'checklists:{name}')), 'Formulários')
         self.assertContains(self.client.get(reverse('checklists:modelo', args=[self.modelo.pk])), 'Óculos de segurança?')

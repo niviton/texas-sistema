@@ -11,7 +11,8 @@ _DATE = forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d')
 class SupervisorForm(forms.ModelForm):
     class Meta:
         model = Supervisor
-        fields = ['name', 'email']
+        fields = ['name', 'email', 'recebe_veiculos', 'recebe_termos', 'recebe_checklists', 'tipos_ativo']
+        widgets = {'tipos_ativo': forms.CheckboxSelectMultiple}
 
 
 class MotoristaForm(forms.ModelForm):

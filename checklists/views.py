@@ -151,11 +151,11 @@ def execucao_nova_view(request, ativo_pk, modelo_pk):
             except ImagemInvalida as exc:
                 erros.append(str(exc))
             else:
-                if supervisor_emails():
+                if supervisor_emails('checklists', ativo.tipo):
                     enviar_em_segundo_plano(execucao.pk)
                     messages.success(request, 'Checklist registrado. O comprovante está sendo enviado aos supervisores.')
                 else:
-                    messages.success(request, 'Checklist registrado. (Nenhum supervisor cadastrado para receber o e-mail.)')
+                    messages.success(request, 'Checklist registrado. (Ninguém cadastrado para receber o e-mail deste tipo de equipamento.)')
                 return redirect('checklists:execucao', pk=execucao.pk)
 
     secoes = [(s, list(s.itens.all())) for s in revisao.secoes.prefetch_related('itens')]
@@ -230,7 +230,7 @@ def execucao_reenviar_view(request, pk):
             if enviar_execucao(execucao):
                 messages.success(request, 'Comprovante reenviado aos supervisores.')
             else:
-                messages.error(request, 'Nenhum supervisor ativo cadastrado.')
+                messages.error(request, 'Ninguém cadastrado para receber este e-mail (Configurações → Notificações).')
         except Exception as exc:
             messages.error(request, f'Falha ao enviar o e-mail: {exc}')
     return redirect('checklists:execucao', pk=pk)

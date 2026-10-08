@@ -1,4 +1,5 @@
 {% extends "checklists/_base.html" %}
+{% load static %}
 {% block v_style %}
   .exec-grid { display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1.35fr); gap:24px; align-items:start; }
   .exec-col { display:flex; flex-direction:column; gap:24px; min-width:0; }
@@ -169,6 +170,7 @@
 </form>
 
 {{ valores|json_script:"valores" }}
+<script src="{% static 'js/polaris-campo.js' %}"></script>
 <script>
 (function () {
   const $ = (id) => document.getElementById(id);
@@ -204,25 +206,8 @@
     range.addEventListener('input', () => { hidden.value = range.value; box.classList.remove('unset', 'missing'); box.closest('.it').classList.remove('falta'); pintar(); });
   });
 
-  // ---------- Fotos (reduzidas no próprio celular antes de enviar) ----------
-  function reduzir(file, max = 1600) {
-    return new Promise((resolve) => {
-      const url = URL.createObjectURL(file), img = new Image();
-      img.onload = () => {
-        const r = Math.min(1, max / Math.max(img.width, img.height)), c = document.createElement('canvas');
-        c.width = Math.round(img.width * r); c.height = Math.round(img.height * r);
-        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-        URL.revokeObjectURL(url);
-        c.toBlob((b) => resolve(b ? new File([b], (file.name || 'foto').replace(/\.\w+$/, '') + '_t' + (file.lastModified || Date.now()) + '.jpg', { type: 'image/jpeg' }) : file), 'image/jpeg', 0.82);
-      };
-      img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
-      img.src = url;
-    });
-  }
-  async function trocar(input, files) {
-    try { const dt = new DataTransfer(); for (const f of files) dt.items.add(await reduzir(f)); input.files = dt.files; } catch (e) { /* navegador antigo: o servidor reduz */ }
-    return input.files;
-  }
+  // ---------- Fotos (reduzidas no celular: static/js/polaris-campo.js) ----------
+  const trocar = Polaris.trocarArquivos;
   const fotos = $('fotos');
   fotos.addEventListener('change', async () => {
     const box = $('thumbs'); box.innerHTML = '';
@@ -245,27 +230,12 @@
   });
 
   // ---------- Assinatura com o dedo ----------
-  const canvas = $('sig-canvas'), box = $('sig-box'), ctx = canvas.getContext('2d');
-  let desenhando = false, assinado = false, ultimo = null;
-  function ajustar() {
-    const dpr = window.devicePixelRatio || 1, r = canvas.getBoundingClientRect(), antes = assinado ? canvas.toDataURL() : null;
-    canvas.width = Math.round(r.width * dpr); canvas.height = Math.round(r.height * dpr);
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.lineWidth = 2.4; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#0d1b2e';
-    if (antes) { const im = new Image(); im.onload = () => ctx.drawImage(im, 0, 0, r.width, r.height); im.src = antes; }
-  }
-  const pos = (e) => { const r = canvas.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
-  canvas.addEventListener('pointerdown', (e) => { e.preventDefault(); canvas.setPointerCapture(e.pointerId); desenhando = true; ultimo = pos(e); });
-  canvas.addEventListener('pointermove', (e) => {
-    if (!desenhando) return;
-    e.preventDefault();
-    const p = pos(e);
-    ctx.beginPath(); ctx.moveTo(ultimo.x, ultimo.y); ctx.lineTo(p.x, p.y); ctx.stroke(); ultimo = p;
-    if (!assinado) { assinado = true; $('sig-hint').hidden = true; box.classList.add('signed'); box.classList.remove('falta'); }
+  const box = $('sig-box');
+  const sig = Polaris.assinatura($('sig-canvas'), {
+    aoAssinar: () => { $('sig-hint').hidden = true; box.classList.add('signed'); box.classList.remove('falta'); },
+    aoLimpar: () => { $('sig-hint').hidden = false; box.classList.remove('signed'); },
   });
-  ['pointerup', 'pointercancel', 'pointerleave'].forEach((ev) => canvas.addEventListener(ev, () => { desenhando = false; }));
-  $('sig-limpar').addEventListener('click', () => { ctx.clearRect(0, 0, canvas.width, canvas.height); assinado = false; $('sig-hint').hidden = false; box.classList.remove('signed'); });
-  window.addEventListener('resize', ajustar);
-  ajustar();
+  $('sig-limpar').addEventListener('click', sig.limpar);
 
   // ---------- Conferência antes de enviar ----------
   $('exec-form').addEventListener('submit', (e) => {
@@ -288,7 +258,7 @@
       const foto = it.querySelector('.foto-it input');
       if (foto && !foto.files.length) { erros.push(`Falta a foto: ${nome}`); foto.closest('.foto-it').classList.add('falta'); marca(it); }
     });
-    if (!assinado) { erros.push('Falta a assinatura do técnico.'); box.classList.add('falta'); marca($('sec-assinatura')); }
+    if (!sig.assinado) { erros.push('Falta a assinatura do técnico.'); box.classList.add('falta'); marca($('sec-assinatura')); }
     if (erros.length) {
       e.preventDefault();
       const div = $('erros');
@@ -299,7 +269,7 @@
       (primeiro || div).scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
-    $('assinatura').value = canvas.toDataURL('image/png');
+    $('assinatura').value = sig.dataURL();
     const b = $('submit-btn'); b.disabled = true; b.textContent = 'Enviando...';
   });
 })();

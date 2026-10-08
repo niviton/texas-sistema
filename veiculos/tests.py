@@ -220,8 +220,10 @@ class FluxoInspecaoTests(TestCase):
             r = self.client.get(reverse(f'veiculos:{name}'))
             self.assertContains(r, '<h1', html=False)
             self.assertContains(r, 'Configurações')
-            self.assertContains(r, 'Usuários')
-        self.assertContains(self.client.get(reverse('accounts_admin:usuarios')), 'E-mails da frota')
+            for area in ['Pessoas', 'Equipamentos', 'Formulários', 'Notificações']:
+                self.assertContains(r, area)
+        self.assertContains(self.client.get(reverse('accounts_admin:usuarios')), 'Motoristas (CNH)')
+        self.assertContains(self.client.get(reverse('veiculos:email')), 'Quem recebe')
 
     def test_professor_nao_acessa_veiculos(self):
         self.client.force_login(self.prof)
@@ -345,3 +347,20 @@ class CarimboTests(TestCase):
         origem = _origem_do_arquivo(f'IMG_123_t{ts}.jpg')
         self.assertTrue((c.quando - origem).days >= 1)
         self.assertIsNone(_origem_do_arquivo('sem_data.jpg'))
+
+
+class DestinatariosTests(TestCase):
+    def test_cada_destinatario_recebe_so_o_que_escolheu(self):
+        from checklists.models import TipoAtivo
+        prensa = TipoAtivo.objects.create(nome='Prensa')
+        talha = TipoAtivo.objects.create(nome='Talha')
+        Supervisor.objects.create(name='Todos', email='todos@ex.com')
+        so_frota = Supervisor.objects.create(name='Frota', email='frota@ex.com', recebe_checklists=False, recebe_termos=False)
+        so_prensa = Supervisor.objects.create(name='Prensa', email='prensa@ex.com', recebe_veiculos=False, recebe_termos=False)
+        so_prensa.tipos_ativo.add(prensa)
+        Supervisor.objects.create(name='Arquivado', email='arq@ex.com', is_active=False)
+
+        self.assertCountEqual(Supervisor.emails('veiculos'), ['todos@ex.com', so_frota.email])
+        self.assertCountEqual(Supervisor.emails('termos'), ['todos@ex.com'])
+        self.assertCountEqual(Supervisor.emails('checklists', prensa), ['todos@ex.com', so_prensa.email])
+        self.assertCountEqual(Supervisor.emails('checklists', talha), ['todos@ex.com'])
