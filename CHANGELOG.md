@@ -2,6 +2,11 @@
 
 Escrito em linguagem simples, do mais recente para o mais antigo.
 
+## 08/10/2026 – Cadastro do equipamento na hora do checklist
+
+- Se o equipamento não está na lista, o técnico informa uma vez (ex.: "Gerador Toyama 1000 W", série e patrimônio opcionais) e já cai no checklist. Ele fica salvo e aparece nas próximas vezes; o mesmo nome não é cadastrado duas vezes.
+- Em Configurações → Equipamentos, esses cadastros aparecem marcados com quem cadastrou, para o administrador conferir e completar.
+
 ## 08/10/2026 – Todos os checklists TCB-OTB no sistema
 
 - O importador passou a ler os formatos antigos: Sim / Não, Conforme / Não conforme / Parcialmente / N/A, tabela única C / NC / NA, grade semanal e "Descrição | Verificação" (foto obrigatória e medições numéricas).

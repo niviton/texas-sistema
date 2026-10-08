@@ -114,15 +114,22 @@ class ChecklistsTests(TestCase):
         r = self.client.get(reverse('checklists:execucao_nova', args=[self.ativo.pk, self.modelo.pk]))
         self.assertContains(r, 'class="passos"')
         self.assertContains(r, 'Pré-uso')
-        # tipo sem equipamento aparece bloqueado para o técnico e leva ao cadastro para o administrador
-        vazio = TipoAtivo.objects.create(nome='Talha vazia')
+        # tipo sem equipamento: o técnico cadastra na hora e já cai no checklist; da segunda vez não duplica
+        vazio = TipoAtivo.objects.create(nome='Gerador portátil')
         self.modelo.tipos_ativo.add(vazio)
         r = self.client.get(passo_tipo)
-        self.assertContains(r, 'Talha vazia')
-        self.assertContains(r, 'esc-op off')
+        self.assertContains(r, 'Cadastrar na hora')
+        passo_vazio = reverse('checklists:passo_ativo', args=['pre_uso', vazio.pk])
+        self.assertContains(r, passo_vazio)
+        self.assertContains(self.client.get(passo_vazio), 'Salvar e fazer o checklist')
+        r = self.client.post(passo_vazio, {'nome': '  Gerador Toyama   1000 W ', 'identificacao': '', 'patrimonio': ''})
+        novo = Ativo.objects.get(tipo=vazio)
+        self.assertEqual((novo.nome, novo.cadastrado_por), ('Gerador Toyama 1000 W', self.tec))
+        self.assertRedirects(r, reverse('checklists:execucao_nova', args=[novo.pk, self.modelo.pk]), fetch_redirect_response=False)
+        self.client.post(passo_vazio, {'nome': 'gerador toyama 1000 w', 'identificacao': '', 'patrimonio': ''})
+        self.assertEqual(Ativo.objects.filter(tipo=vazio).count(), 1)
+        self.assertContains(self.client.get(passo_vazio), 'Gerador Toyama 1000 W')
         self.client.force_login(self.admin)
-        r = self.client.get(passo_tipo)
-        self.assertContains(r, reverse('checklists:ativos') + f'?tipo={vazio.pk}')
         self.assertContains(self.client.get(reverse('checklists:ativos'), {'tipo': vazio.pk}), f'<option value="{vazio.pk}" selected')
         # finalidade sem checklist volta ao início
         self.assertRedirects(self.client.get(reverse('checklists:passo_ativo', args=['manutencao', self.tipo.pk])),

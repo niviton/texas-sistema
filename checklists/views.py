@@ -18,7 +18,7 @@ from veiculos.imagens import ImagemInvalida, assinatura_de_dataurl, comprimir_fo
 from veiculos.views import _crud, _toggle_active
 
 from .emails import enviar_em_segundo_plano, enviar_execucao
-from .forms import AtivoForm, ImportarForm, ItemForm, ModeloForm, NovoModeloForm, RevisaoForm, SecaoForm, TipoAtivoForm
+from .forms import AtivoForm, AtivoRapidoForm, ImportarForm, ItemForm, ModeloForm, NovoModeloForm, RevisaoForm, SecaoForm, TipoAtivoForm
 from .importador import FormularioInvalido, importar
 from .models import (
     FINALIDADE_CHOICES, FINALIDADE_DESCRICAO, MEDIDOR_NENHUM, MEDIDOR_UNIDADE, OBS_CHOICES, OBS_SE_NEGATIVO, OBS_SEMPRE, TIPO_RESPOSTA_CHOICES, OPCOES_RESPOSTA, RESP_NUMERO, RESP_PORCENTAGEM,
@@ -138,17 +138,12 @@ def passo_tipo_view(request, finalidade):
     tipos = (TipoAtivo.objects.filter(pk__in=tipo_ids, is_active=True)
              .annotate(n=Count('ativos', filter=Q(ativos__is_active=True) & ~Q(ativos__status=STATUS_INATIVO)))
              .order_by('-n', 'nome'))
-    admin = request.user.is_admin_geral
-    opcoes = []
-    for t in tipos:
-        if t.n:
-            opcoes.append({'titulo': t.nome, 'detalhe': _plural(t.n, 'equipamento', 'equipamentos'),
-                           'url': reverse('checklists:passo_ativo', args=[finalidade, t.pk])})
-        elif admin:  # o administrador já cai no cadastro com o tipo escolhido
-            opcoes.append({'titulo': t.nome, 'detalhe': 'Nenhum equipamento cadastrado', 'selo': 'Cadastrar',
-                           'url': reverse('checklists:ativos') + f'?tipo={t.pk}'})
-        else:
-            opcoes.append({'titulo': t.nome, 'detalhe': 'Nenhum equipamento cadastrado', 'off': True, 'url': '#'})
+    opcoes = [
+        {'titulo': t.nome, 'url': reverse('checklists:passo_ativo', args=[finalidade, t.pk]),
+         'detalhe': _plural(t.n, 'equipamento', 'equipamentos') if t.n else 'Nenhum cadastrado ainda',
+         'selo': '' if t.n else 'Cadastrar na hora'}
+        for t in tipos
+    ]
     escolha = {
         'passos': _passos(finalidade), 'pergunta': 'Qual equipamento?',
         'ajuda': f'Checklist de {_FINALIDADES[finalidade].lower()}. Escolha o tipo de equipamento.',
@@ -165,25 +160,42 @@ def passo_ativo_view(request, finalidade, tipo_pk):
     modelos = list(_modelos_executaveis().filter(finalidade=finalidade, tipos_ativo=tipo).order_by('codigo'))
     if finalidade not in _FINALIDADES or not modelos:
         return redirect('checklists:executar')
-    ativos = _ativos_executaveis().filter(tipo=tipo).order_by('nome')
-    q = request.GET.get('q', '').strip()
-    if q:
-        ativos = ativos.filter(Q(nome__icontains=q) | Q(identificacao__icontains=q) | Q(patrimonio__icontains=q))
-
     def url(a):
         if len(modelos) == 1:
             return reverse('checklists:execucao_nova', args=[a.pk, modelos[0].pk])
         return reverse('checklists:escolher_modelo', args=[a.pk]) + f'?finalidade={finalidade}'
 
+    # Equipamento que ainda não está na lista: o técnico informa uma vez e ele fica salvo para os próximos.
+    novo_form = AtivoRapidoForm(request.POST or None, tipo=tipo)
+    if request.method == 'POST' and novo_form.is_valid():
+        dados = novo_form.cleaned_data
+        ativo = _ativos_executaveis().filter(tipo=tipo, nome__iexact=dados['nome'],
+                                             identificacao__iexact=dados['identificacao']).first()
+        if ativo is None:
+            ativo = novo_form.save(commit=False)
+            ativo.tipo, ativo.cadastrado_por = tipo, request.user
+            ativo.save()
+            messages.success(request, f'{ativo.nome} cadastrado. Da próxima vez ele já aparece na lista.')
+        return redirect(url(ativo))
+
+    ativos = _ativos_executaveis().filter(tipo=tipo).order_by('nome')
+    q = request.GET.get('q', '').strip()
+    if q:
+        ativos = ativos.filter(Q(nome__icontains=q) | Q(identificacao__icontains=q) | Q(patrimonio__icontains=q))
+    tem_algum = _ativos_executaveis().filter(tipo=tipo).exists()
+
     escolha = {
         'passos': _passos(finalidade, tipo), 'pergunta': f'Qual {tipo.nome.lower()}?',
-        'ajuda': 'Escolha a unidade em que você vai fazer o checklist.',
+        'ajuda': ('Escolha o equipamento em que você vai fazer o checklist.' if tem_algum else
+                  f'Ainda não há {tipo.nome.lower()} cadastrado. Informe o equipamento abaixo: ele fica salvo para os próximos checklists.'),
         'busca': {'q': q, 'placeholder': 'Buscar por nome, série ou patrimônio'} if q or ativos.count() > 8 else None,
         'opcoes': [{'titulo': a.nome, 'detalhe': _detalhe_ativo(a), 'url': url(a),
                     'selo': a.get_status_display() if a.status != 'disponivel' else ''} for a in ativos],
-        'vazio': 'Nenhum equipamento encontrado.',
+        'vazio': 'Nenhum equipamento encontrado com essa busca.' if q else '',
     }
-    return render(request, 'checklists/executar.html', _ctx(request, 'executar', escolha=escolha))
+    return render(request, 'checklists/executar.html', _ctx(
+        request, 'executar', escolha=escolha, novo_form=novo_form, novo_aberto=not tem_algum or novo_form.errors, tipo=tipo,
+    ))
 
 
 @checklists_required

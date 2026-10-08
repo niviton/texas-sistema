@@ -82,13 +82,17 @@ class TipoAtivo(models.Model):
 class Ativo(models.Model):
     tipo = models.ForeignKey(TipoAtivo, verbose_name='tipo', on_delete=models.PROTECT, related_name='ativos')
     nome = models.CharField('nome', max_length=150, help_text='Como o equipamento é conhecido, ex.: Bancada RAD 02.')
-    identificacao = models.CharField('identificação / nº de série', max_length=80)
+    identificacao = models.CharField('identificação / nº de série', max_length=80, blank=True)
     patrimonio = models.CharField('patrimônio', max_length=40, blank=True)
     marca = models.CharField('marca', max_length=80, blank=True)
     modelo = models.CharField('modelo', max_length=80, blank=True)
     status = models.CharField('status', max_length=12, choices=STATUS_ATIVO_CHOICES, default=STATUS_DISPONIVEL)
     medidor_atual = models.DecimalField('leitura atual do medidor', max_digits=10, decimal_places=1, null=True, blank=True)
     observacoes = models.TextField('observações', blank=True)
+    cadastrado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL, verbose_name='cadastrado por', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='+', help_text='Preenchido quando o técnico cadastra o equipamento na hora do checklist.',
+    )
     is_active = models.BooleanField('ativo', default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -98,7 +102,7 @@ class Ativo(models.Model):
         ordering = ['tipo__nome', 'nome']
 
     def __str__(self):
-        return f'{self.nome} ({self.identificacao})'
+        return f'{self.nome} ({self.identificacao})' if self.identificacao else self.nome
 
     def modelos_disponiveis(self):
         return Modelo.objects.filter(is_active=True, tipos_ativo=self.tipo).order_by('codigo')

@@ -22,6 +22,31 @@ class AtivoForm(forms.ModelForm):
         self.fields['tipo'].queryset = TipoAtivo.objects.filter(is_active=True)
 
 
+class AtivoRapidoForm(forms.ModelForm):
+    """Cadastro feito pelo técnico no caminho do checklist: só o essencial, o administrador completa depois."""
+    class Meta:
+        model = Ativo
+        fields = ['nome', 'identificacao', 'patrimonio']
+        labels = {'nome': 'Equipamento (marca, modelo, potência)', 'identificacao': 'Nº de série ou identificação'}
+        help_texts = {'nome': '', 'identificacao': 'Se tiver, ajuda a diferenciar equipamentos iguais.'}
+        widgets = {
+            'nome': forms.TextInput(attrs={'class': 'v-input', 'placeholder': 'Ex.: Gerador Toyama 1000 W', 'autocomplete': 'off'}),
+            'identificacao': forms.TextInput(attrs={'class': 'v-input'}),
+            'patrimonio': forms.TextInput(attrs={'class': 'v-input'}),
+        }
+
+    def __init__(self, *args, tipo=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.tipo = tipo
+        if tipo is not None:
+            self.fields['nome'].widget.attrs['placeholder'] = f'Ex.: {tipo.nome} marca modelo'
+            if tipo.nome.lower().startswith('gerador'):
+                self.fields['nome'].widget.attrs['placeholder'] = 'Ex.: Gerador Toyama 1000 W'
+
+    def clean_nome(self):
+        return ' '.join(self.cleaned_data['nome'].split())
+
+
 class ModeloForm(forms.ModelForm):
     class Meta:
         model = Modelo

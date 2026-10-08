@@ -1,4 +1,27 @@
 {% extends "checklists/_base.html" %}
+{% block v_style %}
+  .novo-eq { margin-top:18px; max-width:560px; border:1.5px dashed #c5ccd4; border-radius:14px; background:#fff; }
+  .novo-eq summary { list-style:none; cursor:pointer; padding:16px 18px; font-weight:800; font-size:14.5px; color:#365f91; display:flex; align-items:center; gap:10px; }
+  .novo-eq summary::-webkit-details-marker { display:none; }
+  .novo-eq summary:focus-visible { outline:3px solid #ffc000; outline-offset:2px; border-radius:12px; }
+  .novo-eq[open] { border-style:solid; border-color:#365f91; }
+  .novo-eq form { padding:0 18px 18px; }
+  .novo-eq .v-help { margin-top:4px; }
+  .novo-eq input[type=text] { width:100%; }
+{% endblock %}
 {% block veiculos_content %}
 {% include "dashboard/_escolha.html" with e=escolha %}
+{% if novo_form %}
+<details class="novo-eq"{% if novo_aberto %} open{% endif %}>
+  <summary>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+    {% if escolha.opcoes %}Não está na lista? Cadastrar novo equipamento{% else %}Cadastrar o equipamento{% endif %}
+  </summary>
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% include "veiculos/_form_fields.html" with form=novo_form %}
+    <button type="submit" class="v-btn" style="width:100%;">Salvar e fazer o checklist</button>
+  </form>
+</details>
+{% endif %}
 {% endblock %}
