@@ -67,6 +67,7 @@
   }
 {% endblock %}
 {% block veiculos_content %}
+{% include "dashboard/_passos.html" %}
 <form data-geo method="post" enctype="multipart/form-data" id="exec-form" novalidate>
   {% csrf_token %}
   <div id="erros" class="erro-box" {% if not erros %}hidden{% endif %}>

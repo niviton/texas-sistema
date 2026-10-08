@@ -6,6 +6,8 @@ app_name = 'checklists'
 
 urlpatterns = [
     path('', views.executar_view, name='executar'),
+    path('novo/<slug:finalidade>/', views.passo_tipo_view, name='passo_tipo'),
+    path('novo/<slug:finalidade>/<int:tipo_pk>/', views.passo_ativo_view, name='passo_ativo'),
     path('executar/<int:ativo_pk>/', views.escolher_modelo_view, name='escolher_modelo'),
     path('executar/<int:ativo_pk>/<int:modelo_pk>/', views.execucao_nova_view, name='execucao_nova'),
     path('historico/', views.historico_view, name='historico'),

@@ -2,6 +2,13 @@
 
 Escrito em linguagem simples, do mais recente para o mais antigo.
 
+## 08/10/2026 – Navegação em passos
+
+- Checklist de equipamento agora segue um caminho, uma pergunta por tela: **Pré-uso / Inspeção / Manutenção → tipo de equipamento → unidade (ex.: RAD 02) → formulário**. O caminho escolhido aparece no topo e cada passo é clicável para voltar.
+- Cada modelo de checklist tem uma "finalidade" (pré-uso, inspeção, manutenção, geral), preenchida sozinha a partir do título do TCB na importação.
+- A vistoria de veículos segue a mesma lógica: **Saída / Chegada / Rotina → veículo → formulário**. Na saída, veículos em uso aparecem bloqueados; na chegada, só aparecem os veículos que a pessoa está usando.
+- A tela de escolha em passos é uma só (`templates/dashboard/_escolha.html`) e serve a qualquer módulo novo.
+
 ## 08/10/2026 – Configurações por assunto e e-mails por módulo
 
 - Configurações reorganizadas em quatro áreas que valem para todos os módulos: Pessoas, Equipamentos, Formulários e Notificações.

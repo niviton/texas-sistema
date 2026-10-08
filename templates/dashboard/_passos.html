@@ -1,0 +1,16 @@
+{# Caminho já escolhido (ex.: Equipamentos › Pré-uso › Bancada de calibração › RAD 02). Recebe `passos` = [(rótulo, url ou None)]. #}
+{% if passos %}
+<style>
+  .passos { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin:0 0 18px; font-size:13px; font-weight:700; }
+  .passos a { color:#365f91; text-decoration:none; padding:5px 10px; border-radius:100px; background:#eaf0f7; }
+  .passos a:hover { background:#dce6f2; }
+  .passos span.atual { color:#0d1b2e; padding:5px 2px; }
+  .passos .sep { color:#a3acb7; font-weight:600; }
+</style>
+<nav class="passos" aria-label="Caminho">
+  {% for rotulo, url in passos %}
+    {% if not forloop.first %}<span class="sep" aria-hidden="true">›</span>{% endif %}
+    {% if url %}<a href="{{ url }}">{{ rotulo }}</a>{% else %}<span class="atual" aria-current="step">{{ rotulo }}</span>{% endif %}
+  {% endfor %}
+</nav>
+{% endif %}

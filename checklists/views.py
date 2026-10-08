@@ -8,6 +8,7 @@ from django.db import transaction
 from django.db.models import Count, Q
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 
 from certificates.decorators import admin_required, checklists_required
 from dashboard.navigation import CONFIG_KEYS, CONFIG_TABS
@@ -20,7 +21,7 @@ from .emails import enviar_em_segundo_plano, enviar_execucao
 from .forms import AtivoForm, ImportarForm, ItemForm, ModeloForm, NovoModeloForm, RevisaoForm, SecaoForm, TipoAtivoForm
 from .importador import FormularioInvalido, importar
 from .models import (
-    MEDIDOR_NENHUM, MEDIDOR_UNIDADE, OBS_CHOICES, OBS_SE_NEGATIVO, OBS_SEMPRE, TIPO_RESPOSTA_CHOICES, OPCOES_RESPOSTA, RESP_NUMERO, RESP_PORCENTAGEM,
+    FINALIDADE_CHOICES, FINALIDADE_DESCRICAO, MEDIDOR_NENHUM, MEDIDOR_UNIDADE, OBS_CHOICES, OBS_SE_NEGATIVO, OBS_SEMPRE, TIPO_RESPOSTA_CHOICES, OPCOES_RESPOSTA, RESP_NUMERO, RESP_PORCENTAGEM,
     RESP_TEXTO, STATUS_INATIVO, VALORES_NEGATIVOS, Ativo, Execucao, FotoExecucao, Item, Modelo, Resposta, Revisao,
     Secao, TipoAtivo,
 )
@@ -31,11 +32,11 @@ logger = logging.getLogger(__name__)
 _MAX_FOTOS_GERAIS = 10
 
 TABS_ADMIN = [
-    ('executar', 'Executar', 'checklists:executar'),
+    ('executar', 'Novo checklist', 'checklists:executar'),
     ('historico', 'Histórico', 'checklists:historico'),
 ]
 TABS_TECNICO = [
-    ('executar', 'Executar', 'checklists:executar'),
+    ('executar', 'Novo checklist', 'checklists:executar'),
     ('historico', 'Minhas execuções', 'checklists:historico'),
 ]
 
@@ -59,26 +60,144 @@ def _execucoes_visiveis(user):
 
 # ---------------------------------------------------------------- Execução
 
+# Caminho do técnico, uma pergunta por tela:
+#   finalidade (pré-uso, inspeção...) -> tipo de equipamento -> equipamento -> formulário.
+
+_FINALIDADES = dict(FINALIDADE_CHOICES)
+
+
+def _modelos_executaveis():
+    return Modelo.objects.filter(is_active=True, revisoes__vigente=True).distinct()
+
+
+def _ativos_executaveis():
+    return Ativo.objects.filter(is_active=True, tipo__is_active=True).exclude(status=STATUS_INATIVO)
+
+
+def _passos(finalidade=None, tipo=None, ativo=None):
+    """Equipamentos > Pré-uso > Bancada de calibração > RAD 02 (o último passo não é link)."""
+    passos = [('Equipamentos', reverse('checklists:executar'))]
+    if finalidade:
+        passos.append((_FINALIDADES[finalidade], reverse('checklists:passo_tipo', args=[finalidade])))
+    if tipo and finalidade:
+        passos.append((tipo.nome, reverse('checklists:passo_ativo', args=[finalidade, tipo.pk])))
+    if ativo:
+        passos.append((ativo.nome, None))
+    passos[-1] = (passos[-1][0], None)
+    return passos
+
+
+def _plural(n, um, varios):
+    return f'{n} {um if n == 1 else varios}'
+
+
+def _detalhe_ativo(a):
+    ident = '' if a.identificacao.lower() in a.nome.lower() else a.identificacao
+    partes = [ident] + ([f'patrimônio {a.patrimonio}'] if a.patrimonio else [])
+    return ' · '.join(p for p in partes if p)
+
+
 @checklists_required
 def executar_view(request):
+    """Passo 1: o que vai fazer (pré-uso, inspeção, manutenção). A busca pula direto para o equipamento."""
     q = request.GET.get('q', '').strip()
-    ativos = (Ativo.objects.filter(is_active=True).exclude(status=STATUS_INATIVO)
-              .select_related('tipo').annotate(n_modelos=Count('tipo__modelos', filter=Q(tipo__modelos__is_active=True))))
+    busca = {'q': q, 'placeholder': 'Ou busque o equipamento por nome, série ou patrimônio'}
     if q:
-        ativos = ativos.filter(Q(nome__icontains=q) | Q(identificacao__icontains=q) | Q(patrimonio__icontains=q) | Q(tipo__nome__icontains=q))
-    grupos = {}
-    for a in ativos:
-        grupos.setdefault(a.tipo, []).append(a)
-    return render(request, 'checklists/executar.html', _ctx(request, 'executar', grupos=grupos, q=q))
+        ativos = _ativos_executaveis().select_related('tipo').filter(
+            Q(nome__icontains=q) | Q(identificacao__icontains=q) | Q(patrimonio__icontains=q) | Q(tipo__nome__icontains=q))
+        escolha = {
+            'passos': [('Equipamentos', reverse('checklists:executar')), (f'Busca: {q}', None)],
+            'pergunta': 'Qual equipamento?', 'busca': busca,
+            'opcoes': [{'titulo': a.nome, 'detalhe': f'{a.tipo.nome} · {_detalhe_ativo(a)}',
+                        'url': reverse('checklists:escolher_modelo', args=[a.pk]),
+                        'selo': a.get_status_display() if a.status != 'disponivel' else ''} for a in ativos],
+            'vazio': 'Nenhum equipamento encontrado. Confira o nome, a série ou o patrimônio digitado.',
+        }
+        return render(request, 'checklists/executar.html', _ctx(request, 'executar', escolha=escolha))
+
+    tipos_com_equip = set(_ativos_executaveis().values_list('tipo_id', flat=True))
+    opcoes = []
+    for valor, rotulo in FINALIDADE_CHOICES:
+        tipos = set(_modelos_executaveis().filter(finalidade=valor).values_list('tipos_ativo', flat=True)) & tipos_com_equip
+        if tipos:
+            opcoes.append({'titulo': rotulo, 'detalhe': f'{FINALIDADE_DESCRICAO[valor]} · {_plural(len(tipos), "tipo", "tipos")} de equipamento',
+                           'url': reverse('checklists:passo_tipo', args=[valor])})
+    vazio = 'Nenhum equipamento com checklist disponível.'
+    if request.user.is_admin_geral:
+        vazio += f' Cadastre em <a href="{reverse("checklists:ativos")}">Configurações → Equipamentos</a>.'
+    escolha = {'pergunta': 'Qual checklist você vai fazer?', 'busca': busca, 'opcoes': opcoes, 'vazio': vazio}
+    return render(request, 'checklists/executar.html', _ctx(request, 'executar', escolha=escolha))
+
+
+@checklists_required
+def passo_tipo_view(request, finalidade):
+    """Passo 2: qual tipo de equipamento (só os que têm checklist dessa finalidade)."""
+    if finalidade not in _FINALIDADES:
+        return redirect('checklists:executar')
+    tipo_ids = _modelos_executaveis().filter(finalidade=finalidade).values_list('tipos_ativo', flat=True)
+    tipos = (TipoAtivo.objects.filter(pk__in=tipo_ids, is_active=True)
+             .annotate(n=Count('ativos', filter=Q(ativos__is_active=True) & ~Q(ativos__status=STATUS_INATIVO)))
+             .filter(n__gt=0).order_by('nome'))
+    escolha = {
+        'passos': _passos(finalidade), 'pergunta': 'Qual equipamento?',
+        'ajuda': f'Checklist de {_FINALIDADES[finalidade].lower()}. Escolha o tipo de equipamento.',
+        'opcoes': [{'titulo': t.nome, 'detalhe': _plural(t.n, 'equipamento', 'equipamentos'),
+                    'url': reverse('checklists:passo_ativo', args=[finalidade, t.pk])} for t in tipos],
+        'vazio': 'Nenhum equipamento cadastrado para este checklist.',
+    }
+    return render(request, 'checklists/executar.html', _ctx(request, 'executar', escolha=escolha))
+
+
+@checklists_required
+def passo_ativo_view(request, finalidade, tipo_pk):
+    """Passo 3: qual unidade (ex.: RAD 02, RAD 24). Com um só formulário, já abre o checklist."""
+    tipo = get_object_or_404(TipoAtivo, pk=tipo_pk, is_active=True)
+    modelos = list(_modelos_executaveis().filter(finalidade=finalidade, tipos_ativo=tipo).order_by('codigo'))
+    if finalidade not in _FINALIDADES or not modelos:
+        return redirect('checklists:executar')
+    ativos = _ativos_executaveis().filter(tipo=tipo).order_by('nome')
+    q = request.GET.get('q', '').strip()
+    if q:
+        ativos = ativos.filter(Q(nome__icontains=q) | Q(identificacao__icontains=q) | Q(patrimonio__icontains=q))
+
+    def url(a):
+        if len(modelos) == 1:
+            return reverse('checklists:execucao_nova', args=[a.pk, modelos[0].pk])
+        return reverse('checklists:escolher_modelo', args=[a.pk]) + f'?finalidade={finalidade}'
+
+    escolha = {
+        'passos': _passos(finalidade, tipo), 'pergunta': f'Qual {tipo.nome.lower()}?',
+        'ajuda': 'Escolha a unidade em que você vai fazer o checklist.',
+        'busca': {'q': q, 'placeholder': 'Buscar por nome, série ou patrimônio'} if q or ativos.count() > 8 else None,
+        'opcoes': [{'titulo': a.nome, 'detalhe': _detalhe_ativo(a), 'url': url(a),
+                    'selo': a.get_status_display() if a.status != 'disponivel' else ''} for a in ativos],
+        'vazio': 'Nenhum equipamento encontrado.',
+    }
+    return render(request, 'checklists/executar.html', _ctx(request, 'executar', escolha=escolha))
 
 
 @checklists_required
 def escolher_modelo_view(request, ativo_pk):
+    """Quando se chega pelo equipamento (busca): escolhe a finalidade do checklist."""
     ativo = get_object_or_404(Ativo.objects.select_related('tipo'), pk=ativo_pk, is_active=True)
     modelos = [m for m in ativo.modelos_disponiveis() if m.revisao_vigente]
+    finalidade = request.GET.get('finalidade')
+    if finalidade in _FINALIDADES:
+        modelos = [m for m in modelos if m.finalidade == finalidade] or modelos
     if len(modelos) == 1:
         return redirect('checklists:execucao_nova', ativo_pk=ativo.pk, modelo_pk=modelos[0].pk)
-    return render(request, 'checklists/escolher_modelo.html', _ctx(request, 'executar', ativo=ativo, modelos=modelos))
+    repetidas = {m.finalidade for m in modelos if sum(x.finalidade == m.finalidade for x in modelos) > 1}
+    ordem = [v for v, _ in FINALIDADE_CHOICES]
+    modelos.sort(key=lambda m: (ordem.index(m.finalidade), m.codigo))
+    escolha = {
+        'passos': [('Equipamentos', reverse('checklists:executar')), (ativo.nome, None)],
+        'pergunta': 'Qual checklist você vai fazer?', 'ajuda': f'{ativo.tipo.nome} · {_detalhe_ativo(ativo)}',
+        'opcoes': [{'titulo': m.get_finalidade_display() + (f' · {m.titulo}' if m.finalidade in repetidas else ''),
+                    'detalhe': f'{FINALIDADE_DESCRICAO[m.finalidade]} · {m.codigo}',
+                    'url': reverse('checklists:execucao_nova', args=[ativo.pk, m.pk])} for m in modelos],
+        'vazio': f'Ainda não há checklist cadastrado para {ativo.tipo.nome}.',
+    }
+    return render(request, 'checklists/executar.html', _ctx(request, 'executar', escolha=escolha))
 
 
 def _ler_respostas(request, revisao):
@@ -162,6 +281,7 @@ def execucao_nova_view(request, ativo_pk, modelo_pk):
     return render(request, 'checklists/execucao_form.html', _ctx(
         request, 'executar', ativo=ativo, modelo=modelo, revisao=revisao, secoes=secoes, erros=erros, valores=valores,
         pede_medidor=pede_medidor, unidade=MEDIDOR_UNIDADE.get(ativo.tipo.medidor, ''), max_fotos=_MAX_FOTOS_GERAIS,
+        passos=_passos(modelo.finalidade, ativo.tipo, ativo),
         nome_tecnico=request.user.full_name or request.user.email,
     ))
 

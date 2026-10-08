@@ -6,6 +6,7 @@ from django.db import transaction
 from django.db.models import Q
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 
 from certificates.decorators import admin_required, veiculos_required
@@ -19,7 +20,7 @@ from .carimbo import carimbo_da_requisicao
 from .imagens import ImagemInvalida, assinatura_de_dataurl, comprimir_foto
 from .pdf import pdf_filename, render_inspecao_pdf
 from .models import (
-    CATEGORIA_CAMINHONETE, CHECKLIST_ITEMS, FOTO_GRUPOS, FOTO_LABELS, FOTO_ORDEM, FOTO_POSICOES, PNEU_KEYS, ITEM_NOK, ITEM_OK, ITEM_STATUS_CHOICES, TIPO_CHEGADA, TIPO_SAIDA,
+    CATEGORIA_CAMINHONETE, CHECKLIST_ITEMS, FOTO_GRUPOS, FOTO_LABELS, FOTO_ORDEM, FOTO_POSICOES, PNEU_KEYS, ITEM_NOK, ITEM_OK, ITEM_STATUS_CHOICES, TIPO_CHEGADA, TIPO_CHOICES, TIPO_SAIDA,
     Inspecao, InspecaoFoto, InspecaoItem, Manutencao, Motorista, Supervisor, Uso, Veiculo,
 )
 
@@ -117,8 +118,51 @@ def _checklist_from_post(post):
     return secoes
 
 
+# Caminho da vistoria, uma pergunta por tela (mesma lógica dos checklists de equipamentos):
+#   tipo (saída, chegada, rotina) -> veículo -> formulário.
+_TIPO_DESCRICAO = {
+    'saida': 'Vou pegar um veículo',
+    'chegada': 'Vou devolver o veículo que estou usando',
+    'rotina': 'Vistoria periódica, sem sair com o veículo',
+}
+
+
+def _escolha_vistoria(request):
+    tipos = dict(TIPO_CHOICES)
+    tipo = request.GET.get('tipo')
+    base = reverse('veiculos:inspecao_nova')
+    if tipo not in tipos:
+        return {
+            'pergunta': 'Qual vistoria você vai fazer?',
+            'opcoes': [{'titulo': rotulo, 'detalhe': _TIPO_DESCRICAO[valor], 'url': f'{base}?tipo={valor}'} for valor, rotulo in TIPO_CHOICES],
+        }
+    opcoes = []
+    for v in Veiculo.objects.filter(is_active=True).order_by('placa'):
+        uso = v.uso_aberto
+        op = {'titulo': v.placa, 'detalhe': f'{v.marca} {v.modelo}'.strip(), 'url': f'{base}?tipo={tipo}&veiculo={v.pk}'}
+        if tipo == TIPO_SAIDA and uso:
+            op.update(off=True, selo=f'Em uso: {uso.motorista.name.split()[0]}' if uso.motorista else 'Em uso')
+        if tipo == TIPO_CHEGADA:
+            if not uso:
+                continue
+            if not request.user.is_admin_geral and (not uso.motorista or uso.motorista.usuario_id != request.user.pk):
+                continue
+            op['selo'] = f'Saiu {timezone.localtime(uso.saida_em):%d/%m %H:%M}'
+        opcoes.append(op)
+    return {
+        'passos': [('Veículos', base), (tipos[tipo], None)],
+        'pergunta': 'Qual veículo?',
+        'ajuda': {'saida': 'Veículos em uso aparecem bloqueados até a chegada ser registrada.',
+                  'chegada': 'Só aparecem os veículos com saída em aberto.'}.get(tipo, ''),
+        'opcoes': opcoes,
+        'vazio': 'Nenhum veículo com saída em aberto para você.' if tipo == TIPO_CHEGADA else 'Nenhum veículo cadastrado.',
+    }
+
+
 @veiculos_required
 def inspecao_nova_view(request):
+    if request.method != 'POST' and not (request.GET.get('veiculo') and request.GET.get('tipo')):
+        return render(request, 'veiculos/inspecao_passos.html', _ctx(request, 'nova', escolha=_escolha_vistoria(request)))
     initial = {}
     if request.GET.get('veiculo'):
         initial['veiculo'] = request.GET['veiculo']
@@ -195,8 +239,14 @@ def inspecao_nova_view(request):
         }
         for v in Veiculo.objects.filter(is_active=True)
     }
+    dados = request.POST if request.method == 'POST' else request.GET
+    tipo_txt = dict(TIPO_CHOICES).get(dados.get('tipo'), '')
+    veic = Veiculo.objects.filter(pk=dados.get('veiculo')).first() if str(dados.get('veiculo', '')).isdigit() else None
+    base = reverse('veiculos:inspecao_nova')
+    passos = [('Veículos', base)] + ([(tipo_txt, f"{base}?tipo={dados.get('tipo')}")] if tipo_txt else []) + ([(veic.placa, None)] if veic else [])
+    passos[-1] = (passos[-1][0], None)
     return render(request, 'veiculos/inspecao_form.html', _ctx(
-        request, 'nova', form=form, secoes=secoes, veiculos_info=veiculos_info,
+        request, 'nova', form=form, secoes=secoes, veiculos_info=veiculos_info, passos=passos,
         foto_grupos=_foto_grupos(), max_extras=_MAX_FOTOS_EXTRAS,
         nome_condutor='' if request.user.is_admin_geral else (request.user.full_name or request.user.email),
     ))

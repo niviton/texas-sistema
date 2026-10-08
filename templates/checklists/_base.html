@@ -5,8 +5,8 @@
 <p style="font-size:14px; color:#6b7480; margin:0 0 24px;">Cadastros e permissões, feitos pelo administrador geral.</p>
 {% load polaris_nav %}{% config_nav active_tab %}
 {% else %}
-<h1 style="font-family:'Sora',sans-serif; font-size:24px; font-weight:800; margin:0 0 4px; color:#0d1b2e;">Pré-uso e inspeção de equipamentos</h1>
-<p style="font-size:14px; color:#6b7480; margin:0 0 24px;">{% if ve_tudo %}Checklists dos equipamentos, no padrão dos formulários TCB-OTB.{% else %}Seus checklists de equipamentos, no padrão dos formulários TCB-OTB.{% endif %}</p>
+<h1 style="font-family:'Sora',sans-serif; font-size:24px; font-weight:800; margin:0 0 4px; color:#0d1b2e;">Checklist de equipamentos</h1>
+<p style="font-size:14px; color:#6b7480; margin:0 0 24px;">Pré-uso, inspeção e manutenção, no padrão dos formulários TCB-OTB.</p>
 <nav class="v-tabs">
   {% for key, label, url_name in mod_tabs %}
     <a href="{% url url_name %}" class="{% if active_tab == key %}on{% endif %}">{{ label }}</a>

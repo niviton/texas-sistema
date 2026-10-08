@@ -211,7 +211,7 @@ class FluxoInspecaoTests(TestCase):
         self.client.force_login(self.vist)
         r = self.client.get(reverse('veiculos:inspecoes'))
         self.assertContains(r, 'class="nav-group" open')
-        self.assertContains(r, 'Pré-uso de equipamentos')
+        self.assertContains(r, 'nav-sublink ">Equipamentos')
         self.assertContains(r, 'nav-sublink active">Veículos')
 
     def test_configuracoes_reunem_os_cadastros(self):
@@ -299,7 +299,7 @@ class FluxoInspecaoTests(TestCase):
         self.assertRedirects(self.client.get(reverse('veiculos:painel')), reverse('veiculos:inspecoes'))
         home = self.client.get(reverse('dashboard:home'))
         self.assertContains(home, 'Vistoria de veículo')
-        self.assertContains(home, 'Pré-uso de equipamento')
+        self.assertContains(home, 'Checklist de equipamento')
         self.assertNotContains(home, 'Certificados')
         self.assertNotContains(home, 'Configurações')
         form = self.client.get(reverse('veiculos:inspecao_nova'))
@@ -364,3 +364,29 @@ class DestinatariosTests(TestCase):
         self.assertCountEqual(Supervisor.emails('termos'), ['todos@ex.com'])
         self.assertCountEqual(Supervisor.emails('checklists', prensa), ['todos@ex.com', so_prensa.email])
         self.assertCountEqual(Supervisor.emails('checklists', talha), ['todos@ex.com'])
+
+
+class PassosVistoriaTests(TestCase):
+    def setUp(self):
+        from accounts.models import User
+        self.tec = User.objects.create_user(email='t@x.com', password='x', full_name='Tec Um', is_approved=True, role=User.ROLE_TECNICO)
+        self.livre = Veiculo.objects.create(placa='AAA1A11', marca='Fiat', modelo='Strada')
+        self.ocupado = Veiculo.objects.create(placa='BBB2B22', marca='Toyota', modelo='Hilux')
+        from django.utils import timezone
+        outro = Motorista.objects.create(name='Outra Pessoa')
+        Uso.objects.create(veiculo=self.ocupado, motorista=outro, saida_em=timezone.now(), km_saida=10)
+        self.client.force_login(self.tec)
+
+    def test_tipo_depois_veiculo_depois_formulario(self):
+        url = reverse('veiculos:inspecao_nova')
+        r = self.client.get(url)
+        self.assertContains(r, 'Qual vistoria você vai fazer?')
+        self.assertContains(r, '?tipo=saida')
+        r = self.client.get(url, {'tipo': 'saida'})
+        self.assertContains(r, 'AAA1A11')
+        self.assertContains(r, 'esc-op off')  # o veículo em uso aparece bloqueado
+        r = self.client.get(url, {'tipo': 'chegada'})
+        self.assertNotContains(r, 'BBB2B22')  # em uso por outra pessoa
+        r = self.client.get(url, {'tipo': 'saida', 'veiculo': self.livre.pk})
+        self.assertContains(r, 'id="insp-form"')
+        self.assertContains(r, 'class="passos"')

@@ -37,7 +37,7 @@ def _resumo_checklists(user):
          'problema': v.tem_problema, 'url': reverse('veiculos:inspecao_detalhe', args=[v.pk])}
         for v in vistorias[:5]
     ] + [
-        {'quando': e.created_at, 'titulo': e.ativo.nome, 'detalhe': f'Pré-uso {e.revisao.modelo.codigo}',
+        {'quando': e.created_at, 'titulo': e.ativo.nome, 'detalhe': f'{e.revisao.modelo.get_finalidade_display()} {e.revisao.modelo.codigo}',
          'problema': e.tem_problema, 'url': reverse('checklists:execucao', args=[e.pk])}
         for e in execucoes[:5]
     ]

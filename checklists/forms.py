@@ -25,7 +25,7 @@ class AtivoForm(forms.ModelForm):
 class ModeloForm(forms.ModelForm):
     class Meta:
         model = Modelo
-        fields = ['codigo', 'titulo', 'tipos_ativo', 'is_active']
+        fields = ['codigo', 'titulo', 'finalidade', 'tipos_ativo', 'is_active']
         widgets = {'tipos_ativo': forms.CheckboxSelectMultiple}
 
     def __init__(self, *args, **kwargs):
@@ -73,7 +73,7 @@ class ImportarForm(forms.Form):
 class NovoModeloForm(forms.ModelForm):
     class Meta:
         model = Modelo
-        fields = ['codigo', 'titulo', 'tipos_ativo']
+        fields = ['codigo', 'titulo', 'finalidade', 'tipos_ativo']
         widgets = {'tipos_ativo': forms.CheckboxSelectMultiple}
 
     def clean_codigo(self):

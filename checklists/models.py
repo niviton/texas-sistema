@@ -104,10 +104,40 @@ class Ativo(models.Model):
         return Modelo.objects.filter(is_active=True, tipos_ativo=self.tipo).order_by('codigo')
 
 
+FINALIDADE_PRE_USO, FINALIDADE_INSPECAO, FINALIDADE_MANUTENCAO, FINALIDADE_GERAL = 'pre_uso', 'inspecao', 'manutencao', 'geral'
+FINALIDADE_CHOICES = [
+    (FINALIDADE_PRE_USO, 'Pré-uso'),
+    (FINALIDADE_INSPECAO, 'Inspeção'),
+    (FINALIDADE_MANUTENCAO, 'Manutenção'),
+    (FINALIDADE_GERAL, 'Geral'),
+]
+# Texto curto mostrado no primeiro passo de "Executar".
+FINALIDADE_DESCRICAO = {
+    FINALIDADE_PRE_USO: 'Antes de usar o equipamento',
+    FINALIDADE_INSPECAO: 'Inspeção periódica do equipamento',
+    FINALIDADE_MANUTENCAO: 'Registro da manutenção preventiva',
+    FINALIDADE_GERAL: 'Checklist geral do equipamento',
+}
+
+
+def finalidade_do_titulo(titulo):
+    """'Checklist de pré-uso – Prensa' -> 'pre_uso'. Usado na importação dos TCB."""
+    t = (titulo or '').lower().replace('é', 'e').replace('ç', 'c').replace('ã', 'a').replace('-', ' ')
+    if 'pre uso' in t:
+        return FINALIDADE_PRE_USO
+    if 'inspec' in t:
+        return FINALIDADE_INSPECAO
+    if 'manutenc' in t:
+        return FINALIDADE_MANUTENCAO
+    return FINALIDADE_GERAL
+
+
 class Modelo(models.Model):
     """Formulário controlado (ex.: TCB-OTB-80). O conteúdo fica nas revisões."""
     codigo = models.CharField('código do documento', max_length=40, unique=True, help_text='Ex.: TCB-OTB-80')
     titulo = models.CharField('título', max_length=200, help_text='Ex.: Checklist de pré-uso – Bancada de calibração')
+    finalidade = models.CharField('finalidade', max_length=12, choices=FINALIDADE_CHOICES, default=FINALIDADE_GERAL,
+                                  help_text='Primeiro passo do técnico ao executar: pré-uso, inspeção, manutenção ou geral.')
     tipos_ativo = models.ManyToManyField(TipoAtivo, verbose_name='aplica-se a', related_name='modelos', blank=True)
     is_active = models.BooleanField('disponível para execução', default=True)
     created_at = models.DateTimeField(auto_now_add=True)

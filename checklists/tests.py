@@ -95,6 +95,37 @@ class ChecklistsTests(TestCase):
         self.client.force_login(user or self.tec)
         return self.client.post(reverse('checklists:execucao_nova', args=[self.ativo.pk, self.modelo.pk]), data)
 
+    # ---- Navegação: finalidade -> tipo -> equipamento -> formulário ----
+    def test_caminho_em_passos(self):
+        self.modelo.finalidade = 'pre_uso'
+        self.modelo.save()
+        self.client.force_login(self.tec)
+        r = self.client.get(reverse('checklists:executar'))
+        passo_tipo = reverse('checklists:passo_tipo', args=['pre_uso'])
+        self.assertContains(r, passo_tipo)
+        self.assertNotContains(r, reverse('checklists:passo_tipo', args=['manutencao']))
+        r = self.client.get(passo_tipo)
+        passo_ativo = reverse('checklists:passo_ativo', args=['pre_uso', self.tipo.pk])
+        self.assertContains(r, passo_ativo)
+        self.assertContains(r, self.tipo.nome)
+        r = self.client.get(passo_ativo)
+        self.assertContains(r, 'Gerador 01')
+        self.assertContains(r, reverse('checklists:execucao_nova', args=[self.ativo.pk, self.modelo.pk]))
+        r = self.client.get(reverse('checklists:execucao_nova', args=[self.ativo.pk, self.modelo.pk]))
+        self.assertContains(r, 'class="passos"')
+        self.assertContains(r, 'Pré-uso')
+        # finalidade sem checklist volta ao início
+        self.assertRedirects(self.client.get(reverse('checklists:passo_ativo', args=['manutencao', self.tipo.pk])),
+                             reverse('checklists:executar'))
+
+    def test_finalidade_vem_do_titulo(self):
+        from checklists.models import finalidade_do_titulo
+        self.assertEqual(finalidade_do_titulo('CHECKLIST DE PRE USO – GIRAFA'), 'pre_uso')
+        self.assertEqual(finalidade_do_titulo('Checklist de pré-uso – Prensa'), 'pre_uso')
+        self.assertEqual(finalidade_do_titulo('CHECKLIST DE INSPEÇÃO – TALHA'), 'inspecao')
+        self.assertEqual(finalidade_do_titulo('CHECKLIST DE MANUTENÇÃO – TALHA'), 'manutencao')
+        self.assertEqual(finalidade_do_titulo('CHECKLIST GERAL - SEPARADOR'), 'geral')
+
     # ---- Importação ----
     def test_importador_le_cabecalho_e_secoes(self):
         caminho = os.path.join(TMP_MEDIA, 'f.docx')
@@ -230,11 +261,11 @@ class ChecklistsTests(TestCase):
         self.assertEqual(self.client.get(reverse('checklists:executar')).status_code, 403)
         self.assertEqual(self.client.get(reverse('veiculos:inspecao_nova')).status_code, 403)
         self.client.force_login(self.tec)
-        self.assertContains(self.client.get(reverse('checklists:executar')), 'Gerador 01')
+        self.assertContains(self.client.get(reverse('checklists:executar'), {'q': 'GD-4471'}), 'Gerador 01')
         for name in ['tipos', 'ativos', 'modelos']:
             self.assertEqual(self.client.get(reverse(f'checklists:{name}')).status_code, 403, name)
         home = self.client.get(reverse('dashboard:home'))
-        self.assertContains(home, 'Pré-uso de equipamento')
+        self.assertContains(home, 'Checklist de equipamento')
         self.assertContains(home, 'Vistoria de veículo')
         self.assertNotContains(home, 'Configurações')
         self.client.force_login(self.admin)

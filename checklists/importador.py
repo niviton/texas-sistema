@@ -14,7 +14,7 @@ from django.db import transaction
 from docx.table import Table
 from docx.text.paragraph import Paragraph
 
-from .models import RESP_OK_NOK, Item, Modelo, Revisao, Secao, TipoAtivo
+from .models import finalidade_do_titulo, RESP_OK_NOK, Item, Modelo, Revisao, Secao, TipoAtivo
 
 _CODIGO = re.compile(r'\b([A-Z]{2,5}-[A-Z]{2,5}-\d{1,4})\b')
 _DATA = re.compile(r'\b(\d{2}/\d{2}/\d{4})\b')
@@ -149,7 +149,9 @@ def importar(caminho, tipo_ativo=None):
     Retorna (modelo, revisao, criado). Se a revisão já existir, não duplica.
     """
     f = ler_formulario(caminho)
-    modelo, criado = Modelo.objects.get_or_create(codigo=f.codigo, defaults={'titulo': _frase(f.titulo)})
+    modelo, criado = Modelo.objects.get_or_create(
+        codigo=f.codigo, defaults={'titulo': _frase(f.titulo), 'finalidade': finalidade_do_titulo(f.titulo)},
+    )
     revisao = modelo.revisoes.filter(numero=f.revisao).first()
     if revisao is None:
         revisao = Revisao.objects.create(
