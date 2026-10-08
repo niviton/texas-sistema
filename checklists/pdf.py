@@ -131,8 +131,6 @@ def _secao(titulo, respostas):
         rows = [[Paragraph('Item', _s['th']), Paragraph('Resposta', _s['th'])]]
     for r in respostas:
         texto = [Paragraph(r.item.texto + (' <font size=7 color="#777777">(não se aplica)</font>' if r.valor == 'na' and so_ok_nok else ''), _s['item'])]
-        if r.observacao:
-            texto.append(Paragraph(r.observacao, _s['obs']))
         if so_ok_nok:
             rows.append([texto, base.CheckBox(r.valor == 'ok'), base.CheckBox(r.valor == 'nok', color=base.RED)])
         else:
@@ -154,9 +152,11 @@ def _observacoes(execucao):
     partes = []
     if problemas:
         partes.append(f'<font color="#c0392b"><b>{len(problemas)} item(ns) com não conformidade:</b></font>')
-        partes += [f'• <b>{r.item.texto}</b> {r.observacao}' for r in problemas]
+        partes += [f'• <b>{r.item.texto}:</b> {r.observacao}' for r in problemas]
     else:
         partes.append('<font color="#1e7a4a"><b>Todos os itens verificados estão conformes.</b></font>')
+    outras = [r for r in execucao.respostas.select_related('item') if r.observacao and r not in problemas]
+    partes += [f'• <b>{r.item.texto}:</b> {r.observacao}' for r in outras]
     if execucao.observacoes:
         partes.append('<br/>' + execucao.observacoes.replace('\n', '<br/>'))
     t = Table([[Paragraph('OBSERVAÇÕES', _s['label'])], [Paragraph('<br/>'.join(partes), _s['body'])]], colWidths=[base.CONTENT_W])

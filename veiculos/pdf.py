@@ -182,8 +182,6 @@ def _verificacao_block(inspecao):
             it = por_item.get(key)
             status = it.status if it else None
             texto = [Paragraph(label + ('' if status in (ITEM_OK, ITEM_NOK) else ' <font size=7 color="#777777">(não se aplica)</font>'), _s['item'])]
-            if it and it.observacao:
-                texto.append(Paragraph(it.observacao, _s['obs']))
             rows.append([texto, CheckBox(status == ITEM_OK), CheckBox(status == ITEM_NOK, color=RED)])
     item_w = 104 * mm
     t = Table(rows, colWidths=[item_w, 16 * mm, 16 * mm], repeatRows=1, hAlign='LEFT')
@@ -203,6 +201,8 @@ def _observacoes_block(inspecao):
         partes += [f'• <b>{p.label}:</b> {p.observacao}' for p in problemas]
     else:
         partes.append('<font color="#1e7a4a"><b>APROVADO – todos os itens verificados estão OK.</b></font>')
+    outras = [i for i in inspecao.itens.all() if i.observacao and i not in problemas]
+    partes += [f'• <b>{i.label}:</b> {i.observacao}' for i in outras]
     if inspecao.observacoes:
         partes.append('<br/>' + inspecao.observacoes.replace('\n', '<br/>'))
     t = Table([[Paragraph('OBSERVAÇÕES', _s['label'])], [Paragraph('<br/>'.join(partes), _s['body'])]], colWidths=[CONTENT_W])

@@ -2,6 +2,10 @@
 
 Escrito em linguagem simples, do mais recente para o mais antigo.
 
+## 08/10/2026 – PDF: motivo só nas observações
+
+- Nos PDFs da vistoria e do checklist de equipamento, a tabela de itens mostra só o X. O motivo de cada item marcado como NOK (ou de qualquer item com observação) aparece uma única vez, no quadro "Observações".
+
 ## 08/10/2026 – Cadastro do equipamento na hora do checklist
 
 - Se o equipamento não está na lista, o técnico informa uma vez (ex.: "Gerador Toyama 1000 W", série e patrimônio opcionais) e já cai no checklist. Ele fica salvo e aparece nas próximas vezes; o mesmo nome não é cadastrado duas vezes.
