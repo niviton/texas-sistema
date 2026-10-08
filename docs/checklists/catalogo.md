@@ -20,10 +20,15 @@ Formulários controlados da empresa e sua situação no Polaris. Atualize esta t
 | TCB-LO-01 | Termo de entrada – material cliente | 01 (20/06/2024) | conforme o formulário | — | **Módulo Termos** |
 | TCB-LO-02 | Termo de saída – material cliente | 01 (20/06/2024) | conforme o formulário | — | **Módulo Termos** |
 | a definir | Vistoria veicular (saída, chegada, rotina) | — | — | Veículo | Módulo Veículos; migração para o motor na Fase 1 |
-| TCB-OTB-02 a 06 | Cinta de amarração, esmerilhadeira, furadeira, lixadeira, parafusadeira | — | — | Ferramentas | Pendente: layout antigo (C / NC / NA numa tabela única) |
-| TCB-OTB-24, 28 | Geradores | — | — | Gerador | Pendente: layout DESCRIÇÃO / VERIFICAÇÃO com campos livres e fotos |
-| TCB-OTB-26 | Checklist geral da empilhadeira | — | — | Empilhadeira | Pendente: grade por dia da semana |
-| TCB-OTB-53 | Checklist de equipamentos | — | — | — | Pendente: layout SIM / NÃO |
+| TCB-OTB-02 | Inspeção – cinta de amarração | 1.0 | conforme o formulário | Cinta de amarração | **Importado** em 08/10/2026 (C / NC / NA) |
+| TCB-OTB-03 | Inspeção – esmerilhadeira elétrica de bancada | 1.0 | conforme o formulário | Esmerilhadeira de bancada | **Importado** em 08/10/2026; convive com o TCB-OTB-39 |
+| TCB-OTB-04 | Inspeção – furadeira elétrica | 1.0 | conforme o formulário | Furadeira elétrica | **Importado** em 08/10/2026 |
+| TCB-OTB-05 | Inspeção – lixadeira elétrica angular | 1.0 | conforme o formulário | Lixadeira elétrica angular | **Importado** em 08/10/2026 |
+| TCB-OTB-06 | Inspeção – parafusadeira elétrica a bateria | 1.0 | conforme o formulário | Parafusadeira elétrica a bateria | **Importado** em 08/10/2026 |
+| TCB-OTB-24 | Manutenção – geradores | 01 | conforme o formulário | Gerador | **Importado** em 08/10/2026 (50 itens: fotos antes/depois, medições e torre de iluminação) |
+| TCB-OTB-28 | Inspeção – gerador | 00 | conforme o formulário | Gerador | **Importado** em 08/10/2026 (C / NC / P / NA) |
+| TCB-OTB-26 | Checklist geral – empilhadeira | 00 | conforme o formulário | Empilhadeira | **Importado** em 08/10/2026 como pré-uso diário (a grade semanal virou uma execução por dia) |
+| TCB-OTB-53 | Equipamentos – bombas, chaves de torque, tensionadores e mangueiras | 01 | conforme o formulário | Bombas, chaves de torque, tensionadores e mangueiras | **Importado** em 08/10/2026 como pré-uso (Sim / Não) |
 
 ## Como incluir um novo checklist
 

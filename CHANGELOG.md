@@ -2,6 +2,11 @@
 
 Escrito em linguagem simples, do mais recente para o mais antigo.
 
+## 08/10/2026 – Todos os checklists TCB-OTB no sistema
+
+- O importador passou a ler os formatos antigos: Sim / Não, Conforme / Não conforme / Parcialmente / N/A, tabela única C / NC / NA, grade semanal e "Descrição | Verificação" (foto obrigatória e medições numéricas).
+- Importados os 9 que faltavam, com destaque para os geradores: TCB-OTB-24 (manutenção) e TCB-OTB-28 (inspeção), além de 02 a 06, 26 (empilhadeira) e 53 (bombas, chaves de torque, tensionadores e mangueiras).
+
 ## 08/10/2026 – Navegação em passos
 
 - Checklist de equipamento agora segue um caminho, uma pergunta por tela: **Pré-uso / Inspeção / Manutenção → tipo de equipamento → unidade (ex.: RAD 02) → formulário**. O caminho escolhido aparece no topo e cada passo é clicável para voltar.

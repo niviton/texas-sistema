@@ -138,6 +138,41 @@ class ChecklistsTests(TestCase):
         self.assertEqual([t for t, _ in lido.secoes], ['Verificação dos EPIs', 'Verificação do equipamento'])
         self.assertEqual(lido.total_itens, 5)
 
+    def test_importador_le_os_formatos_antigos(self):
+        """Gerador (Descrição | Verificação), Sim/Não com campos e tabela única C / NC / NA."""
+        from .importador import ItemLido
+        d = docx.Document()
+        h = d.sections[0].header
+        for texto in ['Título Title', 'CHECKLIST - GERADORES', 'TCB-OTB-98', '1.0', 'Data Date', '06/08/2025']:
+            h.add_paragraph(texto)
+        d.add_paragraph('CHECKLIST')
+        t = d.add_table(rows=5, cols=2)
+        for i, (a, b) in enumerate([('DESCRIÇÃO', 'VERIFICAÇÃO'), ('INSERIR FOTOS ANTES', '[INSERIR FOTO]'),
+                                    ('NÍVEL DE ÓLEO', ''), ('TENSÃO DO GMG EM VAZIO', '[VALOR]'), ('CORRENTE DO GMG R/S/T', '[VALOR]')]):
+            t.cell(i, 0).text, t.cell(i, 1).text = a, b
+        d.add_paragraph('BOMBA')
+        d.add_paragraph('IDENTIFICAÇÃO: [XXXX]')
+        t = d.add_table(rows=2, cols=3)
+        t.cell(0, 0).text, t.cell(0, 1).text, t.cell(0, 2).text = 'ITEM', 'SIM', 'NÃO'
+        t.cell(1, 0).text = 'O MANÔMETRO ESTÁ EM ZERO?'
+        t = d.add_table(rows=5, cols=4)
+        t.cell(0, 0).merge(t.cell(0, 3)).text = 'INSPEÇÃO MECÂNICA'
+        for j, x in enumerate(['', 'C', 'NC', 'NA']):
+            t.cell(1, j).text = x
+        t.cell(2, 0).text = 'Cortes'
+        t.cell(3, 0).text = 'Proteções'
+        t.cell(4, 0).text = 'Operador Responsável'
+        caminho = os.path.join(TMP_MEDIA, 'g.docx')
+        d.save(caminho)
+        lido = ler_formulario(caminho)
+        self.assertEqual((lido.codigo, lido.revisao), ('TCB-OTB-98', 1))
+        secoes = dict(lido.secoes)
+        self.assertEqual(secoes['Checklist'], [
+            ItemLido('Inserir fotos antes', 'texto', True), ItemLido('Nível de óleo', 'ok_nok'),
+            ItemLido('Tensão do GMG em vazio', 'numero'), ItemLido('Corrente do GMG R/S/T', 'texto')])
+        self.assertEqual(secoes['Bomba'], [ItemLido('Identificação', 'texto'), ItemLido('O manômetro está em zero?', 'sim_nao')])
+        self.assertEqual(secoes['Inspeção mecânica'], [ItemLido('Cortes', 'conformidade'), ItemLido('Proteções', 'conformidade')])
+
     def test_importacao_cria_modelo_revisao_e_tipo(self):
         rev = self.modelo.revisao_vigente
         self.assertEqual(rev.rotulo, '01')

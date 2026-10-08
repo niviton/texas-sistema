@@ -1,8 +1,15 @@
 """
 Importa um formulário TCB-OTB em Word (.docx) como modelo de checklist.
 
-Lê do cabeçalho o título, o código, a revisão, quem preparou, quem revisou e a data;
-do corpo, cada tabela "Item | OK | NOK" vira uma seção, com o parágrafo anterior como título.
+Lê do cabeçalho o título, o código, a revisão, quem preparou, quem revisou e a data.
+O corpo é lido por formato de tabela (os TCB foram feitos em épocas diferentes):
+  - "Item | OK | NOK"                      -> OK / NOK / N/A (formato atual)
+  - "Item | SIM | NÃO"                     -> Sim / Não
+  - "Descrição | C | N | P | NA"           -> Conforme / Não conforme / Parcialmente / N/A
+  - tabela única com linhas de seção e "C | NC | NA" (TCB-OTB-02 a 06)
+  - "Item | DOM | SEG | ... | SAB"         -> grade semanal: cada execução é um dia, OK / NOK / N/A
+  - "Descrição | Verificação"              -> [INSERIR FOTO] vira foto obrigatória, [VALOR] vira número
+O parágrafo anterior à tabela vira o título da seção.
 """
 import re
 import zipfile
@@ -14,7 +21,10 @@ from django.db import transaction
 from docx.table import Table
 from docx.text.paragraph import Paragraph
 
-from .models import finalidade_do_titulo, RESP_OK_NOK, Item, Modelo, Revisao, Secao, TipoAtivo
+from .models import (
+    RESP_CONFORMIDADE, RESP_NUMERO, RESP_OK_NOK, RESP_SIM_NAO, RESP_TEXTO, Item, Modelo, Revisao, Secao, TipoAtivo,
+    finalidade_do_titulo,
+)
 
 _CODIGO = re.compile(r'\b([A-Z]{2,5}-[A-Z]{2,5}-\d{1,4})\b')
 _DATA = re.compile(r'\b(\d{2}/\d{2}/\d{4})\b')
@@ -28,6 +38,13 @@ class FormularioInvalido(ValueError):
 
 
 @dataclass
+class ItemLido:
+    texto: str
+    tipo: str = RESP_OK_NOK
+    exige_foto: bool = False
+
+
+@dataclass
 class FormularioLido:
     codigo: str = ''
     titulo: str = ''
@@ -35,7 +52,7 @@ class FormularioLido:
     preparado_por: str = ''
     revisado_por: str = ''
     data: object = None
-    secoes: list = field(default_factory=list)  # [(titulo, [itens])]
+    secoes: list = field(default_factory=list)  # [(titulo, [ItemLido])]
 
     @property
     def total_itens(self):
@@ -48,9 +65,9 @@ def _frase(texto):
     if sum(c.isupper() for c in texto) < sum(c.islower() for c in texto):
         return texto
     out = texto.lower().capitalize()
-    for sigla in ('EPIs', 'EPI', 'RAD', 'CRLV', 'CNH'):
+    for sigla in ('EPIs', 'EPI', 'RAD', 'CRLV', 'CNH', 'GMG'):
         out = re.sub(rf'\b{sigla.lower()}\b', sigla, out)
-    return out
+    return out.replace('r/s/t', 'R/S/T')
 
 
 def _textos_cabecalho(caminho):
@@ -73,8 +90,8 @@ def _ler_cabecalho(caminho, f):
         m = _CODIGO.search(t)
         if m and not f.codigo:
             f.codigo = m.group(1)
-            if i + 1 < len(valores) and valores[i + 1].isdigit():
-                f.revisao = int(valores[i + 1])
+            if i + 1 < len(valores) and re.fullmatch(r'\d+(\.0)?', valores[i + 1]):
+                f.revisao = int(float(valores[i + 1]))
     titulos = [t for t in valores if len(t) > 12 and not _CODIGO.search(t) and not _DATA.search(t)]
     if titulos:
         f.titulo = titulos[0]
@@ -97,26 +114,118 @@ def _blocos(documento):
             yield Table(filho, documento)
 
 
+_DIAS = {'dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sab', 'sáb'}
+_FIM_DA_LISTA = ('operador', 'superior imediato', 'legenda', 'observa', 'obs.', 'assinatura')
+
+
+def _limpo(texto):
+    return ' '.join(texto.split())
+
+
+def _titulo_de_paragrafo(texto):
+    """Parágrafo que pode ser título de seção: curto, sem campo a preencher ("DATA:", "[XXXX]")."""
+    t = texto.strip()
+    if not t or len(t) > 80 or '[' in t or t.endswith(':') or ':' in t[:25]:
+        return False
+    return not t.lower().startswith(('data', 'legenda', 'os itens', 'informações'))
+
+
+def _tipo_da_tabela(cab):
+    """Formato pelo cabeçalho (primeira linha, sem células repetidas de mesclagem)."""
+    c = [x.lower() for x in cab]
+    if c[:1] == ['item'] and 'ok' in c and 'nok' in c:
+        return 'ok_nok'
+    if c[:1] == ['item'] and 'sim' in c and ('não' in c or 'nao' in c):
+        return 'sim_nao'
+    if c[:1] == ['item'] and _DIAS & set(c):
+        return 'semanal'
+    if c[:1] == ['descrição'] and {'c', 'na'} <= set(c):
+        return 'conformidade'
+    if c[:1] == ['descrição'] and 'verificação' in c:
+        return 'verificacao'
+    return None
+
+
+def _item_de_verificacao(texto, valor):
+    v = valor.upper()
+    if 'FOTO' in v:
+        return ItemLido(_frase(texto), RESP_TEXTO, exige_foto=True)
+    if 'VALOR' in v:
+        # "Corrente R/S/T" tem três leituras: vai como texto.
+        return ItemLido(_frase(texto), RESP_TEXTO if '/' in texto else RESP_NUMERO)
+    if v.startswith('[DESCREVER') or v.startswith('[DESCREVA'):
+        return ItemLido(_frase(texto), RESP_TEXTO)
+    return ItemLido(_frase(texto), RESP_OK_NOK)
+
+
+def _ler_tabela_cnc(linhas, f):
+    """Tabela única (TCB-OTB-02 a 06): linha de seção, linha "| C | NC | NA", itens; para no rodapé."""
+    titulo, itens, dentro = '', [], False
+    for linha in linhas:
+        unicas = [c for c in dict.fromkeys(linha) if c]
+        if not unicas:
+            continue
+        primeira = unicas[0].lower()
+        if primeira.startswith(_FIM_DA_LISTA):
+            break
+        if {'c', 'nc', 'na'} <= {u.lower() for u in unicas}:
+            dentro = True
+            continue
+        if len(unicas) == 1 and len(set(linha)) == 1:  # linha mesclada: título de seção
+            if itens:
+                f.secoes.append((_frase(titulo or 'Verificação'), itens))
+            titulo, itens, dentro = unicas[0], [], False
+            if primeira.startswith('checklist'):
+                titulo = ''
+            continue
+        if dentro and len(unicas) == 1:
+            itens.append(ItemLido(_frase(unicas[0]), RESP_CONFORMIDADE))
+    if itens:
+        f.secoes.append((_frase(titulo or 'Verificação'), itens))
+
+
 def _ler_corpo(documento, f):
     ultimo_titulo = ''
+    campos = []  # "IDENTIFICAÇÃO: [XXXX]" antes da tabela vira item de texto da seção
     for bloco in _blocos(documento):
         if isinstance(bloco, Paragraph):
-            texto = bloco.text.strip()
-            if texto and len(texto) <= 80 and not texto.upper().startswith('DATA'):
-                ultimo_titulo = texto
+            texto = _limpo(bloco.text)
+            if _titulo_de_paragrafo(texto):
+                ultimo_titulo, campos = texto, []
+            elif '[' in texto and ':' in texto and ultimo_titulo:
+                rotulo = texto.split(':', 1)[0].strip()
+                if rotulo.lower() not in ('empresa', 'responsável', 'data'):
+                    campos.append(ItemLido(_frase(rotulo), RESP_TEXTO))
             continue
-        linhas = [[c.text.strip() for c in row.cells] for row in bloco.rows]
+        linhas = [[_limpo(c.text) for c in row.cells] for row in bloco.rows]
         if not linhas:
             continue
-        cab = [c.lower() for c in dict.fromkeys(linhas[0])]
-        if cab[:1] == ['item'] and 'ok' in cab and 'nok' in cab:
-            itens = []
-            for linha in linhas[1:]:
-                texto = ' '.join(linha[0].split())
-                if texto and texto not in itens:
-                    itens.append(texto)
-            if itens:
-                f.secoes.append((_frase(ultimo_titulo or 'Verificação'), itens))
+        if any({'c', 'nc', 'na'} <= {x.lower() for x in linha} for linha in linhas[:8]):
+            _ler_tabela_cnc(linhas, f)
+            continue
+        formato = _tipo_da_tabela(list(dict.fromkeys(linhas[0])))
+        if not formato:
+            continue
+        itens, vistos = list(campos), set()
+        for linha in linhas[1:]:
+            texto = linha[0]
+            if not texto or texto in vistos or texto.lower().startswith(_FIM_DA_LISTA):
+                continue
+            vistos.add(texto)
+            if formato == 'verificacao':
+                valor = next((c for c in linha[1:] if c and c != texto), '')
+                itens.append(_item_de_verificacao(texto, valor))
+            elif formato == 'semanal' and texto.lower().startswith('anotar horímetro'):
+                itens.append(ItemLido('Horímetro', RESP_NUMERO))
+            elif formato == 'sim_nao':
+                itens.append(ItemLido(_frase(texto), RESP_SIM_NAO))
+            elif formato == 'conformidade':
+                itens.append(ItemLido(_frase(texto), RESP_CONFORMIDADE))
+            else:
+                itens.append(ItemLido(_frase(texto) if formato == 'semanal' else texto, RESP_OK_NOK))
+        if itens:
+            f.secoes.append((_frase(ultimo_titulo or 'Verificação'), itens))
+        campos = []
 
 
 def ler_formulario(caminho):
@@ -130,7 +239,7 @@ def ler_formulario(caminho):
     if not f.codigo:
         raise FormularioInvalido('Não encontrei o código do documento (ex.: TCB-OTB-80) no cabeçalho do formulário.')
     if not f.secoes:
-        raise FormularioInvalido('Não encontrei nenhuma tabela "Item | OK | NOK" no formulário.')
+        raise FormularioInvalido('Não encontrei nenhuma tabela de checklist no formulário (ex.: "Item | OK | NOK").')
     if not f.titulo:
         f.titulo = f.codigo
     return f
@@ -162,8 +271,8 @@ def importar(caminho, tipo_ativo=None):
         for ordem_s, (titulo, itens) in enumerate(f.secoes):
             secao = Secao.objects.create(revisao=revisao, titulo=titulo, ordem=ordem_s)
             Item.objects.bulk_create([
-                Item(secao=secao, texto=texto, tipo_resposta=RESP_OK_NOK, ordem=ordem_i)
-                for ordem_i, texto in enumerate(itens)
+                Item(secao=secao, texto=it.texto[:255], tipo_resposta=it.tipo, exige_foto=it.exige_foto, ordem=ordem_i)
+                for ordem_i, it in enumerate(itens)
             ])
     if tipo_ativo is None:
         tipo_ativo, _ = TipoAtivo.objects.get_or_create(nome=nome_do_tipo(f.titulo))

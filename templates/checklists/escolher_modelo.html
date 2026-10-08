@@ -1,0 +1,16 @@
+{% extends "checklists/_base.html" %}
+{% block veiculos_content %}
+<div class="v-card" style="max-width:620px;">
+  <h3 class="v-h3">Qual checklist para {{ ativo.nome }}?</h3>
+  <p style="margin:-8px 0 16px; font-size:13.5px; color:#6b7480;">{{ ativo.tipo.nome }} · {{ ativo.identificacao }}</p>
+  {% for m in modelos %}
+    <a href="{% url 'checklists:execucao_nova' ativo.pk m.pk %}" style="display:flex; justify-content:space-between; gap:12px; align-items:center; padding:14px 0; border-top:1px solid #eef0f2; text-decoration:none; color:#12181f;">
+      <div><b>{{ m.titulo }}</b><div style="font-size:12.5px; color:#8b95a1;">{{ m.codigo }} · rev. {{ m.revisao_vigente.rotulo }}</div></div>
+      <span class="v-btn-sm blue">Iniciar</span>
+    </a>
+  {% empty %}
+    <p style="margin:0; font-size:14px; color:#556072;">Ainda não há checklist cadastrado para {{ ativo.tipo.nome }}.{% if is_admin %} Cadastre ou importe em <a href="{% url 'checklists:modelos' %}">Configurações → Modelos de checklist</a>.{% endif %}</p>
+  {% endfor %}
+  <div style="margin-top:14px;"><a class="v-btn-sm" href="{% url 'checklists:executar' %}">Voltar</a></div>
+</div>
+{% endblock %}
