@@ -70,7 +70,7 @@ class FluxoInspecaoTests(TestCase):
         self.client.force_login(self.vist)
         r = self._post('saida', 1050, item_pneus='nok', obs_pneus='Pneu dianteiro careca', fotos_extra=[_jpeg('avaria.jpg', (3000, 2000))])
         insp = Inspecao.objects.get()
-        self.assertRedirects(r, reverse('veiculos:inspecao_detalhe', args=[insp.pk]))
+        self.assertRedirects(r, reverse('dashboard:concluido', args=['vistoria', insp.pk]))
         self.assertTrue(insp.tem_problema)
         self.assertEqual(insp.itens.count(), len(CHECKLIST_LABELS))
         self.assertEqual(insp.fotos.count(), len(FOTO_POSICOES) + 1)

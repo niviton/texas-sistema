@@ -1,0 +1,35 @@
+{% extends "veiculos/_base.html" %}
+{% load static %}
+{% block title %}{{ titulo }} · Polaris{% endblock %}
+{% block v_style %}
+  .ok-box { max-width:520px; margin:8px auto 0; text-align:center; }
+  .ok-ic { width:76px; height:76px; border-radius:50%; background:#e5f3ea; color:#1e7a4a; display:flex; align-items:center; justify-content:center; margin:0 auto 16px; }
+  .ok-box h1 { font-family:'Sora',sans-serif; font-size:24px; font-weight:800; color:#0d1b2e; margin:0 0 6px; }
+  .ok-box .sub { font-size:14.5px; color:#556072; margin:0 0 4px; }
+  .ok-box .quando { font-size:13px; color:#8b95a1; margin:0 0 22px; }
+  .ok-acoes { display:flex; flex-direction:column; gap:10px; }
+  .ok-acoes .v-btn, .ok-acoes .v-btn-sm { display:block; padding:14px 18px; font-size:14.5px; }
+  .ok-acoes .v-btn-sm { border-radius:10px; }
+  .ok-prob { margin:0 0 18px; padding:10px 14px; border-radius:10px; background:#fdecea; color:#a3281f; font-size:13.5px; font-weight:700; }
+{% endblock %}
+{% block modulo_header %}{% endblock %}
+{% block veiculos_content %}
+<div class="ok-box">
+  <div class="ok-ic" aria-hidden="true"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+  <h1>{{ titulo }}</h1>
+  <p class="sub"><b>{{ reg.titulo }}</b> · {{ reg.detalhe }}</p>
+  <p class="quando">{{ reg.quando|date:"d/m/Y \à\s H:i" }}</p>
+  {% if reg.problema %}<p class="ok-prob">Registrado com item não conforme. Os responsáveis recebem o aviso no e-mail.</p>{% endif %}
+  <div class="ok-acoes">
+    <a class="v-btn" href="{{ reg.pdf_url }}" target="_blank" rel="noopener">Ver PDF</a>
+    <a class="v-btn-sm blue" href="{{ outro.1 }}">{{ outro.0 }}</a>
+    <a class="v-btn-sm" href="{% url 'dashboard:novo' %}">Novo registro</a>
+    <a class="v-btn-sm" href="{% url 'dashboard:home' %}">Voltar ao início</a>
+  </div>
+</div>
+<script src="{% static 'js/polaris-campo.js' %}"></script>
+<script>
+  // O envio deu certo: apaga o rascunho guardado no celular para este formulário.
+  Polaris.apagarRascunhoEnviado();
+</script>
+{% endblock %}

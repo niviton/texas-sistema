@@ -209,7 +209,12 @@ class ChecklistsTests(TestCase):
     def test_tecnico_executa_e_supervisor_recebe_pdf(self):
         r = self._post()
         ex = Execucao.objects.get()
-        self.assertRedirects(r, reverse('checklists:execucao', args=[ex.pk]))
+        self.assertRedirects(r, reverse('dashboard:concluido', args=['checklist', ex.pk]))
+        concl = self.client.get(reverse('dashboard:concluido', args=['checklist', ex.pk]))
+        self.assertContains(concl, 'Checklist registrado')
+        self.assertContains(concl, reverse('checklists:execucao_pdf', args=[ex.pk]))
+        self.assertContains(concl, reverse('checklists:escolher_modelo', args=[self.ativo.pk]))
+        self.assertEqual(self.client.get(reverse('dashboard:concluido', args=['checklist', ex.pk + 999])).status_code, 404)
         self.assertEqual(ex.respostas.count(), 5)
         self.assertEqual(ex.executor, self.tec)
         self.assertEqual(ex.medidor_label, '130,5 h')

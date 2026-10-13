@@ -131,11 +131,21 @@ def _escolha_vistoria(request):
     tipos = dict(TIPO_CHOICES)
     tipo = request.GET.get('tipo')
     base = reverse('veiculos:inspecao_nova')
+    inicio = ('Novo registro', reverse('dashboard:novo'))
+    veiculo = Veiculo.objects.filter(pk=request.GET.get('veiculo'), is_active=True).first() if request.GET.get('veiculo', '').isdigit() else None
     if tipo not in tipos:
-        return {
-            'pergunta': 'Qual vistoria você vai fazer?',
-            'opcoes': [{'titulo': rotulo, 'detalhe': _TIPO_DESCRICAO[valor], 'url': f'{base}?tipo={valor}'} for valor, rotulo in TIPO_CHOICES],
-        }
+        sufixo = f'&veiculo={veiculo.pk}' if veiculo else ''
+        opcoes = []
+        for valor, rotulo in TIPO_CHOICES:
+            op = {'titulo': rotulo, 'detalhe': _TIPO_DESCRICAO[valor], 'url': f'{base}?tipo={valor}{sufixo}'}
+            if veiculo and valor == TIPO_SAIDA and veiculo.uso_aberto:
+                op.update(off=True, selo='Veículo em uso')
+            if veiculo and valor == TIPO_CHEGADA and not veiculo.uso_aberto:
+                op.update(off=True, selo='Sem saída em aberto')
+            opcoes.append(op)
+        passos = [inicio, ('Veículo', base)] + ([(veiculo.placa, None)] if veiculo else [])
+        passos[-1] = (passos[-1][0], None)
+        return {'passos': passos, 'pergunta': 'Qual vistoria você vai fazer?', 'opcoes': opcoes}
     opcoes = []
     for v in Veiculo.objects.filter(is_active=True).order_by('placa'):
         uso = v.uso_aberto
@@ -150,7 +160,7 @@ def _escolha_vistoria(request):
             op['selo'] = f'Saiu {timezone.localtime(uso.saida_em):%d/%m %H:%M}'
         opcoes.append(op)
     return {
-        'passos': [('Veículos', base), (tipos[tipo], None)],
+        'passos': [inicio, ('Veículo', base), (tipos[tipo], None)],
         'pergunta': 'Qual veículo?',
         'ajuda': {'saida': 'Veículos em uso aparecem bloqueados até a chegada ser registrada.',
                   'chegada': 'Só aparecem os veículos com saída em aberto.'}.get(tipo, ''),
@@ -213,7 +223,7 @@ def inspecao_nova_view(request):
                     messages.success(request, 'Vistoria registrada. O comprovante está sendo enviado aos supervisores.')
                 else:
                     messages.success(request, 'Vistoria registrada. (Ninguém cadastrado para receber o e-mail das vistorias.)')
-                return redirect('veiculos:inspecao_detalhe', pk=inspecao.pk)
+                return redirect('dashboard:concluido', tipo='vistoria', pk=inspecao.pk)
     else:
         form = InspecaoForm(initial=initial, user=request.user)
         secoes = _checklist_from_post({})
@@ -243,7 +253,7 @@ def inspecao_nova_view(request):
     tipo_txt = dict(TIPO_CHOICES).get(dados.get('tipo'), '')
     veic = Veiculo.objects.filter(pk=dados.get('veiculo')).first() if str(dados.get('veiculo', '')).isdigit() else None
     base = reverse('veiculos:inspecao_nova')
-    passos = [('Veículos', base)] + ([(tipo_txt, f"{base}?tipo={dados.get('tipo')}")] if tipo_txt else []) + ([(veic.placa, None)] if veic else [])
+    passos = [('Novo registro', reverse('dashboard:novo')), ('Veículo', base)] + ([(tipo_txt, f"{base}?tipo={dados.get('tipo')}")] if tipo_txt else []) + ([(veic.placa, None)] if veic else [])
     passos[-1] = (passos[-1][0], None)
     return render(request, 'veiculos/inspecao_form.html', _ctx(
         request, 'nova', form=form, secoes=secoes, veiculos_info=veiculos_info, passos=passos,

@@ -1,0 +1,69 @@
+{% extends "veiculos/_base.html" %}
+{% block title %}Histórico · Polaris{% endblock %}
+{% block v_style %}
+  .hf { display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end; margin:0 0 14px; }
+  .hf label { display:block; font-size:12px; font-weight:700; color:#556072; margin-bottom:4px; }
+  .hf .campo { flex:1 1 150px; min-width:0; }
+  .hf .campo.largo { flex:2 1 240px; }
+  .hf select, .hf input { width:100%; }
+  .hf-acoes { display:flex; gap:8px; }
+  .chips { display:flex; flex-wrap:wrap; gap:8px; margin:0 0 16px; }
+  .chip { padding:7px 14px; border-radius:100px; border:1.5px solid #dfe3e8; background:#fff; color:#556072; font-size:13px; font-weight:700; text-decoration:none; }
+  .chip.on { background:#0d2440; border-color:#0d2440; color:#fff; }
+  .reg { display:flex; align-items:center; gap:14px; padding:14px 16px; border:1.5px solid #e6e9ec; border-radius:12px; background:#fff; margin-bottom:8px; text-decoration:none; color:#12181f; }
+  .reg:hover { border-color:#365f91; }
+  .reg:focus-visible { outline:3px solid #ffc000; outline-offset:2px; }
+  .reg .ic { flex-shrink:0; width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; background:#eaf0f7; color:#365f91; }
+  .reg .tx { flex:1; min-width:0; }
+  .reg b { font-size:14.5px; color:#0d1b2e; }
+  .reg small { display:block; font-size:12.5px; color:#7b8591; margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .reg .lado { flex-shrink:0; text-align:right; font-size:12px; color:#7b8591; }
+  .reg .lado .v-badge { margin-top:4px; }
+  .total { font-size:13px; color:#6b7480; margin:0 0 10px; }
+  @media (max-width:600px) { .reg { padding:12px; gap:10px; } .reg .ic { width:34px; height:34px; } }
+{% endblock %}
+{% block modulo_header %}
+<h1 style="font-family:'Sora',sans-serif; font-size:24px; font-weight:800; margin:0 0 4px; color:#0d1b2e;">Histórico</h1>
+<p style="font-size:14px; color:#6b7480; margin:0 0 20px;">{% if request.user.ve_todo_historico %}Vistorias, checklists e termos de toda a equipe.{% else %}Seus registros: vistorias e checklists.{% endif %}</p>
+{% endblock %}
+{% block veiculos_content %}
+{% if tipos|length > 1 %}
+<nav class="chips" aria-label="Tipo de registro">
+  <a class="chip{% if not f.tipo %} on{% endif %}" href="?{% if f.q %}q={{ f.q|urlencode }}{% endif %}">Todos</a>
+  {% for valor, rotulo in tipos %}
+    <a class="chip{% if f.tipo == valor %} on{% endif %}" href="?tipo={{ valor }}{% if f.q %}&q={{ f.q|urlencode }}{% endif %}">{{ rotulo }}</a>
+  {% endfor %}
+</nav>
+{% endif %}
+
+<form method="get" class="hf">
+  {% if f.tipo %}<input type="hidden" name="tipo" value="{{ f.tipo }}">{% endif %}
+  <div class="campo largo"><label for="hq">Buscar</label><input id="hq" class="v-input" type="search" name="q" value="{{ f.q }}" placeholder="Placa, equipamento, série, cliente..."></div>
+  {% if pessoas %}
+  <div class="campo"><label for="hp">Pessoa</label>
+    <select id="hp" name="pessoa" class="v-input"><option value="">Todas</option>
+      {% for p in pessoas %}<option value="{{ p.pk }}"{% if f.pessoa == p.pk %} selected{% endif %}>{{ p.full_name|default:p.email }}</option>{% endfor %}
+    </select>
+  </div>
+  {% endif %}
+  <div class="campo"><label for="hd">De</label><input id="hd" class="v-input" type="date" name="de" value="{{ f.de|date:'Y-m-d' }}"></div>
+  <div class="campo"><label for="ha">Até</label><input id="ha" class="v-input" type="date" name="ate" value="{{ f.ate|date:'Y-m-d' }}"></div>
+  <div class="campo" style="flex:0 0 auto;"><label style="display:flex; gap:6px; align-items:center; margin:0 0 12px;"><input type="checkbox" name="problema" value="1"{% if f.problema %} checked{% endif %} style="width:auto;"> Só com problema</label></div>
+  <div class="hf-acoes">
+    <button class="v-btn" type="submit">Filtrar</button>
+    {% if filtrado %}<a class="v-btn-sm" href="{{ request.path }}" style="padding:11px 14px;">Limpar</a>{% endif %}
+  </div>
+</form>
+
+<p class="total">{{ registros|length }} registro{{ registros|length|pluralize }}{% if registros|length >= 300 %} (os mais recentes; use os filtros para achar outros){% endif %}</p>
+{% for r in registros %}
+  <a class="reg" href="{{ r.url }}">
+    <span class="ic" aria-hidden="true">{% if r.tipo == 'vistoria' %}{% include "veiculos/_icon.html" with i="car_side" s=22 w="1.9" %}{% elif r.tipo == 'checklist' %}{% include "veiculos/_icon.html" with i="document" s=20 w="1.9" %}{% else %}{% include "veiculos/_icon.html" with i="pen" s=20 w="1.9" %}{% endif %}</span>
+    <span class="tx"><b>{{ r.titulo }}</b><small>{{ r.detalhe }}{% if r.pessoa and request.user.ve_todo_historico %} · {{ r.pessoa }}{% endif %}</small></span>
+    <span class="lado">{{ r.quando|date:"d/m/Y" }}<br>{{ r.quando|date:"H:i" }}
+      {% if r.rascunho %}<br><span class="v-badge b-warn">Rascunho</span>{% elif r.problema %}<br><span class="v-badge b-nok">Com problema</span>{% endif %}</span>
+  </a>
+{% empty %}
+  <div class="v-card" style="max-width:560px;"><p style="margin:0; font-size:14px; color:#556072;">{% if filtrado %}Nenhum registro com esses filtros.{% else %}Nenhum registro ainda. Comece em <a href="{% url 'dashboard:novo' %}">Novo registro</a>.{% endif %}</p></div>
+{% endfor %}
+{% endblock %}

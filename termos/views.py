@@ -170,7 +170,7 @@ def _finalizar(request, termo):
         messages.success(request, f'Termo nº {termo.numero} finalizado. O PDF está sendo enviado aos supervisores.')
     else:
         messages.success(request, f'Termo nº {termo.numero} finalizado. (Ninguém cadastrado para receber o e-mail dos termos.)')
-    return redirect('termos:detalhe', pk=termo.pk)
+    return redirect('dashboard:concluido', tipo='termo', pk=termo.pk)
 
 
 @termos_required

@@ -78,6 +78,7 @@
       {% empty %}
         <p class="vazio">Nenhum registro ainda. Comece por um dos botões acima.</p>
       {% endfor %}
+      {% if resumo.ultimos %}<a class="linha" href="{% url 'dashboard:historico' %}" style="justify-content:center;"><span class="ir">Ver histórico completo</span></a>{% endif %}
     </div>
   {% elif request.user.role == 'professor' %}
     <div class="acoes" style="grid-template-columns:minmax(0, 1fr); max-width:360px;">
