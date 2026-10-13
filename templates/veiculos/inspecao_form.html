@@ -126,7 +126,7 @@
 
   <div class="insp-grid">
     <div class="insp-col">
-      <section class="v-card">
+      <section class="v-card" data-etapa="1" data-etapa-nome="Dados do veículo">
         <h3 class="step-h"><span class="step-n">1</span>Dados da vistoria</h3>
         <div class="grid2">
           {% for field in form %}{% if field.name != 'observacoes' and field.name != 'combustivel_pct' and field.name != 'com_carga' %}
@@ -158,7 +158,7 @@
         </div>
       </section>
 
-      <section class="v-card" id="sec-fotos">
+      <section class="v-card" id="sec-fotos" data-etapa="3" data-etapa-nome="Fotos">
         <h3 class="step-h"><span class="step-n">2</span>Fotos<span class="aux" id="foto-count"></span></h3>
         <div class="progress"><div id="foto-bar"></div></div>
         <p class="v-help" style="margin:0 0 12px;">Toque em cada quadro para abrir a câmera.</p>
@@ -206,7 +206,7 @@
     </div>
 
     <div class="insp-col">
-      <section class="v-card">
+      <section class="v-card" data-etapa="2" data-etapa-nome="Itens">
         <h3 class="step-h"><span class="step-n">3</span>Checklist</h3>
         <p class="v-help" style="margin:-8px 0 4px;">Tudo começa como OK. Marque <b style="color:#c0392b;">Não OK</b> e descreva o problema.</p>
         {% for secao, itens in secoes %}
@@ -225,12 +225,12 @@
         {% endfor %}
       </section>
 
-      <section class="v-card">
+      <section class="v-card" data-etapa="4">
         <h3 class="step-h"><span class="step-n">4</span>Observações</h3>
         {{ form.observacoes }}
       </section>
 
-      <section class="v-card" id="sec-assinatura">
+      <section class="v-card" id="sec-assinatura" data-etapa="4" data-etapa-nome="Assinatura">
         <h3 class="step-h"><span class="step-n">5</span>Assinatura do motorista</h3>
         <div class="sig-box" id="sig-box">
           <canvas id="sig-canvas"></canvas>
@@ -258,6 +258,8 @@
   const info = JSON.parse(document.getElementById('veiculos-info').textContent);
   const NOME_CONDUTOR = '{{ nome_condutor|escapejs }}';
   const $ = (id) => document.getElementById(id);
+  // Rascunho no celular: restaura o que já foi preenchido antes de montar a tela.
+  const rasc = Polaris.rascunho(document.getElementById('insp-form'));
   const veic = $('id_veiculo'), tipo = $('id_tipo'), km = $('id_km'), mot = $('id_motorista');
 
   // ---------- Dados ----------
@@ -392,7 +394,7 @@
   document.querySelectorAll('.seg input').forEach((r) => r.addEventListener('change', () => {
     const row = r.closest('.ck-row');
     row.classList.toggle('is-nok', r.value === 'nok');
-    if (r.value === 'nok') row.querySelector('.ck-obs').focus();
+    if (r.value === 'nok' && !Polaris.restaurando) row.querySelector('.ck-obs').focus();
   }));
 
   // ---------- Assinatura com o dedo ----------
@@ -429,12 +431,15 @@
     if (erros.length) {
       e.preventDefault();
       const div = $('erros'); div.innerHTML = erros.join('<br>'); div.style.display = '';
-      (primeiro || div).scrollIntoView({ behavior: 'smooth', block: 'center' });
+      Polaris.mostrar(primeiro || div);
       return;
     }
     $('assinatura').value = sig.dataURL();
     const b = $('submit-btn'); b.disabled = true; b.textContent = 'Enviando fotos...';
   });
+  // Etapas no celular e rascunho automático (static/js/polaris-campo.js)
+  Polaris.etapas($('insp-form'));
+  rasc.ativar({ assinaturas: { motorista: sig } });
 })();
 </script>
 {% endblock %}
