@@ -302,6 +302,8 @@ class Inspecao(models.Model):
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='+')
     created_at = models.DateTimeField('data', auto_now_add=True)
     email_enviado = models.BooleanField(default=False)
+    conferido_em = models.DateTimeField('conferido em', null=True, blank=True)
+    conferido_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
 
     class Meta:
         verbose_name = 'inspeção'

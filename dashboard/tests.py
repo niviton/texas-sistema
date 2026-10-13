@@ -65,3 +65,48 @@ class RegistrosTests(TestCase):
         self.assertNotContains(r, 'Gerador Toyama')
         self.assertNotContains(r, 'Cliente Eólica')
         self.assertEqual(self.client.get(reverse('dashboard:concluido', args=['termo', 1])).status_code, 404)
+
+    def test_pendencias_e_conferencia_do_administrador(self):
+        from django.urls import reverse
+
+        from checklists.models import Ativo, Execucao
+        Ativo.objects.filter(nome='Gerador Toyama 1000 W').update(conferido=False, cadastrado_por=self.tec)
+        self.client.force_login(self.admin)
+        home = self.client.get(reverse('dashboard:home'))
+        self.assertContains(home, 'Para conferir')
+        self.assertContains(home, 'class="nav-cont"')
+        self.assertEqual(home.context['n_pendencias'], 2)  # equipamento novo + checklist com problema
+        ex = Execucao.objects.get()
+        r = self.client.post(reverse('dashboard:conferir', args=['checklist', ex.pk]), {'next': '/dashboard/'})
+        self.assertRedirects(r, '/dashboard/', fetch_redirect_response=False)
+        ex.refresh_from_db()
+        self.assertEqual(ex.conferido_por, self.admin)
+        a = Ativo.objects.get()
+        self.client.post(reverse('dashboard:conferir', args=['equipamento', a.pk]), {'next': 'https://outro-site.com/'})
+        self.assertNotContains(self.client.get(reverse('dashboard:home')), 'Para conferir')
+        # só o administrador confere
+        self.client.force_login(self.log)
+        self.assertEqual(self.client.post(reverse('dashboard:conferir', args=['equipamento', a.pk])).status_code, 403)
+
+    def test_qr_leva_direto_ao_checklist_e_a_vistoria(self):
+        from django.urls import reverse
+
+        from checklists.models import Ativo
+        from veiculos.models import Veiculo
+        a, v = Ativo.objects.get(), Veiculo.objects.get()
+        self.client.force_login(self.tec)
+        self.assertRedirects(self.client.get(reverse('dashboard:qr_equipamento', args=[a.pk])),
+                             reverse('checklists:escolher_modelo', args=[a.pk]), fetch_redirect_response=False)
+        self.assertRedirects(self.client.get(reverse('dashboard:qr_veiculo', args=[v.pk])),
+                             reverse('veiculos:inspecao_nova') + f'?veiculo={v.pk}', fetch_redirect_response=False)
+        self.assertEqual(self.client.get(reverse('dashboard:etiquetas')).status_code, 403)
+        self.client.force_login(self.admin)
+        r = self.client.get(reverse('dashboard:etiquetas'), {'equip': 'todos', 'veic': str(v.pk)})
+        self.assertContains(r, '<svg', count=2)
+        self.assertContains(r, 'Gerador Toyama 1000 W')
+        self.assertContains(r, 'ABC1D23')
+        # sem login, o QR pede o login e depois volta para o checklist
+        self.client.logout()
+        r = self.client.get(reverse('dashboard:qr_equipamento', args=[a.pk]))
+        self.assertEqual(r.status_code, 302)
+        self.assertIn('next=', r['Location'])

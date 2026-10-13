@@ -52,6 +52,24 @@
       {% endif %}
     </div>
 
+    {% if pendencias.total %}
+      <div class="bloco">
+        <h2>Para conferir <span style="font-family:'Manrope',sans-serif; font-size:12px; font-weight:800; color:#8a5a00; background:#fff4d6; padding:2px 8px; border-radius:100px; margin-left:4px;">{{ pendencias.total }}</span></h2>
+        {% for a in pendencias.equipamentos %}
+          <a class="linha" href="{% url 'checklists:ativos' %}?edit={{ a.pk }}">
+            <div><b>{{ a.nome }}</b> <span style="color:#6b7480;">{{ a.tipo.nome }}</span><small>Equipamento cadastrado no checklist{% if a.cadastrado_por %} por {{ a.cadastrado_por.full_name|default:a.cadastrado_por.email }}{% endif %}</small></div>
+            <span class="ir">Conferir cadastro</span>
+          </a>
+        {% endfor %}
+        {% for r in pendencias.registros %}
+          <a class="linha" href="{{ r.url }}">
+            <div><b>{{ r.titulo }}</b> {{ r.detalhe }}<small>{{ r.quando|date:"d/m/Y H:i" }}{% if r.pessoa %} · {{ r.pessoa }}{% endif %} · <span class="nc">com problema</span></small></div>
+            <span class="ir">Ver e conferir</span>
+          </a>
+        {% endfor %}
+      </div>
+    {% endif %}
+
     {% if resumo.em_uso %}
       <div class="bloco">
         <h2>{% if request.user.ve_todo_historico %}Veículos em uso{% else %}Com você agora{% endif %}</h2>

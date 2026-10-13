@@ -29,7 +29,8 @@
       {% if execucao.email_enviado %}<span class="v-badge b-ok">E-mail enviado</span>{% else %}<span class="v-badge b-mute">E-mail não enviado</span>{% endif %}
       <a class="v-btn-sm blue" href="{% url 'checklists:execucao_pdf' execucao.pk %}" target="_blank">Ver PDF</a>
       <a class="v-btn-sm" href="{% url 'checklists:execucao_pdf' execucao.pk %}?download=1">Baixar PDF</a>
-      <form method="post" action="{% url 'checklists:execucao_reenviar' execucao.pk %}">{% csrf_token %}<button class="v-btn-sm blue" type="submit">Reenviar aos supervisores</button></form>
+      <form method="post" action="{% url 'checklists:execucao_reenviar' execucao.pk %}">{% csrf_token %}<button class="v-btn-sm blue" type="submit">Reenviar aos destinatários</button></form>
+      {% include "dashboard/_conferir.html" with obj=execucao tipo="checklist" %}
     </div>
   </div>
 

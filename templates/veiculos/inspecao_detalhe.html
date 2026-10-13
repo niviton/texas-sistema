@@ -35,7 +35,8 @@
       {% if inspecao.email_enviado %}<span class="v-badge b-ok">E-mail enviado</span>{% else %}<span class="v-badge b-mute">E-mail não enviado</span>{% endif %}
       <a class="v-btn-sm blue" href="{% url 'veiculos:inspecao_pdf' inspecao.pk %}" target="_blank">Ver PDF</a>
       <a class="v-btn-sm" href="{% url 'veiculos:inspecao_pdf' inspecao.pk %}?download=1">Baixar PDF</a>
-      <form method="post" action="{% url 'veiculos:inspecao_reenviar' inspecao.pk %}">{% csrf_token %}<button class="v-btn-sm blue" type="submit">Reenviar aos supervisores</button></form>
+      <form method="post" action="{% url 'veiculos:inspecao_reenviar' inspecao.pk %}">{% csrf_token %}<button class="v-btn-sm blue" type="submit">Reenviar aos destinatários</button></form>
+      {% include "dashboard/_conferir.html" with obj=inspecao tipo="vistoria" %}
     </div>
   </div>
 

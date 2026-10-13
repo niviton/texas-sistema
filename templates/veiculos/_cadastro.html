@@ -16,7 +16,8 @@
   </div>
 
   <div style="flex:1.4; min-width:320px;">
-    <div style="display:flex; justify-content:flex-end; margin-bottom:12px;">
+    <div style="display:flex; justify-content:flex-end; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
+      {% block topo_lista %}{% endblock %}
       {% if show_archived %}<a href="{{ request.path }}" class="v-btn-sm">Ocultar arquivados</a>
       {% else %}<a href="?arquivados=1" class="v-btn-sm">Mostrar arquivados</a>{% endif %}
     </div>

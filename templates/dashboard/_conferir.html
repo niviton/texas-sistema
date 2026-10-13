@@ -1,0 +1,8 @@
+{# Registro com problema: o administrador marca que já viu e tratou. #}
+{% if request.user.is_admin_geral and obj.tem_problema %}
+  {% if obj.conferido_em %}
+    <span class="v-badge b-ok">Conferido{% if obj.conferido_por %} por {{ obj.conferido_por.full_name|default:obj.conferido_por.email }}{% endif %} em {{ obj.conferido_em|date:"d/m/Y" }}</span>
+  {% else %}
+    <form method="post" action="{% url 'dashboard:conferir' tipo obj.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button class="v-btn-sm green" type="submit">Marcar como conferido</button></form>
+  {% endif %}
+{% endif %}

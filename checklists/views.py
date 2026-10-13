@@ -174,6 +174,7 @@ def passo_ativo_view(request, finalidade, tipo_pk):
         if ativo is None:
             ativo = novo_form.save(commit=False)
             ativo.tipo, ativo.cadastrado_por = tipo, request.user
+            ativo.conferido = request.user.is_admin_geral
             ativo.save()
             messages.success(request, f'{ativo.nome} cadastrado. Da próxima vez ele já aparece na lista.')
         return redirect(url(ativo))

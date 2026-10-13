@@ -75,6 +75,9 @@ def home(request):
         'active_nav': 'inicio',
         'resumo': _resumo_checklists(request.user) if request.user.pode_checklists else None,
     }
+    if request.user.is_admin_geral:
+        from .pendencias import listar
+        context['pendencias'] = listar(request.user)
     return render(request, 'dashboard/dashboard.html', context)
 
 
@@ -175,3 +178,84 @@ def concluido_view(request, tipo, pk):
     return render(request, 'dashboard/concluido.html', {
         'active_nav': 'novo', 'titulo': titulo, 'reg': reg, 'outro': outro,
     })
+
+
+@login_required
+def conferir_view(request, tipo, pk):
+    """Administrador marca um equipamento novo ou um registro com problema como conferido."""
+    from django.contrib import messages
+    from django.core.exceptions import PermissionDenied
+    from django.shortcuts import redirect
+    from django.utils.http import url_has_allowed_host_and_scheme
+
+    from .pendencias import conferir
+
+    if not request.user.is_admin_geral or request.method != 'POST' or tipo not in ('equipamento', 'vistoria', 'checklist'):
+        raise PermissionDenied
+    messages.success(request, conferir(request.user, tipo, pk))
+    volta = request.POST.get('next', '')
+    if not url_has_allowed_host_and_scheme(volta, allowed_hosts={request.get_host()}):
+        volta = '/'
+    return redirect(volta)
+
+
+# ------------------------------------------------------------ QR code nos equipamentos e veículos
+
+@login_required
+def qr_equipamento_view(request, pk):
+    from django.shortcuts import redirect
+    return redirect('checklists:escolher_modelo', ativo_pk=pk)
+
+
+@login_required
+def qr_veiculo_view(request, pk):
+    from django.shortcuts import redirect
+    from django.urls import reverse
+    return redirect(reverse('veiculos:inspecao_nova') + f'?veiculo={pk}')
+
+
+def _qr_svg(texto):
+    import qrcode
+    import qrcode.image.svg
+    from django.utils.safestring import mark_safe
+    img = qrcode.make(texto, image_factory=qrcode.image.svg.SvgPathImage, box_size=10, border=1)
+    svg = img.to_string(encoding='unicode')
+    return mark_safe(svg[svg.index('<svg'):])
+
+
+@login_required
+def etiquetas_view(request):
+    """Etiquetas para imprimir e colar: o QR leva direto ao checklist do equipamento (ou à vistoria do veículo)."""
+    from django.core.exceptions import PermissionDenied
+    from django.urls import reverse
+
+    from checklists.models import Ativo
+    from veiculos.models import Veiculo
+
+    if not request.user.is_admin_geral:
+        raise PermissionDenied
+    ids = lambda nome: [int(x) for x in request.GET.get(nome, '').split(',') if x.strip().isdigit()]
+    etiquetas = []
+    equip = Ativo.objects.filter(is_active=True).select_related('tipo').order_by('tipo__nome', 'nome')
+    if request.GET.get('equip') == 'todos':
+        pass
+    elif ids('equip'):
+        equip = equip.filter(pk__in=ids('equip'))
+    else:
+        equip = equip.none()
+    for a in equip:
+        url = request.build_absolute_uri(reverse('dashboard:qr_equipamento', args=[a.pk]))
+        etiquetas.append({'titulo': a.nome, 'sub': ' · '.join(x for x in [a.tipo.nome, a.identificacao, a.patrimonio] if x),
+                          'acao': 'Aponte a câmera para fazer o checklist', 'qr': _qr_svg(url)})
+    veic = Veiculo.objects.filter(is_active=True).order_by('placa')
+    if request.GET.get('veic') == 'todos':
+        pass
+    elif ids('veic'):
+        veic = veic.filter(pk__in=ids('veic'))
+    else:
+        veic = veic.none()
+    for v in veic:
+        url = request.build_absolute_uri(reverse('dashboard:qr_veiculo', args=[v.pk]))
+        etiquetas.append({'titulo': v.placa, 'sub': f'{v.marca} {v.modelo}'.strip(),
+                          'acao': 'Aponte a câmera para fazer a vistoria', 'qr': _qr_svg(url)})
+    return render(request, 'dashboard/etiquetas.html', {'etiquetas': etiquetas, 'host': request.get_host()})

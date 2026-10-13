@@ -1,0 +1,48 @@
+{% load static %}<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Etiquetas QR · Polaris</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:'Manrope',sans-serif; background:#eef0f3; color:#0d1b2e; }
+  .barra { display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:space-between; padding:16px 20px; background:#0d2440; color:#fff; }
+  .barra p { margin:0; font-size:13.5px; opacity:.85; }
+  .barra button { padding:11px 20px; border:none; border-radius:10px; background:#f5a623; color:#0d1b2e; font-weight:800; font-size:14px; cursor:pointer; }
+  .folha { display:grid; grid-template-columns:repeat(auto-fill, 90mm); gap:6mm; justify-content:center; padding:10mm; }
+  .et { width:90mm; height:50mm; display:flex; gap:4mm; align-items:center; padding:4mm; background:#fff; border:0.4mm solid #c9ced6; border-radius:3mm; page-break-inside:avoid; break-inside:avoid; }
+  .et .qr { width:40mm; height:40mm; flex-shrink:0; }
+  .et .qr svg { width:100%; height:100%; display:block; }
+  .et .tx { min-width:0; display:flex; flex-direction:column; gap:1.5mm; }
+  .et img { height:8mm; width:auto; align-self:flex-start; }
+  .et b { font-size:4.2mm; line-height:1.15; }
+  .et small { font-size:2.9mm; color:#556072; }
+  .et .acao { font-size:2.7mm; font-weight:800; color:#365f91; }
+  .vazio { text-align:center; padding:40px; }
+  @media print { body { background:#fff; } .barra { display:none; } .folha { padding:0; gap:4mm; } @page { margin:8mm; } }
+</style>
+</head>
+<body>
+<div class="barra">
+  <p>{{ etiquetas|length }} etiqueta{{ etiquetas|length|pluralize }}. O QR aponta para <b>{{ host }}</b>: imprima a partir do endereço definitivo do Polaris.</p>
+  <button type="button" onclick="window.print()">Imprimir</button>
+</div>
+<div class="folha">
+  {% for e in etiquetas %}
+    <div class="et">
+      <div class="qr">{{ e.qr }}</div>
+      <div class="tx">
+        <img src="{% static 'assets/logo-texas-cor-hd.png' %}" alt="Texas Controls">
+        <b>{{ e.titulo }}</b>
+        {% if e.sub %}<small>{{ e.sub }}</small>{% endif %}
+        <span class="acao">{{ e.acao }}</span>
+      </div>
+    </div>
+  {% empty %}
+    <p class="vazio">Nenhum equipamento ou veículo selecionado.</p>
+  {% endfor %}
+</div>
+</body>
+</html>

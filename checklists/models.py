@@ -93,6 +93,7 @@ class Ativo(models.Model):
         settings.AUTH_USER_MODEL, verbose_name='cadastrado por', on_delete=models.SET_NULL, null=True, blank=True,
         related_name='+', help_text='Preenchido quando o técnico cadastra o equipamento na hora do checklist.',
     )
+    conferido = models.BooleanField('conferido pelo administrador', default=True)
     is_active = models.BooleanField('ativo', default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -250,6 +251,8 @@ class Execucao(models.Model):
     assinatura = models.ImageField('assinatura do técnico', upload_to='checklists/assinaturas/%Y/%m', null=True, blank=True)
     tem_problema = models.BooleanField(default=False)
     email_enviado = models.BooleanField(default=False)
+    conferido_em = models.DateTimeField('conferido em', null=True, blank=True)
+    conferido_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
     created_at = models.DateTimeField('data', auto_now_add=True)
 
     class Meta:
