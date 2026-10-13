@@ -2,6 +2,12 @@
 
 Escrito em linguagem simples, do mais recente para o mais antigo.
 
+## 13/10/2026 – Pronto para o PythonAnywhere
+
+- `SITE_URL` passa a definir também o domínio aceito e a proteção dos formulários (CSRF). Em produção (`DJANGO_DEBUG=False`) o sistema exige chave secreta própria e liga cookies seguros e HTTPS.
+- `STATIC_ROOT` para o `collectstatic`; envio de e-mail em segundo plano configurável (`EMAIL_SEGUNDO_PLANO`).
+- Guia passo a passo em `docs/deploy/pythonanywhere.md`.
+
 ## 08/10/2026 – PDF: motivo só nas observações
 
 - Nos PDFs da vistoria e do checklist de equipamento, a tabela de itens mostra só o X. O motivo de cada item marcado como NOK (ou de qualquer item com observação) aparece uma única vez, no quadro "Observações".

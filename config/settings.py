@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 import os
 from pathlib import Path
+from urllib.parse import urlparse
 
 from dotenv import load_dotenv
 
@@ -39,6 +40,24 @@ DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
 ALLOWED_HOSTS = [h.strip() for h in os.environ.get('DJANGO_ALLOWED_HOSTS', '').split(',') if h.strip()]
 if DEBUG and not ALLOWED_HOSTS:
     ALLOWED_HOSTS = ['*']
+
+# Endereço público do sistema (ex.: https://polaris.pythonanywhere.com). Uma variável só alimenta
+# os links dos e-mails, o domínio aceito e a proteção dos formulários (CSRF).
+SITE_URL = os.environ.get('SITE_URL', 'http://127.0.0.1:8000').rstrip('/')
+_site = urlparse(SITE_URL)
+if _site.hostname and '*' not in ALLOWED_HOSTS and _site.hostname not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(_site.hostname)
+CSRF_TRUSTED_ORIGINS = [f'{_site.scheme}://{_site.netloc}'] if _site.scheme == 'https' else []
+
+if not DEBUG:
+    if SECRET_KEY.startswith('django-insecure'):
+        raise RuntimeError('Defina DJANGO_SECRET_KEY no .env antes de rodar em produção (DJANGO_DEBUG=False).')
+    # O PythonAnywhere entrega o HTTPS e repassa a requisição: confia no cabeçalho dele.
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    if _site.scheme == 'https':
+        SESSION_COOKIE_SECURE = CSRF_COOKIE_SECURE = True
+        SECURE_SSL_REDIRECT = True
+        SECURE_HSTS_SECONDS = 60 * 60 * 24 * 30
 
 
 # Microsoft Entra ID / Graph API (usado para acessar o SharePoint via Sites.Selected)
@@ -157,13 +176,14 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
+STATIC_ROOT = BASE_DIR / 'staticfiles'  # python manage.py collectstatic (produção)
 
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-SOFFICE_PATH = r'C:\Program Files\LibreOffice\program\soffice.exe'
+SOFFICE_PATH = os.environ.get('SOFFICE_PATH', r'C:\Program Files\LibreOffice\program\soffice.exe')
 
 
 # E-mail (Gmail com "senha de app"). Sem usuário/senha no .env, os e-mails
@@ -183,8 +203,6 @@ DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', '') or f'Polaris Frota
 # Carimbo das fotos: converte o GPS do celular em endereço pelo OpenStreetMap (desligue com CARIMBO_ENDERECO=0).
 CARIMBO_ENDERECO = os.environ.get('CARIMBO_ENDERECO', '1') == '1'
 
-# Envia os e-mails da vistoria em segundo plano (a tela não espera o Gmail).
-VEICULOS_EMAIL_ASYNC = True
-
-# Endereço usado nos links dos e-mails (ex: http://192.168.0.10:8000)
-SITE_URL = os.environ.get('SITE_URL', 'http://127.0.0.1:8000')
+# Envia os e-mails em segundo plano (a tela não espera o Gmail). No PythonAnywhere os web apps
+# não rodam threads: lá use EMAIL_SEGUNDO_PLANO=0 (o e-mail sai na hora, a tela espera alguns segundos).
+VEICULOS_EMAIL_ASYNC = os.environ.get('EMAIL_SEGUNDO_PLANO', '1') == '1'
