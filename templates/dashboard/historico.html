@@ -64,6 +64,6 @@
       {% if r.rascunho %}<br><span class="v-badge b-warn">Rascunho</span>{% elif r.problema %}<br><span class="v-badge b-nok">Com problema</span>{% endif %}</span>
   </a>
 {% empty %}
-  <div class="v-card" style="max-width:560px;"><p style="margin:0; font-size:14px; color:#556072;">{% if filtrado %}Nenhum registro com esses filtros.{% else %}Nenhum registro ainda. Comece em <a href="{% url 'dashboard:novo' %}">Novo registro</a>.{% endif %}</p></div>
+  <div class="v-card" style="max-width:560px;"><p style="margin:0; font-size:14px; color:#556072;">{% if filtrado %}Nenhum registro com esses filtros.{% else %}Nenhum registro ainda. Comece pela <a href="{% url 'dashboard:home' %}">tela inicial</a>.{% endif %}</p></div>
 {% endfor %}
 {% endblock %}

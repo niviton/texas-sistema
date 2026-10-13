@@ -32,6 +32,7 @@
   <p style="font-size:14.5px; color:#6b7480; margin:0 0 24px;">{{ today_label }}</p>
 
   {% if resumo %}
+    <h2 style="font-family:'Sora',sans-serif; font-size:15px; font-weight:700; color:#0d1b2e; margin:0 0 10px;">Novo registro</h2>
     <div class="acoes">
       <a class="acao" href="{% url 'veiculos:inspecao_nova' %}">
         <div class="ico">{% include "veiculos/_icon.html" with i="car_side" s=28 w="1.8" %}</div>

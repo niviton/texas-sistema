@@ -101,7 +101,7 @@ def _registros_required(view):
 
 @_registros_required
 def novo_view(request):
-    """Ponto de partida único: o que você vai registrar? Daí seguem os passos de cada módulo."""
+    """Endereço antigo do "Novo registro": a escolha agora fica na tela inicial."""
     from django.shortcuts import redirect
     from django.urls import reverse
 
@@ -116,10 +116,8 @@ def novo_view(request):
                      'url': reverse('termos:novo')},
     }
     opcoes = [opcoes_por_tipo[t] for t in tipos_permitidos(request.user)]
-    if len(opcoes) == 1:
-        return redirect(opcoes[0]['url'])
-    escolha = {'pergunta': 'O que você vai registrar?', 'opcoes': opcoes}
-    return render(request, 'dashboard/novo.html', {'active_nav': 'novo', 'escolha': escolha})
+    # A escolha fica na tela inicial; com uma opção só, vai direto para ela.
+    return redirect(opcoes[0]['url'] if len(opcoes) == 1 else 'dashboard:home')
 
 
 @_registros_required
@@ -176,7 +174,7 @@ def concluido_view(request, tipo, pk):
         titulo = 'Termo finalizado'
         outro = ('Novo termo', reverse('termos:novo'))
     return render(request, 'dashboard/concluido.html', {
-        'active_nav': 'novo', 'titulo': titulo, 'reg': reg, 'outro': outro,
+        'active_nav': 'inicio', 'titulo': titulo, 'reg': reg, 'outro': outro,
     })
 
 

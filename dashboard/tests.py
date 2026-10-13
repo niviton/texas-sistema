@@ -35,16 +35,17 @@ class RegistrosTests(TestCase):
         Execucao.objects.create(revisao=rev, ativo=ativo, executor=outro, executor_nome='Outro', tem_problema=True)
         Termo.objects.create(tipo='entrada', data=date.today(), cliente_contato='Cliente Eólica', created_by=self.log)
 
-    def test_novo_registro_mostra_so_o_permitido(self):
+    def test_novo_registro_fica_na_tela_inicial(self):
         from django.urls import reverse
         self.client.force_login(self.log)
-        r = self.client.get(reverse('dashboard:novo'))
-        for txt in ['Veículo', 'Equipamento', 'Termo de material']:
-            self.assertContains(r, txt)
+        home = self.client.get(reverse('dashboard:home'))
+        self.assertContains(home, 'Novo registro')
+        for url in [reverse('veiculos:inspecao_nova'), reverse('checklists:executar'), reverse('termos:novo')]:
+            self.assertContains(home, url)
+        self.assertNotContains(home, 'nav-novo')
+        self.assertRedirects(self.client.get(reverse('dashboard:novo')), reverse('dashboard:home'))
         self.client.force_login(self.tec)
-        r = self.client.get(reverse('dashboard:novo'))
-        self.assertContains(r, 'Equipamento')
-        self.assertNotContains(r, 'Termo de material')
+        self.assertNotContains(self.client.get(reverse('dashboard:home')), reverse('termos:novo'))
 
     def test_historico_unico_respeita_quem_ve_o_que(self):
         from django.urls import reverse

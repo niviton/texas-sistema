@@ -76,7 +76,7 @@ def _ativos_executaveis():
 
 def _passos(finalidade=None, tipo=None, ativo=None):
     """Equipamentos > Pré-uso > Bancada de calibração > RAD 02 (o último passo não é link)."""
-    passos = [('Novo registro', reverse('dashboard:novo')), ('Equipamento', reverse('checklists:executar'))]
+    passos = [('Início', reverse('dashboard:home')), ('Equipamento', reverse('checklists:executar'))]
     if finalidade:
         passos.append((_FINALIDADES[finalidade], reverse('checklists:passo_tipo', args=[finalidade])))
     if tipo and finalidade:

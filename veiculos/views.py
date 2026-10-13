@@ -131,7 +131,7 @@ def _escolha_vistoria(request):
     tipos = dict(TIPO_CHOICES)
     tipo = request.GET.get('tipo')
     base = reverse('veiculos:inspecao_nova')
-    inicio = ('Novo registro', reverse('dashboard:novo'))
+    inicio = ('Início', reverse('dashboard:home'))
     veiculo = Veiculo.objects.filter(pk=request.GET.get('veiculo'), is_active=True).first() if request.GET.get('veiculo', '').isdigit() else None
     if tipo not in tipos:
         sufixo = f'&veiculo={veiculo.pk}' if veiculo else ''
@@ -253,7 +253,7 @@ def inspecao_nova_view(request):
     tipo_txt = dict(TIPO_CHOICES).get(dados.get('tipo'), '')
     veic = Veiculo.objects.filter(pk=dados.get('veiculo')).first() if str(dados.get('veiculo', '')).isdigit() else None
     base = reverse('veiculos:inspecao_nova')
-    passos = [('Novo registro', reverse('dashboard:novo')), ('Veículo', base)] + ([(tipo_txt, f"{base}?tipo={dados.get('tipo')}")] if tipo_txt else []) + ([(veic.placa, None)] if veic else [])
+    passos = [('Início', reverse('dashboard:home')), ('Veículo', base)] + ([(tipo_txt, f"{base}?tipo={dados.get('tipo')}")] if tipo_txt else []) + ([(veic.placa, None)] if veic else [])
     passos[-1] = (passos[-1][0], None)
     return render(request, 'veiculos/inspecao_form.html', _ctx(
         request, 'nova', form=form, secoes=secoes, veiculos_info=veiculos_info, passos=passos,

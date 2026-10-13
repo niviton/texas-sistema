@@ -1,9 +1,0 @@
-{% extends "veiculos/_base.html" %}
-{% block title %}Novo registro · Polaris{% endblock %}
-{% block modulo_header %}
-<h1 style="font-family:'Sora',sans-serif; font-size:24px; font-weight:800; margin:0 0 4px; color:#0d1b2e;">Novo registro</h1>
-<p style="font-size:14px; color:#6b7480; margin:0 0 22px;">Escolha o que vai registrar. Os próximos passos aparecem um de cada vez.</p>
-{% endblock %}
-{% block veiculos_content %}
-{% include "dashboard/_escolha.html" with e=escolha %}
-{% endblock %}

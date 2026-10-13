@@ -12,11 +12,7 @@
   .nav-link.active { background:rgba(245,166,35,0.14); border-left-color:#f5a623; }
   .nav-link.active .dot { background:#f5a623; }
   .nav-link.active span { font-weight:700; color:#fff; }
-  .nav-cont { margin-left:auto; min-width:22px; padding:2px 7px; border-radius:100px; background:#f5a623; color:#0d1b2e; font-size:11.5px; font-weight:800; text-align:center; }
-  .nav-novo { display:flex; align-items:center; justify-content:center; gap:8px; margin:6px 0 8px; padding:11px 14px; border-radius:10px; background:#f5a623; color:#0d1b2e; font-weight:800; font-size:14px; text-decoration:none; }
-  .nav-novo:hover { background:#ffb63d; }
-  .nav-novo.active { box-shadow:0 0 0 2px rgba(255,255,255,.55); }
-  .nav-novo:focus-visible { outline:3px solid #fff; outline-offset:2px; }
+  .nav-cont { margin-left:auto; min-width:22px; padding:2px 7px; border-radius:100px; background:rgba(255,255,255,.16); color:#fff; font-size:11.5px; font-weight:800; text-align:center; }
   .nav-group summary { list-style:none; cursor:pointer; }
   .nav-group summary::-webkit-details-marker { display:none; }
   .nav-group summary .chev { margin-left:auto; color:rgba(255,255,255,0.5); transition:transform .15s; }
@@ -81,8 +77,6 @@
     <div class="shell-nav">
       <a href="{% url 'dashboard:home' %}" class="nav-link {% if active_nav == 'inicio' %}active{% endif %}"><div class="dot"></div><span>Início</span>{% if n_pendencias %}<span class="nav-cont" title="Pendências para conferir">{{ n_pendencias }}</span>{% endif %}</a>
       {% if request.user.pode_checklists or request.user.pode_termos %}
-      <a href="{% url 'dashboard:novo' %}" class="nav-novo {% if active_nav == 'novo' %}active{% endif %}">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Novo registro</span></a>
       <a href="{% url 'dashboard:historico' %}" class="nav-link {% if active_nav == 'historico' %}active{% endif %}"><div class="dot"></div><span>Histórico</span></a>
       {% endif %}
       {% if request.user.role == 'admin' %}
