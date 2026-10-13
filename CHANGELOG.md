@@ -2,6 +2,17 @@
 
 Escrito em linguagem simples, do mais recente para o mais antigo.
 
+## 13/10/2026 – Usabilidade: um caminho só para tudo
+
+- **Novo registro**: botão único no menu. Pergunta "Veículo, Equipamento ou Termo?" e segue os passos de cada um; o caminho escolhido aparece no topo.
+- **Histórico único**: vistorias, checklists e termos numa lista só, com filtros por tipo, texto, pessoa, período e "só com problema". O técnico vê só os próprios registros.
+- **Tela de concluído**: depois de enviar, confirmação com "Ver PDF", "Outro checklist neste equipamento" (ou "Nova vistoria deste veículo"), "Novo registro" e "Voltar ao início".
+- **Etapas no celular**: vistoria e checklist aparecem uma etapa por vez (dados, itens, fotos, assinatura), com barra de progresso. Um erro no envio abre a etapa do problema.
+- **Rascunho automático**: respostas, fotos e assinatura ficam guardadas no celular enquanto a pessoa preenche. Se o sinal cair ou a página fechar, tudo volta ao abrir de novo (por até 3 dias).
+- **QR code**: etiquetas para imprimir em Configurações → Equipamentos e Veículos. O QR leva direto ao checklist do equipamento ou à vistoria do veículo.
+- **Para conferir**: o administrador vê na tela inicial (com contador no menu) os equipamentos cadastrados na hora pelos técnicos e os registros com problema, e marca cada um como conferido.
+- Palavras iguais em todo o sistema: "equipamento" (não "ativo"), "formulário" (não "modelo de checklist") e "destinatários" (não "supervisores").
+
 ## 13/10/2026 – Pronto para o PythonAnywhere
 
 - `SITE_URL` passa a definir também o domínio aceito e a proteção dos formulários (CSRF). Em produção (`DJANGO_DEBUG=False`) o sistema exige chave secreta própria e liga cookies seguros e HTTPS.

@@ -167,7 +167,7 @@ def _finalizar(request, termo):
     termo.save(update_fields=['status', 'documento', 'documento_revisao', 'finalizado_em'])
     if supervisor_emails('termos'):
         enviar_em_segundo_plano(termo.pk)
-        messages.success(request, f'Termo nº {termo.numero} finalizado. O PDF está sendo enviado aos supervisores.')
+        messages.success(request, f'Termo nº {termo.numero} finalizado. O PDF está sendo enviado aos destinatários.')
     else:
         messages.success(request, f'Termo nº {termo.numero} finalizado. (Ninguém cadastrado para receber o e-mail dos termos.)')
     return redirect('dashboard:concluido', tipo='termo', pk=termo.pk)
@@ -196,7 +196,7 @@ def reenviar_view(request, pk):
     if request.method == 'POST':
         try:
             if enviar_termo(termo):
-                messages.success(request, 'Termo reenviado aos supervisores.')
+                messages.success(request, 'Termo reenviado aos destinatários.')
             else:
                 messages.error(request, 'Ninguém cadastrado para receber este e-mail (Configurações → Notificações).')
         except Exception as exc:

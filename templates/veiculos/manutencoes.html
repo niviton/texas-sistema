@@ -11,7 +11,7 @@
 <div style="display:flex; gap:28px; flex-wrap:wrap; align-items:flex-start;">
   <div class="v-card" style="flex:1; min-width:280px; max-width:400px;">
     <h3 class="v-h3">{% if editing %}Editar{% else %}Nova{% endif %} manutenção</h3>
-    <p class="v-help" style="margin:-8px 0 14px;">Quando estiver perto do km ou da data, o aviso aparece no painel, no e-mail de cada inspeção desse carro e no resumo diário aos supervisores.</p>
+    <p class="v-help" style="margin:-8px 0 14px;">Quando estiver perto do km ou da data, o aviso aparece no painel, no e-mail de cada inspeção desse carro e no resumo diário aos destinatários.</p>
     <form method="post">
       {% csrf_token %}
       {% if editing %}<input type="hidden" name="editing_id" value="{{ editing.pk }}">{% endif %}

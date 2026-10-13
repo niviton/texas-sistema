@@ -189,7 +189,7 @@ class Veiculo(models.Model):
     revisao_km = models.PositiveIntegerField('próxima revisão (km)', null=True, blank=True)
     checklist_frequencia_dias = models.PositiveIntegerField(
         'checklist a cada (dias)', default=7,
-        help_text='Se o veículo ficar mais que isso sem inspeção, o motorista e os supervisores recebem um lembrete.',
+        help_text='Se o veículo ficar mais que isso sem inspeção, o motorista e os destinatários recebem um lembrete.',
     )
     is_active = models.BooleanField('ativo', default=True)
     created_at = models.DateTimeField(auto_now_add=True)

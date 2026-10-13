@@ -151,7 +151,7 @@ def enviar_alertas_veiculo(veiculo, connection=None):
 
 def enviar_alertas(dias_vencimento=30):
     """
-    Envia (1) um resumo de vencimentos próximos aos supervisores e (2) lembretes de
+    Envia (1) um resumo de vencimentos próximos aos destinatários e (2) lembretes de
     checklist atrasado ao motorista responsável, com cópia para os supervisores.
     Cada alerta só é enviado uma vez por marco (30, 15, 7 dias, vencido), então pode
     rodar todo dia sem repetir e-mails.

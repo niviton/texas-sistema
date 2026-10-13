@@ -5,7 +5,7 @@ from veiculos.emails import enviar_alertas
 
 class Command(BaseCommand):
     help = (
-        'Envia aos supervisores os alertas de vencimento (licenciamento, seguro, revisão, CNH) '
+        'Envia aos destinatários os alertas de vencimento (licenciamento, seguro, revisão, CNH) '
         'e os lembretes de checklist atrasado. Agende para rodar uma vez por dia.'
     )
 

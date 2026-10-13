@@ -35,7 +35,7 @@
         {% if termo.email_enviado %}<span class="v-badge b-ok">E-mail enviado</span>{% else %}<span class="v-badge b-mute">E-mail não enviado</span>{% endif %}
         <a class="v-btn-sm blue" href="{% url 'termos:pdf' termo.pk %}" target="_blank">Ver PDF</a>
         <a class="v-btn-sm" href="{% url 'termos:pdf' termo.pk %}?download=1">Baixar PDF</a>
-        <form method="post" action="{% url 'termos:reenviar' termo.pk %}">{% csrf_token %}<button class="v-btn-sm blue" type="submit">Reenviar aos supervisores</button></form>
+        <form method="post" action="{% url 'termos:reenviar' termo.pk %}">{% csrf_token %}<button class="v-btn-sm blue" type="submit">Reenviar aos destinatários</button></form>
       {% else %}
         <a class="v-btn" href="{% url 'termos:editar' termo.pk %}">Continuar o termo</a>
         <a class="v-btn-sm" href="{% url 'termos:pdf' termo.pk %}" target="_blank">Prévia do PDF</a>

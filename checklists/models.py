@@ -71,8 +71,8 @@ class TipoAtivo(models.Model):
     is_active = models.BooleanField('ativo', default=True)
 
     class Meta:
-        verbose_name = 'tipo de ativo'
-        verbose_name_plural = 'tipos de ativo'
+        verbose_name = 'tipo de equipamento'
+        verbose_name_plural = 'tipos de equipamento'
         ordering = ['nome']
 
     def __str__(self):
@@ -98,8 +98,8 @@ class Ativo(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        verbose_name = 'ativo'
-        verbose_name_plural = 'ativos'
+        verbose_name = 'equipamento'
+        verbose_name_plural = 'equipamentos'
         ordering = ['tipo__nome', 'nome']
 
     def __str__(self):
@@ -148,8 +148,8 @@ class Modelo(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        verbose_name = 'modelo de checklist'
-        verbose_name_plural = 'modelos de checklist'
+        verbose_name = 'formulário de checklist'
+        verbose_name_plural = 'formulários de checklist'
         ordering = ['codigo']
 
     def __str__(self):

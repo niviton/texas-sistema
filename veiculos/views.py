@@ -220,7 +220,7 @@ def inspecao_nova_view(request):
             else:
                 if supervisor_emails('veiculos'):
                     enviar_emails_da_vistoria_em_segundo_plano(inspecao.pk)
-                    messages.success(request, 'Vistoria registrada. O comprovante está sendo enviado aos supervisores.')
+                    messages.success(request, 'Vistoria registrada. O comprovante está sendo enviado aos destinatários.')
                 else:
                     messages.success(request, 'Vistoria registrada. (Ninguém cadastrado para receber o e-mail das vistorias.)')
                 return redirect('dashboard:concluido', tipo='vistoria', pk=inspecao.pk)
@@ -357,7 +357,7 @@ def inspecao_reenviar_view(request, pk):
     if request.method == 'POST':
         try:
             if enviar_inspecao(inspecao):
-                messages.success(request, 'E-mail reenviado aos supervisores.')
+                messages.success(request, 'E-mail reenviado aos destinatários.')
             else:
                 messages.error(request, 'Ninguém cadastrado para receber este e-mail (Configurações → Notificações).')
         except Exception as exc:

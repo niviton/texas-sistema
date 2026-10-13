@@ -1,5 +1,5 @@
 {% extends "veiculos/_cadastro.html" %}
-{% block nome_singular %}ativo{% endblock %}
+{% block nome_singular %}equipamento{% endblock %}
 {% block form_intro %}<p class="v-help" style="margin:-8px 0 14px;">Cada equipamento real da empresa. O tipo define quais checklists aparecem para ele.</p>{% endblock %}
 {% block archive_url %}{% url 'checklists:ativo_arquivar' obj.pk %}{% endblock %}
 {% block topo_lista %}<a class="v-btn-sm blue" href="{% url 'dashboard:etiquetas' %}?equip=todos" target="_blank">Imprimir etiquetas QR de todos</a>{% endblock %}

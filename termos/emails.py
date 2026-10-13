@@ -1,4 +1,4 @@
-"""Comprovante do termo finalizado por e-mail aos supervisores (mesmo envio em segundo plano dos checklists)."""
+"""Comprovante do termo finalizado por e-mail aos destinatários (mesmo envio em segundo plano dos checklists)."""
 import logging
 import threading
 

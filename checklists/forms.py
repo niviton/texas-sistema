@@ -84,7 +84,7 @@ class ItemForm(forms.ModelForm):
 class ImportarForm(forms.Form):
     arquivo = forms.FileField(label='Formulário em Word (.docx)')
     tipo_ativo = forms.ModelChoiceField(
-        queryset=TipoAtivo.objects.filter(is_active=True), required=False, label='Aplica-se ao tipo de ativo',
+        queryset=TipoAtivo.objects.filter(is_active=True), required=False, label='Aplica-se ao tipo de equipamento',
         empty_label='Criar a partir do título do formulário',
     )
 

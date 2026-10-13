@@ -26,7 +26,7 @@
   <div class="v-card" style="flex:1; min-width:300px;">
     <h3 class="v-h3">Quem recebe</h3>
     {% if supervisores %}
-      <p style="font-size:13px; color:#334051; margin:0 0 8px;">{{ supervisores|length }} supervisor{{ supervisores|pluralize:"es" }} ativo{{ supervisores|pluralize }}:</p>
+      <p style="font-size:13px; color:#334051; margin:0 0 8px;">{{ supervisores|length }} destinatário{{ supervisores|pluralize }} da frota:</p>
       <p style="font-size:13px; color:#6b7480; margin:0 0 14px;">{{ supervisores|join:", " }}</p>
     {% else %}
       <p style="font-size:13px; margin:0 0 14px;"><span class="v-badge b-warn">Nenhum</span> <a href="{% url 'veiculos:supervisores' %}">Cadastre os supervisores</a>.</p>
@@ -35,7 +35,7 @@
       <tr><td style="padding:6px 0; border-bottom:1px solid #f0f2f4;"><b>Toda inspeção feita</b></td><td style="padding:6px 0; border-bottom:1px solid #f0f2f4; color:#6b7480;">Na hora, com o PDF em anexo</td></tr>
       <tr><td style="padding:6px 0; border-bottom:1px solid #f0f2f4;"><b>Checklist com problema</b></td><td style="padding:6px 0; border-bottom:1px solid #f0f2f4; color:#6b7480;">Na hora, com o problema destacado no assunto</td></tr>
       <tr><td style="padding:6px 0; border-bottom:1px solid #f0f2f4;"><b>Vencimentos</b></td><td style="padding:6px 0; border-bottom:1px solid #f0f2f4; color:#6b7480;">Rotina diária: 30, 15, 7 dias e no vencimento</td></tr>
-      <tr><td style="padding:6px 0;"><b>Lembrete de checklist</b></td><td style="padding:6px 0; color:#6b7480;">Rotina diária: motorista, com cópia aos supervisores</td></tr>
+      <tr><td style="padding:6px 0;"><b>Lembrete de checklist</b></td><td style="padding:6px 0; color:#6b7480;">Rotina diária: motorista, com cópia aos destinatários</td></tr>
     </table>
     <div style="height:1px; background:#eef0f2; margin:18px 0;"></div>
     <form method="post">

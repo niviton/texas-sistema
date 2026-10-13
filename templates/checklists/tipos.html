@@ -1,5 +1,5 @@
 {% extends "veiculos/_cadastro.html" %}
-{% block nome_singular %}tipo de ativo{% endblock %}
+{% block nome_singular %}tipo de equipamento{% endblock %}
 {% block form_intro %}<p class="v-help" style="margin:-8px 0 14px;">Uma família de equipamentos que segue os mesmos checklists, ex.: Gerador, Chave elétrica de torque, Transpaleteira.</p>{% endblock %}
 {% block archive_url %}{% url 'checklists:tipo_arquivar' obj.pk %}{% endblock %}
 {% block item %}

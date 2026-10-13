@@ -295,7 +295,7 @@ def execucao_nova_view(request, ativo_pk, modelo_pk):
             else:
                 if supervisor_emails('checklists', ativo.tipo):
                     enviar_em_segundo_plano(execucao.pk)
-                    messages.success(request, 'Checklist registrado. O comprovante está sendo enviado aos supervisores.')
+                    messages.success(request, 'Checklist registrado. O comprovante está sendo enviado aos destinatários.')
                 else:
                     messages.success(request, 'Checklist registrado. (Ninguém cadastrado para receber o e-mail deste tipo de equipamento.)')
                 return redirect('dashboard:concluido', tipo='checklist', pk=execucao.pk)
@@ -371,7 +371,7 @@ def execucao_reenviar_view(request, pk):
     if request.method == 'POST':
         try:
             if enviar_execucao(execucao):
-                messages.success(request, 'Comprovante reenviado aos supervisores.')
+                messages.success(request, 'Comprovante reenviado aos destinatários.')
             else:
                 messages.error(request, 'Ninguém cadastrado para receber este e-mail (Configurações → Notificações).')
         except Exception as exc:
@@ -383,7 +383,7 @@ def execucao_reenviar_view(request, pk):
 
 @admin_required
 def tipos_view(request):
-    return _crud(request, TipoAtivo, TipoAtivoForm, 'checklists/tipos.html', 'tipos', 'checklists:tipos', 'Tipo de ativo salvo.')
+    return _crud(request, TipoAtivo, TipoAtivoForm, 'checklists/tipos.html', 'tipos', 'checklists:tipos', 'Tipo de equipamento salvo.')
 
 
 @admin_required
@@ -393,7 +393,7 @@ def tipo_arquivar_view(request, pk):
 
 @admin_required
 def ativos_view(request):
-    return _crud(request, Ativo, AtivoForm, 'checklists/ativos.html', 'ativos', 'checklists:ativos', 'Ativo salvo.')
+    return _crud(request, Ativo, AtivoForm, 'checklists/ativos.html', 'ativos', 'checklists:ativos', 'Equipamento salvo.')
 
 
 @admin_required
