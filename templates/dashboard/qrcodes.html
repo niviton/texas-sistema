@@ -1,0 +1,69 @@
+{% extends "veiculos/_base.html" %}
+{% block title %}QR codes · Polaris{% endblock %}
+{% block v_style %}
+  .qr-intro { font-size:13.5px; color:#556072; margin:-8px 0 16px; max-width:760px; line-height:1.55; }
+  .qr-aviso { max-width:760px; padding:12px 14px; border-radius:10px; background:#fff8ea; border:1px solid #f3dfb5; color:#6b5216; font-size:13px; margin:0 0 18px; }
+  .qr-grupos { display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:14px; max-width:1100px; }
+  .qr-grupo { background:#fff; border:1.5px solid #e6e9ec; border-radius:14px; padding:14px 16px; }
+  .qr-grupo h3 { display:flex; justify-content:space-between; align-items:center; gap:10px; margin:0 0 8px; font-size:14px; font-weight:800; color:#365f91; padding-bottom:8px; border-bottom:2px solid #ffc000; }
+  .qr-grupo h3 button { border:none; background:none; color:#1e5c94; font-weight:700; font-size:12px; cursor:pointer; padding:2px 4px; }
+  .qr-lista { max-height:320px; overflow:auto; }
+  .qr-op { display:flex; gap:10px; align-items:flex-start; padding:8px 4px; border-radius:8px; cursor:pointer; }
+  .qr-op:hover { background:#f5f7fa; }
+  .qr-op[hidden] { display:none; }
+  .qr-op input { width:18px; height:18px; margin-top:2px; accent-color:#0d2440; flex-shrink:0; }
+  .qr-op b { display:block; font-size:13.5px; color:#0d1b2e; }
+  .qr-op small { display:block; font-size:12px; color:#7b8591; }
+  .qr-busca { margin:0 0 8px; }
+  .qr-barra { position:sticky; bottom:0; display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:space-between; margin-top:18px; padding:14px 16px; background:#0d2440; border-radius:14px; color:#fff; max-width:1100px; }
+  .qr-barra span { font-size:13.5px; }
+  .qr-barra .v-btn { background:#f5a623; color:#0d1b2e !important; }
+  .qr-barra .v-btn[disabled] { opacity:.5; cursor:not-allowed; }
+{% endblock %}
+{% block veiculos_content %}
+<p class="qr-intro">Escolha para onde cada QR code leva: uma tela do Polaris (por exemplo <b>Pré-uso › Gerador</b> colado na parede da oficina) ou um equipamento ou veículo específico. Quem ler o QR com a câmera do celular entra direto nessa tela; se não estiver logado, faz o login e cai no lugar certo.</p>
+<div class="qr-aviso">Os QR codes guardam o endereço <b>{{ host }}</b>. Imprima a partir do endereço definitivo do servidor (de preferência com IP fixo), senão as etiquetas param de funcionar se o endereço mudar.</div>
+
+<form method="get" action="{% url 'dashboard:etiquetas' %}" target="_blank" id="qr-form">
+  <div class="qr-grupos">
+    {% for grupo, itens in grupos %}{% if itens %}
+      <section class="qr-grupo">
+        <h3>{{ grupo }}<button type="button" data-todos>Marcar todos</button></h3>
+        {% if itens|length > 8 %}<input class="v-input qr-busca" type="search" placeholder="Filtrar..." aria-label="Filtrar {{ grupo }}">{% endif %}
+        <div class="qr-lista">
+          {% for chave, titulo, detalhe, caminho in itens %}
+            <label class="qr-op"><input type="checkbox" name="d" value="{{ chave }}"><span><b>{{ titulo }}</b>{% if detalhe %}<small>{{ detalhe }}</small>{% endif %}</span></label>
+          {% endfor %}
+        </div>
+      </section>
+    {% endif %}{% endfor %}
+  </div>
+  <div class="qr-barra">
+    <span id="qr-cont">Nenhum QR code escolhido</span>
+    <button class="v-btn" type="submit" id="qr-gerar" disabled>Gerar etiquetas para imprimir</button>
+  </div>
+</form>
+<script>
+(function () {
+  const form = document.getElementById('qr-form');
+  const atualizar = () => {
+    const n = form.querySelectorAll('input[name=d]:checked').length;
+    document.getElementById('qr-cont').textContent = n ? n + ' QR code' + (n > 1 ? 's' : '') + ' escolhido' + (n > 1 ? 's' : '') : 'Nenhum QR code escolhido';
+    document.getElementById('qr-gerar').disabled = !n;
+  };
+  form.addEventListener('change', atualizar);
+  form.querySelectorAll('[data-todos]').forEach((b) => b.addEventListener('click', () => {
+    const caixas = [...b.closest('.qr-grupo').querySelectorAll('.qr-op:not([hidden]) input')];
+    const marcar = caixas.some((c) => !c.checked);
+    caixas.forEach((c) => { c.checked = marcar; });
+    b.textContent = marcar ? 'Desmarcar todos' : 'Marcar todos';
+    atualizar();
+  }));
+  form.querySelectorAll('.qr-busca').forEach((campo) => campo.addEventListener('input', () => {
+    const t = campo.value.trim().toLowerCase();
+    campo.closest('.qr-grupo').querySelectorAll('.qr-op').forEach((op) => { op.hidden = t && !op.textContent.toLowerCase().includes(t); });
+  }));
+  atualizar();
+})();
+</script>
+{% endblock %}

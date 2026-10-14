@@ -111,3 +111,22 @@ class RegistrosTests(TestCase):
         r = self.client.get(reverse('dashboard:qr_equipamento', args=[a.pk]))
         self.assertEqual(r.status_code, 302)
         self.assertIn('next=', r['Location'])
+
+    def test_qr_codes_para_uma_tela_especifica(self):
+        from django.urls import reverse
+
+        from checklists.models import Modelo, TipoAtivo
+        self.client.force_login(self.admin)
+        r = self.client.get(reverse('dashboard:qrcodes'))
+        self.assertContains(r, 'Vistoria de saída')
+        tipo = TipoAtivo.objects.get(nome='Gerador')
+        Modelo.objects.get().tipos_ativo.add(tipo)
+        r = self.client.get(reverse('dashboard:qrcodes'))
+        self.assertContains(r, f'value="tipo:manutencao:{tipo.pk}"')
+        self.assertContains(r, 'Manutenção › Gerador')
+        r = self.client.get(reverse('dashboard:etiquetas'), {'d': ['pag:veiculo:saida', f'tipo:manutencao:{tipo.pk}']})
+        self.assertContains(r, '<svg', count=2)
+        self.assertContains(r, 'Vistoria de saída')
+        self.assertContains(r, 'Manutenção › Gerador')
+        self.client.force_login(self.tec)
+        self.assertEqual(self.client.get(reverse('dashboard:qrcodes')).status_code, 403)

@@ -210,37 +210,35 @@ def _qr_svg(texto):
 
 @login_required
 def etiquetas_view(request):
-    """Etiquetas para imprimir e colar: o QR leva direto ao checklist do equipamento (ou à vistoria do veículo)."""
+    """Etiquetas para imprimir e colar: cada QR abre uma tela do Polaris, um equipamento ou um veículo."""
     from django.core.exceptions import PermissionDenied
-    from django.urls import reverse
 
-    from checklists.models import Ativo
-    from veiculos.models import Veiculo
+    from . import qrcodes
 
     if not request.user.is_admin_geral:
         raise PermissionDenied
-    ids = lambda nome: [int(x) for x in request.GET.get(nome, '').split(',') if x.strip().isdigit()]
-    etiquetas = []
-    equip = Ativo.objects.filter(is_active=True).select_related('tipo').order_by('tipo__nome', 'nome')
-    if request.GET.get('equip') == 'todos':
-        pass
-    elif ids('equip'):
-        equip = equip.filter(pk__in=ids('equip'))
-    else:
-        equip = equip.none()
-    for a in equip:
-        url = request.build_absolute_uri(reverse('dashboard:qr_equipamento', args=[a.pk]))
-        etiquetas.append({'titulo': a.nome, 'sub': ' · '.join(x for x in [a.tipo.nome, a.identificacao, a.patrimonio] if x),
-                          'acao': 'Aponte a câmera para fazer o checklist', 'qr': _qr_svg(url)})
-    veic = Veiculo.objects.filter(is_active=True).order_by('placa')
-    if request.GET.get('veic') == 'todos':
-        pass
-    elif ids('veic'):
-        veic = veic.filter(pk__in=ids('veic'))
-    else:
-        veic = veic.none()
-    for v in veic:
-        url = request.build_absolute_uri(reverse('dashboard:qr_veiculo', args=[v.pk]))
-        etiquetas.append({'titulo': v.placa, 'sub': f'{v.marca} {v.modelo}'.strip(),
-                          'acao': 'Aponte a câmera para fazer a vistoria', 'qr': _qr_svg(url)})
+    chaves = request.GET.getlist('d')
+    for nome, prefixo in [('equip', 'eq'), ('veic', 'veic')]:
+        valor = request.GET.get(nome, '')
+        if valor == 'todos':
+            chaves += [c for g, itens in qrcodes.grupos() for c, *_ in itens if c.startswith(prefixo + ':')]
+        else:
+            chaves += [f'{prefixo}:{x.strip()}' for x in valor.split(',') if x.strip().isdigit()]
+    etiquetas = qrcodes.etiquetas(request, chaves)
+    for e in etiquetas:
+        e['qr'] = _qr_svg(e['url'])
     return render(request, 'dashboard/etiquetas.html', {'etiquetas': etiquetas, 'host': request.get_host()})
+
+
+@login_required
+def qrcodes_view(request):
+    """Configurações → Sistema → QR codes: escolha para onde cada QR leva e imprima as etiquetas."""
+    from django.core.exceptions import PermissionDenied
+
+    from veiculos.views import _ctx
+
+    from . import qrcodes
+
+    if not request.user.is_admin_geral:
+        raise PermissionDenied
+    return render(request, 'dashboard/qrcodes.html', _ctx(request, 'qrcodes', grupos=qrcodes.grupos(), host=request.get_host()))

@@ -50,7 +50,7 @@ if _site.hostname and '*' not in ALLOWED_HOSTS and _site.hostname not in ALLOWED
 CSRF_TRUSTED_ORIGINS = [f'{_site.scheme}://{_site.netloc}'] if _site.scheme == 'https' else []
 
 if not DEBUG:
-    if SECRET_KEY.startswith('django-insecure'):
+    if SECRET_KEY.startswith('django-insecure') or SECRET_KEY.startswith('troque-por'):
         raise RuntimeError('Defina DJANGO_SECRET_KEY no .env antes de rodar em produção (DJANGO_DEBUG=False).')
     # O PythonAnywhere entrega o HTTPS e repassa a requisição: confia no cabeçalho dele.
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')

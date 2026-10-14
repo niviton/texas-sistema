@@ -19,6 +19,9 @@ CONFIG_AREAS = [
         ('supervisores', 'Quem recebe', 'veiculos:supervisores'),
         ('email', 'Envio e teste', 'veiculos:email'),
     ]),
+    ('sistema', 'Sistema', [
+        ('qrcodes', 'QR codes', 'dashboard:qrcodes'),
+    ]),
 ]
 
 # Lista plana (chave, rótulo, url) usada pelas views para saber se a tela é de configuração.
