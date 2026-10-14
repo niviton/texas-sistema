@@ -201,12 +201,12 @@
 
   // Fotos reduzidas no celular (static/js/polaris-campo.js)
   const fotos = $('fotos');
-  fotos.addEventListener('change', async () => {
-    const box = $('thumbs'); box.innerHTML = '';
-    if (!fotos.files.length) return;
-    await Polaris.trocarArquivos(fotos);
-    [...fotos.files].forEach((f) => { const i = document.createElement('img'); i.src = URL.createObjectURL(f); i.alt = ''; box.appendChild(i); });
-    $('fotos-txt').textContent = `${fotos.files.length} foto(s) nova(s) · trocar`;
+  const TXT_FOTOS = $('fotos-txt').innerHTML;
+  Polaris.galeriaFotos(fotos, {
+    caixa: $('thumbs'), max: Math.max(0, {{ max_fotos }} - {{ termo.fotos.count|default:0 }}),
+    aoMudar: (n, max) => {
+      $('fotos-txt').innerHTML = !n ? TXT_FOTOS : n >= max ? `${n} foto${n > 1 ? 's' : ''} nova${n > 1 ? 's' : ''} (máximo)` : `${n} foto${n > 1 ? 's' : ''} nova${n > 1 ? 's' : ''} · toque para adicionar mais`;
+    },
   });
 
   // Assinaturas com o dedo (Texas e cliente)

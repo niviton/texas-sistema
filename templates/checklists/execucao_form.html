@@ -212,13 +212,13 @@
   // ---------- Fotos (reduzidas no celular: static/js/polaris-campo.js) ----------
   const trocar = Polaris.trocarArquivos;
   const fotos = $('fotos');
-  fotos.addEventListener('change', async () => {
-    const box = $('thumbs'); box.innerHTML = '';
-    if (!fotos.files.length) return;
-    const fs = await trocar(fotos, [...fotos.files]);
-    [...fs].forEach((f) => { const i = document.createElement('img'); i.src = URL.createObjectURL(f); i.alt = ''; box.appendChild(i); });
-    $('fotos-txt').textContent = `${fs.length} foto${fs.length > 1 ? 's' : ''} selecionada${fs.length > 1 ? 's' : ''} · trocar`;
-    $('fotos-ger').classList.remove('falta');
+  const TXT_FOTOS = $('fotos-txt').innerHTML;
+  Polaris.galeriaFotos(fotos, {
+    caixa: $('thumbs'), max: {{ max_fotos }},
+    aoMudar: (n, max) => {
+      $('fotos-txt').innerHTML = !n ? TXT_FOTOS : n >= max ? `${n} fotos (máximo)` : `${n} foto${n > 1 ? 's' : ''} · toque para adicionar mais`;
+      if (n) $('fotos-ger').classList.remove('falta');
+    },
   });
   document.querySelectorAll('.foto-it input').forEach((inp) => {
     inp.addEventListener('change', async () => {

@@ -361,14 +361,13 @@
     });
   });
   const extra = $('fotos-extra');
-  extra.addEventListener('change', async () => {
-    const box = $('extras'); box.innerHTML = '';
-    if (!extra.files.length) return;
-    $('slot-extra').classList.add('busy');
-    const files = await trocarArquivos(extra, [...extra.files]);
-    $('slot-extra').classList.remove('busy');
-    [...files].forEach((f) => { const i = document.createElement('img'); i.src = URL.createObjectURL(f); box.appendChild(i); });
-    $('slot-extra').querySelector('.req').textContent = `${files.length} foto${files.length > 1 ? 's' : ''} · trocar`;
+  const TXT_EXTRA = $('slot-extra').querySelector('.req').textContent;
+  Polaris.galeriaFotos(extra, {
+    caixa: $('extras'), max: {{ max_extras }},
+    aoCarregar: (sim) => $('slot-extra').classList.toggle('busy', sim),
+    aoMudar: (n, max) => {
+      $('slot-extra').querySelector('.req').textContent = !n ? TXT_EXTRA : n >= max ? `${n} fotos (máximo)` : `${n} foto${n > 1 ? 's' : ''} · toque para adicionar mais`;
+    },
   });
   contarFotos();
 

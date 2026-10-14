@@ -2,6 +2,10 @@
 
 Escrito em linguagem simples, do mais recente para o mais antigo.
 
+## 14/10/2026 – Várias fotos, uma de cada vez, com apagar
+
+- Fotos do checklist, fotos adicionais da vistoria e fotos do termo: cada foto nova soma às anteriores (dá para tirar várias com a câmera, uma por vez) e cada miniatura tem um X para apagar. O rascunho guarda as fotos certas.
+
 ## 14/10/2026 – Assinatura deitada no celular
 
 - No celular, tocar no quadro de assinatura abre uma tela cheia na horizontal (vistoria, checklist e termo, inclusive a do cliente). No Android a tela gira sozinha; no iPhone a área aparece girada para assinar com o celular deitado. No computador continua igual.

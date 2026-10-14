@@ -8,6 +8,7 @@
   // O nome leva _t<data da foto> para o carimbo saber se a foto veio da galeria.
   function reduzir(file, max) {
     max = max || 1600;
+    if (file.type === 'image/jpeg' && /_t\d{13}\.jpg$/.test(file.name || '')) return Promise.resolve(file);
     return new Promise((resolve) => {
       const url = URL.createObjectURL(file), img = new Image();
       img.onload = () => {
@@ -31,6 +32,54 @@
     } catch (e) { /* o servidor reduz */ }
     input.dispatchEvent(new CustomEvent('polaris-fotos', { bubbles: true }));
     return input.files;
+  }
+
+  // Várias fotos num campo: cada foto nova SOMA às que já estão (a câmera tira uma por vez)
+  // e cada miniatura tem um X para apagar. opcoes: { caixa, max, aoMudar(n) }.
+  function galeriaFotos(input, opcoes) {
+    opcoes = opcoes || {};
+    const max = opcoes.max || 10;
+    let lista = [];
+    function aplicar() {
+      try {
+        const dt = new DataTransfer();
+        lista.forEach((f) => dt.items.add(f));
+        input.files = dt.files;
+      } catch (e) { /* navegador antigo: fica só a última escolha */ }
+      input.dispatchEvent(new CustomEvent('polaris-fotos', { bubbles: true }));
+      desenhar();
+    }
+    function desenhar() {
+      const caixa = opcoes.caixa;
+      if (caixa) {
+        caixa.innerHTML = '';
+        lista.forEach((f, i) => {
+          const d = document.createElement('div');
+          d.className = 'pf-thumb';
+          const img = document.createElement('img');
+          img.src = URL.createObjectURL(f); img.alt = 'Foto ' + (i + 1);
+          const x = document.createElement('button');
+          x.type = 'button'; x.className = 'pf-x'; x.setAttribute('aria-label', 'Apagar foto ' + (i + 1)); x.textContent = '×';
+          x.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); lista.splice(i, 1); aplicar(); });
+          d.append(img, x);
+          caixa.appendChild(d);
+        });
+      }
+      if (opcoes.aoMudar) opcoes.aoMudar(lista.length, max);
+    }
+    input.addEventListener('change', async () => {
+      const novos = [...input.files];
+      if (!novos.length) { aplicar(); return; }
+      if (opcoes.aoCarregar) opcoes.aoCarregar(true);
+      for (const f of novos) {
+        if (lista.length >= max) break;
+        lista.push(await reduzir(f));
+      }
+      if (opcoes.aoCarregar) opcoes.aoCarregar(false);
+      aplicar();
+    });
+    desenhar();
+    return { quantidade: () => lista.length };
   }
 
   // Celular ou tablet: tela de toque (mesmo no modo "versão para computador" do navegador).
@@ -415,10 +464,13 @@
     + '.sigfs-linha{position:absolute;left:8%;right:8%;bottom:22%;border-bottom:1.5px solid #c5ccd4;pointer-events:none}'
     + '.sigfs-acoes{display:flex;gap:10px;justify-content:flex-end;margin-top:10px}.sigfs-acoes .v-btn{flex:0 1 260px}.sigfs-acoes .v-btn-sm{padding:12px 16px;border-radius:10px}'
     + 'html.sigfs-aberta,html.sigfs-aberta body{overflow:hidden}'
+    + '.pf-thumb{position:relative;display:inline-block}.pf-thumb img{width:76px;height:76px;object-fit:cover;border-radius:9px;border:1px solid #e6e9ec;display:block}'
+    + '.pf-x{position:absolute;top:-8px;right:-8px;width:28px;height:28px;border-radius:50%;border:2px solid #fff;background:#c0392b;color:#fff;font-size:18px;font-weight:800;line-height:22px;padding:0;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.2)}'
+    + '.pf-x:focus-visible{outline:3px solid #ffc000;outline-offset:1px}'
     + '.rasc-aviso{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;padding:12px 14px;margin:0 0 14px;border-radius:10px;background:#e8f0f8;border:1px solid #c9dbee;color:#1e3f66;font-size:13.5px}';
   document.head.appendChild(css);
 
   window.Polaris = Object.assign(window.Polaris || {}, {
-    reduzir, trocarArquivos, assinatura, etapas, mostrar, rascunho, apagarRascunho, apagarRascunhoEnviado, restaurando: false,
+    reduzir, trocarArquivos, galeriaFotos, assinatura, etapas, mostrar, rascunho, apagarRascunho, apagarRascunhoEnviado, restaurando: false,
   });
 })();
