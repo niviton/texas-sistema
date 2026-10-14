@@ -48,10 +48,28 @@
       canvas.width = Math.round(r.width * dpr); canvas.height = Math.round(r.height * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.lineWidth = 2.4; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#0d1b2e'; ctx.fillStyle = '#0d1b2e';
-      if (antes) { const im = new Image(); im.onload = () => ctx.drawImage(im, 0, 0, r.width, r.height); im.src = antes; }
+      if (antes) {
+        const im = new Image();
+        im.onload = () => {
+          const k = Math.min(r.width / im.width, r.height / im.height);
+          const w = im.width * k, h = im.height * k;
+          ctx.drawImage(im, (r.width - w) / 2, (r.height - h) / 2, w, h);
+        };
+        im.src = antes;
+      }
     }
     const pos = (e) => { const r = canvas.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+    // Celular: tocar no quadro abre a assinatura em tela cheia, deitada.
+    const telaCheia = opcoes.telaCheia !== undefined ? opcoes.telaCheia : window.matchMedia('(pointer: coarse)').matches;
+    if (telaCheia) {
+      const dica = canvas.parentElement && canvas.parentElement.querySelector('.sig-hint');
+      if (dica && dica.lastChild && dica.lastChild.nodeType === 3) dica.lastChild.textContent = 'Toque para assinar';
+      canvas.addEventListener('click', () => assinarDeitado(opcoes.titulo || 'Assinatura', (url) => {
+        if (url) { estado.carregar(url); avisar(); } else { estado.limpar(); }
+      }));
+    }
     canvas.addEventListener('pointerdown', (e) => {
+      if (telaCheia) return;
       e.preventDefault(); canvas.setPointerCapture(e.pointerId);
       desenhando = true; ultimo = pos(e);
       ctx.beginPath(); ctx.arc(ultimo.x, ultimo.y, 1.1, 0, Math.PI * 2); ctx.fill();
@@ -87,6 +105,81 @@
     window.addEventListener('resize', ajustar);
     ajustar();
     return estado;
+  }
+
+  // ------------------------------------------------------------------ Assinatura deitada (celular)
+  // Tela cheia na horizontal. No Android a tela gira de verdade; no iPhone (que não deixa girar
+  // por código) a área de assinatura aparece girada: a pessoa vira o celular e assina deitado.
+  function assinarDeitado(titulo, aoTerminar) {
+    const ov = document.createElement('div');
+    ov.className = 'sigfs';
+    ov.innerHTML = '<div class="sigfs-palco"><div class="sigfs-topo"><b></b><span>Vire o celular e assine com o dedo</span></div>'
+      + '<div class="sigfs-area"><canvas></canvas><div class="sigfs-linha"></div></div>'
+      + '<div class="sigfs-acoes"><button type="button" class="v-btn-sm" data-a="limpar">Limpar</button>'
+      + '<button type="button" class="v-btn-sm" data-a="cancelar">Cancelar</button>'
+      + '<button type="button" class="v-btn" data-a="ok">Confirmar assinatura</button></div></div>';
+    ov.querySelector('b').textContent = titulo;
+    document.body.appendChild(ov);
+    document.documentElement.classList.add('sigfs-aberta');
+    const palco = ov.querySelector('.sigfs-palco'), cv = ov.querySelector('canvas'), ctx = cv.getContext('2d');
+    let girado = false, riscou = false, desenhando = false, ultimo = null;
+
+    function montar() {
+      const W = window.innerWidth, H = window.innerHeight;
+      girado = H > W;  // ainda em pé: gira a área para assinar deitado
+      palco.style.width = (girado ? H : W) + 'px';
+      palco.style.height = (girado ? W : H) + 'px';
+      palco.style.transform = girado ? 'translate(' + W + 'px, 0) rotate(90deg)' : 'none';
+      const area = ov.querySelector('.sigfs-area');
+      const dpr = window.devicePixelRatio || 1;
+      const antes = riscou ? cv.toDataURL() : null;
+      cv.width = Math.round(area.clientWidth * dpr); cv.height = Math.round(area.clientHeight * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#0d1b2e'; ctx.fillStyle = '#0d1b2e';
+      if (antes) { const im = new Image(); im.onload = () => ctx.drawImage(im, 0, 0, area.clientWidth, area.clientHeight); im.src = antes; }
+    }
+    // Ponto do dedo nas coordenadas da área (desfaz a rotação quando a área está girada).
+    function ponto(e) {
+      const r = cv.getBoundingClientRect();
+      return girado ? { x: e.clientY - r.top, y: r.right - e.clientX } : { x: e.clientX - r.left, y: e.clientY - r.top };
+    }
+    cv.addEventListener('pointerdown', (e) => {
+      e.preventDefault(); cv.setPointerCapture(e.pointerId);
+      desenhando = true; ultimo = ponto(e); riscou = true;
+      ctx.beginPath(); ctx.arc(ultimo.x, ultimo.y, 1.4, 0, Math.PI * 2); ctx.fill();
+    });
+    cv.addEventListener('pointermove', (e) => {
+      if (!desenhando) return;
+      e.preventDefault();
+      const p = ponto(e);
+      ctx.beginPath(); ctx.moveTo(ultimo.x, ultimo.y); ctx.lineTo(p.x, p.y); ctx.stroke(); ultimo = p;
+    });
+    ['pointerup', 'pointercancel'].forEach((ev) => cv.addEventListener(ev, () => { desenhando = false; }));
+
+    function fechar(url) {
+      window.removeEventListener('resize', montar);
+      try { if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); } catch (e) { /* sem suporte */ }
+      if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {});
+      document.documentElement.classList.remove('sigfs-aberta');
+      ov.remove();
+      if (url !== undefined) aoTerminar(url);
+    }
+    ov.addEventListener('click', (e) => {
+      const a = e.target.dataset && e.target.dataset.a;
+      if (a === 'limpar') { ctx.clearRect(0, 0, cv.width, cv.height); riscou = false; }
+      if (a === 'cancelar') fechar();
+      if (a === 'ok') fechar(riscou ? cv.toDataURL('image/png') : null);
+    });
+    window.addEventListener('resize', montar);
+    montar();
+    // Tenta deitar a tela de verdade (Android/Chrome); se não der, fica a área girada.
+    const el = document.documentElement;
+    if (el.requestFullscreen) {
+      el.requestFullscreen({ navigationUI: 'hide' })
+        .then(() => (screen.orientation && screen.orientation.lock ? screen.orientation.lock('landscape') : null))
+        .catch(() => {})
+        .finally(() => setTimeout(montar, 250));
+    }
   }
 
   // ------------------------------------------------------------------ Etapas (celular)
@@ -304,11 +397,18 @@
 
   // Estilos das etapas e do aviso de rascunho (iguais em todos os formulários).
   const css = document.createElement('style');
-  css.textContent = '.et-oculta{display:none !important}'
+  css.textContent = '.et-oculta{display:none !important}.sig-hint[hidden]{display:none !important}'
     + '.et-topo{position:sticky;top:56px;z-index:5;background:#f4f5f7;padding:10px 0 12px;margin:0 0 6px}'
     + '.et-txt{font-size:13px;color:#556072;margin:0 0 6px}.et-txt b{color:#0d1b2e}'
     + '.et-barra{height:6px;border-radius:6px;background:#e1e5ea;overflow:hidden}.et-barra span{display:block;height:100%;background:#f5a623;transition:width .2s}'
     + '.et-nav{display:flex;justify-content:space-between;gap:10px;margin:14px 0 4px}.et-nav .v-btn{flex:1}.et-nav .v-btn-sm{padding:12px 18px;border-radius:10px}'
+    + '.sigfs{position:fixed;inset:0;z-index:1000;background:#fff;overflow:hidden;touch-action:none}'
+    + '.sigfs-palco{position:absolute;top:0;left:0;transform-origin:0 0;display:flex;flex-direction:column;padding:12px 16px;box-sizing:border-box;background:#fff}'
+    + '.sigfs-topo{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin:0 0 8px}.sigfs-topo b{font-size:16px;color:#0d1b2e}.sigfs-topo span{font-size:12.5px;color:#7b8591}'
+    + '.sigfs-area{position:relative;flex:1;border:2px dashed #c5ccd4;border-radius:12px;min-height:0}.sigfs-area canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none}'
+    + '.sigfs-linha{position:absolute;left:8%;right:8%;bottom:22%;border-bottom:1.5px solid #c5ccd4;pointer-events:none}'
+    + '.sigfs-acoes{display:flex;gap:10px;justify-content:flex-end;margin-top:10px}.sigfs-acoes .v-btn{flex:0 1 260px}.sigfs-acoes .v-btn-sm{padding:12px 16px;border-radius:10px}'
+    + 'html.sigfs-aberta,html.sigfs-aberta body{overflow:hidden}'
     + '.rasc-aviso{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;padding:12px 14px;margin:0 0 14px;border-radius:10px;background:#e8f0f8;border:1px solid #c9dbee;color:#1e3f66;font-size:13.5px}';
   document.head.appendChild(css);
 

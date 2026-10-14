@@ -235,6 +235,7 @@
   // ---------- Assinatura com o dedo ----------
   const box = $('sig-box');
   const sig = Polaris.assinatura($('sig-canvas'), {
+    titulo: 'Assinatura do técnico',
     aoAssinar: () => { $('sig-hint').hidden = true; box.classList.add('signed'); box.classList.remove('falta'); },
     aoLimpar: () => { $('sig-hint').hidden = false; box.classList.remove('signed'); },
   });

@@ -213,6 +213,7 @@
   function pad(nome) {
     const area = $('pad-' + nome), box = area.querySelector('.sig-box'), hint = area.querySelector('.sig-hint');
     const sig = Polaris.assinatura(area.querySelector('canvas'), {
+      titulo: nome === 'cliente' ? 'Assinatura do cliente' : 'Assinatura do responsável Texas',
       aoAssinar: () => { hint.hidden = true; box.classList.add('signed'); },
       aoLimpar: () => { hint.hidden = false; box.classList.remove('signed'); },
     });

@@ -400,6 +400,7 @@
   // ---------- Assinatura com o dedo ----------
   const box = $('sig-box');
   const sig = Polaris.assinatura($('sig-canvas'), {
+    titulo: 'Assinatura do motorista',
     aoAssinar: () => { $('sig-hint').style.display = 'none'; box.classList.add('signed'); box.classList.remove('missing'); },
     aoLimpar: () => { $('sig-hint').style.display = ''; box.classList.remove('signed'); },
   });

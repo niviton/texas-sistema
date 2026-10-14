@@ -2,6 +2,10 @@
 
 Escrito em linguagem simples, do mais recente para o mais antigo.
 
+## 14/10/2026 – Assinatura deitada no celular
+
+- No celular, tocar no quadro de assinatura abre uma tela cheia na horizontal (vistoria, checklist e termo, inclusive a do cliente). No Android a tela gira sozinha; no iPhone a área aparece girada para assinar com o celular deitado. No computador continua igual.
+
 ## 14/10/2026 – Cadastro do motorista e QR code direto
 
 - Conta nova entra sem acesso a nada até o administrador escolher o papel. Novo papel pronto: **Motorista** (só vistoria de veículos).
