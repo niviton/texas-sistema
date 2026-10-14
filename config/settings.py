@@ -178,6 +178,22 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'  # python manage.py collectstatic (produção)
+# Fotos e PDFs enviados: o próprio Polaris entrega (servidor da oficina). No PythonAnywhere, a aba "Web" entrega.
+SERVIR_ARQUIVOS = os.environ.get('SERVIR_ARQUIVOS', '1') == '1'
+
+# Em produção, erros vão para logs/polaris.log (o servidor da oficina não tem janela).
+if not DEBUG:
+    (BASE_DIR / 'logs').mkdir(exist_ok=True)
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'formatters': {'simples': {'format': '{asctime} {levelname} {name}: {message}', 'style': '{'}},
+        'handlers': {'arquivo': {
+            'class': 'logging.handlers.RotatingFileHandler', 'filename': str(BASE_DIR / 'logs' / 'polaris.log'),
+            'maxBytes': 2_000_000, 'backupCount': 5, 'encoding': 'utf-8', 'formatter': 'simples',
+        }},
+        'root': {'handlers': ['arquivo'], 'level': 'WARNING'},
+    }
 
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'

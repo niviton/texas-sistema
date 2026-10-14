@@ -53,3 +53,14 @@ Testes: `python manage.py test checklists veiculos accounts dashboard`
 ## Dados internos
 
 Os formulários da empresa (`tcbs/`, `TCB-OTB-*`, `modelos certificados/`) **não** vão para o repositório, que é público. Eles ficam só na máquina e são importados para o banco.
+
+
+## Servidor da oficina (este computador)
+
+O Polaris roda neste computador como servidor para a rede da oficina:
+
+- `python servidor.py` liga em modo produção: HTTPS em `https://<ip>:8443`, e a porta 8000 só redireciona para lá. O log fica em `logs/servidor.log` (erros do sistema em `logs/polaris.log`).
+- O Windows liga o servidor sozinho ao entrar na conta (tarefa agendada "Polaris - servidor"). Os alertas da frota saem todo dia às 7h (tarefa "Polaris - alertas da frota").
+- Se o IP do computador mudar, o servidor gera de novo o certificado (os celulares não precisam reinstalar) e passa a usar o IP novo. As etiquetas QR já impressas, porém, apontam para o IP antigo: reserve um IP fixo para este computador no roteador.
+- O computador precisa ficar ligado e sem entrar em suspensão.
+- Para parar: Gerenciador de Tarefas → Detalhes → `pythonw.exe` → Finalizar tarefa. Para ligar de novo: `python servidor.py` ou entrar de novo no Windows.

@@ -27,3 +27,4 @@ tcbs/
 # Certificados HTTPS da rede local (contém chaves privadas)
 ssl_local/
 staticfiles/
+logs/

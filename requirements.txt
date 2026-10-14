@@ -12,3 +12,5 @@ reportlab>=4.2
 # HTTPS na rede local (python manage.py certificado_local + runserver_https)
 Werkzeug>=3.0
 cryptography>=42
+# Servidor da oficina (python servidor.py)
+cheroot>=10.0

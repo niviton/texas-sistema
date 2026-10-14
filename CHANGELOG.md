@@ -2,6 +2,11 @@
 
 Escrito em linguagem simples, do mais recente para o mais antigo.
 
+## 14/10/2026 – QR codes por tela e servidor da oficina
+
+- Configurações → Sistema → **QR codes**: escolha telas (ex.: "Pré-uso › Gerador", "Vistoria de saída", "Novo termo") ou equipamentos e veículos específicos e imprima as etiquetas.
+- `python servidor.py`: o Polaris roda neste computador em modo produção (HTTPS 8443, porta 8000 redireciona), reinicia sozinho se cair e acompanha a mudança de IP. O Windows liga o servidor ao entrar na conta e envia os alertas da frota todo dia às 7h.
+
 ## 14/10/2026 – Papéis e acessos configuráveis
 
 - Em Configurações → Pessoas → **Papéis e acessos**, o administrador cria papéis (ex.: Motorista) e marca o que cada um usa: vistoria de veículos, checklist de equipamentos, termos, certificados, histórico de todos ou administrador.
