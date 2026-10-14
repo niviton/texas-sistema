@@ -2,6 +2,13 @@
 
 Escrito em linguagem simples, do mais recente para o mais antigo.
 
+## 14/10/2026 – Papéis e acessos configuráveis
+
+- Em Configurações → Pessoas → **Papéis e acessos**, o administrador cria papéis (ex.: Motorista) e marca o que cada um usa: vistoria de veículos, checklist de equipamentos, termos, certificados, histórico de todos ou administrador.
+- Os papéis de antes (Administrador, Técnico, Logística, Professor) viraram papéis editáveis; cada pessoa ficou com o mesmo acesso. Arquivar um papel tira o acesso de quem o tem.
+- O professor vê só Certificados e Histórico; no histórico aparecem os cadastros de alunos que ele fez.
+- Menu, tela inicial e permissões seguem o papel de cada pessoa.
+
 ## 13/10/2026 – Usabilidade: um caminho só para tudo
 
 - **Novo registro**: botão único no menu. Pergunta "Veículo, Equipamento ou Termo?" e segue os passos de cada um; o caminho escolhido aparece no topo.

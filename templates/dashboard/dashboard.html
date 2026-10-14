@@ -34,16 +34,27 @@
   {% if resumo %}
     <h2 style="font-family:'Sora',sans-serif; font-size:15px; font-weight:700; color:#0d1b2e; margin:0 0 10px;">Novo registro</h2>
     <div class="acoes">
+      {% if request.user.pode_veiculos %}
       <a class="acao" href="{% url 'veiculos:inspecao_nova' %}">
         <div class="ico">{% include "veiculos/_icon.html" with i="car_side" s=28 w="1.8" %}</div>
         <div><b>Vistoria de veículo</b><span>Saída, chegada ou rotina</span></div>
         <div class="go">Começar</div>
       </a>
+      {% endif %}
+      {% if request.user.pode_checklists %}
       <a class="acao" href="{% url 'checklists:executar' %}">
         <div class="ico">{% include "veiculos/_icon.html" with i="document" s=26 w="1.8" %}</div>
         <div><b>Checklist de equipamento</b><span>Pré-uso, inspeção e manutenção</span></div>
         <div class="go">Começar</div>
       </a>
+      {% endif %}
+      {% if request.user.pode_certificados and not request.user.is_admin_geral %}
+      <a class="acao" href="{% url 'cert_prof:folders' %}">
+        <div class="ico">{% include "veiculos/_icon.html" with i="document" s=26 w="1.8" %}</div>
+        <div><b>Certificados</b><span>Cadastro dos alunos dos seus cursos</span></div>
+        <div class="go">Começar</div>
+      </a>
+      {% endif %}
       {% if request.user.pode_termos %}
       <a class="acao" href="{% url 'termos:novo' %}">
         <div class="ico">{% include "veiculos/_icon.html" with i="pen" s=26 w="1.8" %}</div>
@@ -98,14 +109,6 @@
         <p class="vazio">Nenhum registro ainda. Comece por um dos botões acima.</p>
       {% endfor %}
       {% if resumo.ultimos %}<a class="linha" href="{% url 'dashboard:historico' %}" style="justify-content:center;"><span class="ir">Ver histórico completo</span></a>{% endif %}
-    </div>
-  {% elif request.user.role == 'professor' %}
-    <div class="acoes" style="grid-template-columns:minmax(0, 1fr); max-width:360px;">
-      <a class="acao" href="{% url 'cert_prof:folders' %}">
-        <div class="ico">{% include "veiculos/_icon.html" with i="document" s=26 w="1.8" %}</div>
-        <div><b>Certificados</b><span>Cadastro dos alunos dos seus cursos</span></div>
-        <div class="go">Abrir</div>
-      </a>
     </div>
   {% else %}
     <div style="background:#fff8ea; border:1px solid #f6dfa8; border-radius:14px; padding:24px 28px; max-width:520px;">

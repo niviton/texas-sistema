@@ -5,8 +5,8 @@ from certificates.decorators import admin_required
 
 from dashboard.navigation import CONFIG_TABS
 
-from .forms import AdminUserEditForm
-from .models import User
+from .forms import AdminUserEditForm, PapelForm
+from .models import Papel, User
 
 
 @admin_required
@@ -36,3 +36,19 @@ def usuarios_view(request):
         'editing': editing,
         'form': form,
     })
+
+
+@admin_required
+def papeis_view(request):
+    """Papéis e acessos: o administrador cria papéis (ex.: Motorista) e marca o que cada um pode usar."""
+    from django.db.models import Count
+
+    from veiculos.views import _crud
+    return _crud(request, Papel, PapelForm, 'accounts/papeis.html', 'papeis', 'accounts_admin:papeis', 'Papel salvo.',
+                 contagem={p.pk: p.n for p in Papel.objects.annotate(n=Count('usuarios'))})
+
+
+@admin_required
+def papel_arquivar_view(request, pk):
+    from veiculos.views import _toggle_active
+    return _toggle_active(request, Papel, pk, 'accounts_admin:papeis')

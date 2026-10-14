@@ -2,7 +2,8 @@
 # cada área junta o que é igual em todos os módulos (pessoas, equipamentos, formulários, e-mails).
 CONFIG_AREAS = [
     ('pessoas', 'Pessoas', [
-        ('usuarios', 'Usuários e acesso', 'accounts_admin:usuarios'),
+        ('usuarios', 'Usuários', 'accounts_admin:usuarios'),
+        ('papeis', 'Papéis e acessos', 'accounts_admin:papeis'),
         ('motoristas', 'Motoristas (CNH)', 'veiculos:motoristas'),
     ]),
     ('equipamentos', 'Equipamentos', [

@@ -76,24 +76,24 @@
     </div>
     <div class="shell-nav">
       <a href="{% url 'dashboard:home' %}" class="nav-link {% if active_nav == 'inicio' %}active{% endif %}"><div class="dot"></div><span>Início</span>{% if n_pendencias %}<span class="nav-cont" title="Pendências para conferir">{{ n_pendencias }}</span>{% endif %}</a>
-      {% if request.user.pode_checklists or request.user.pode_termos %}
+      {% if request.user.pode_checklists or request.user.pode_veiculos or request.user.pode_termos or request.user.pode_certificados %}
       <a href="{% url 'dashboard:historico' %}" class="nav-link {% if active_nav == 'historico' %}active{% endif %}"><div class="dot"></div><span>Histórico</span></a>
       {% endif %}
-      {% if request.user.role == 'admin' %}
+      {% if request.user.is_admin_geral %}
       <a href="{% url 'cert_admin:emitir' %}" class="nav-link {% if active_nav == 'certificados' %}active{% endif %}"><div class="dot"></div><span>Certificados</span></a>
       {% endif %}
-      {% if request.user.role == 'professor' %}
+      {% if request.user.pode_certificados and not request.user.is_admin_geral %}
       <a href="{% url 'cert_prof:folders' %}" class="nav-link {% if active_nav == 'certificados_prof' %}active{% endif %}"><div class="dot"></div><span>Certificados</span></a>
       {% endif %}
-      {% if request.user.pode_checklists %}
+      {% if request.user.pode_checklists or request.user.pode_veiculos %}
       <details class="nav-group" {% if active_nav == 'veiculos' or active_nav == 'checklists' %}open{% endif %}>
         <summary class="nav-link {% if active_nav == 'veiculos' or active_nav == 'checklists' %}in{% endif %}">
           <div class="dot"></div><span>Checklists</span>
           <svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
         </summary>
         <div class="nav-sub">
-          <a href="{% url 'veiculos:painel' %}" class="nav-sublink {% if active_nav == 'veiculos' %}active{% endif %}">Veículos</a>
-          <a href="{% url 'checklists:executar' %}" class="nav-sublink {% if active_nav == 'checklists' %}active{% endif %}">Equipamentos</a>
+          {% if request.user.pode_veiculos %}<a href="{% url 'veiculos:painel' %}" class="nav-sublink {% if active_nav == 'veiculos' %}active{% endif %}">Veículos</a>{% endif %}
+          {% if request.user.pode_checklists %}<a href="{% url 'checklists:executar' %}" class="nav-sublink {% if active_nav == 'checklists' %}active{% endif %}">Equipamentos</a>{% endif %}
         </div>
       </details>
       {% endif %}
@@ -103,7 +103,7 @@
     </div>
     <div class="shell-nav" style="flex:0; margin-top:auto;">
       <a href="{% url 'accounts:aparencia' %}" class="nav-link {% if active_nav == 'aparencia' %}active{% endif %}"><div class="dot"></div><span>Aparência</span></a>
-      {% if request.user.role == 'admin' %}
+      {% if request.user.is_admin_geral %}
       <a href="{% url 'accounts_admin:usuarios' %}" class="nav-link {% if active_nav == 'configuracoes' %}active{% endif %}"><div class="dot"></div><span>Configurações</span></a>
       {% endif %}
     </div>

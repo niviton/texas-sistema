@@ -3,7 +3,7 @@ import re
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm
 
-from .models import User
+from .models import Papel, User
 
 
 class EmailAuthenticationForm(AuthenticationForm):
@@ -63,6 +63,21 @@ class RegisterForm(forms.ModelForm):
         return user
 
 
+class PapelForm(forms.ModelForm):
+    class Meta:
+        model = Papel
+        fields = ['nome', 'descricao', 'acesso_vistoria', 'acesso_checklists', 'acesso_termos', 'acesso_certificados',
+                  've_todo_historico', 'administrador']
+        widgets = {'descricao': forms.TextInput(attrs={'placeholder': 'Ex.: Motoristas da frota, só fazem vistoria.'})}
+
+    def clean(self):
+        dados = super().clean()
+        campos = ['administrador', 'acesso_vistoria', 'acesso_checklists', 'acesso_termos', 'acesso_certificados']
+        if not any(dados.get(c) for c in campos):
+            raise forms.ValidationError('Marque pelo menos um acesso para este papel.')
+        return dados
+
+
 class AdminUserEditForm(forms.ModelForm):
     new_password = forms.CharField(
         label='Nova senha', widget=forms.PasswordInput, required=False, min_length=8,
@@ -71,7 +86,13 @@ class AdminUserEditForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ['full_name', 'email', 'cpf', 'phone', 'role', 'is_approved']
+        fields = ['full_name', 'email', 'cpf', 'phone', 'papel', 'is_approved']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['papel'].queryset = Papel.objects.filter(is_active=True)
+        self.fields['papel'].required = True
+        self.fields['papel'].empty_label = 'Escolha o papel'
 
     def clean_cpf(self):
         cpf = re.sub(r'\D', '', self.cleaned_data.get('cpf', ''))

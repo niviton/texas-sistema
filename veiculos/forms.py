@@ -24,7 +24,10 @@ class MotoristaForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         from accounts.models import User
-        self.fields['usuario'].queryset = User.objects.filter(role__in=[User.ROLE_TECNICO, User.ROLE_LOGISTICA]).order_by('full_name')
+        from django.db.models import Q
+        self.fields['usuario'].queryset = User.objects.filter(
+            Q(papel__acesso_vistoria=True) | Q(papel__administrador=True), is_active=True,
+        ).order_by('full_name')
 
 
 class VeiculoForm(forms.ModelForm):

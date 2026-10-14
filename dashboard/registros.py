@@ -10,8 +10,9 @@ from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils import timezone
 
-TIPO_VISTORIA, TIPO_CHECKLIST, TIPO_TERMO = 'vistoria', 'checklist', 'termo'
-TIPOS = [(TIPO_VISTORIA, 'Vistoria de veículo'), (TIPO_CHECKLIST, 'Checklist de equipamento'), (TIPO_TERMO, 'Termo de material')]
+TIPO_VISTORIA, TIPO_CHECKLIST, TIPO_TERMO, TIPO_ALUNO = 'vistoria', 'checklist', 'termo', 'aluno'
+TIPOS = [(TIPO_VISTORIA, 'Vistoria de veículo'), (TIPO_CHECKLIST, 'Checklist de equipamento'), (TIPO_TERMO, 'Termo de material'),
+         (TIPO_ALUNO, 'Cadastro de aluno')]
 
 
 @dataclass
@@ -40,6 +41,8 @@ def tipos_permitidos(user):
         tipos.append(TIPO_CHECKLIST)
     if user.pode_termos:
         tipos.append(TIPO_TERMO)
+    if user.pode_certificados:
+        tipos.append(TIPO_ALUNO)
     return tipos
 
 
@@ -64,6 +67,24 @@ def _execucoes(user):
 def _termos(user):
     from termos.models import Termo
     return Termo.objects.select_related('created_by')
+
+
+def _alunos(user):
+    from certificates.models import StudentRegistration
+    qs = StudentRegistration.objects.select_related('course_template', 'created_by', 'professor')
+    if not user.ve_todo_historico:
+        qs = qs.filter(created_by=user)
+    return qs
+
+
+def _de_aluno(a, user):
+    if user.is_admin_geral:
+        url = reverse('cert_admin:pendentes')
+    else:
+        url = reverse('cert_prof:groups', args=[a.course_template_id])
+    return Registro(TIPO_ALUNO, a.pk, a.created_at, a.student_name,
+                    f'{a.course_template.title} · assunto {a.subject_code}' + (f' · {a.client_name}' if a.client_name else ''),
+                    (a.created_by.full_name or a.created_by.email) if a.created_by else '', False, url, '')
 
 
 def _de_vistoria(v):
@@ -128,13 +149,21 @@ def buscar(user, tipo='', q='', pessoa=None, de=None, ate=None, limite=300):
         if pessoa:
             qs = qs.filter(created_by=pessoa)
         regs += [_de_termo(t) for t in qs.order_by('-created_at')[:limite]]
+    if TIPO_ALUNO in tipos:
+        qs = periodo(_alunos(user))
+        if q:
+            qs = qs.filter(Q(student_name__icontains=q) | Q(cpf__icontains=q) | Q(subject_code__icontains=q)
+                           | Q(course_template__title__icontains=q) | Q(client_name__icontains=q))
+        if pessoa:
+            qs = qs.filter(created_by=pessoa)
+        regs += [_de_aluno(a, user) for a in qs.order_by('-created_at')[:limite]]
     regs.sort(key=lambda r: r.quando, reverse=True)
     return regs[:limite]
 
 
 def pegar(user, tipo, pk):
     """Um registro visível para a pessoa (404 se não puder ver)."""
-    if tipo not in tipos_permitidos(user):
+    if tipo not in tipos_permitidos(user) or tipo == TIPO_ALUNO:
         from django.http import Http404
         raise Http404
     if tipo == TIPO_VISTORIA:
