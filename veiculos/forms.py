@@ -18,8 +18,9 @@ class SupervisorForm(forms.ModelForm):
 class MotoristaForm(forms.ModelForm):
     class Meta:
         model = Motorista
-        fields = ['name', 'usuario', 'email', 'phone', 'cnh_numero', 'cnh_validade']
+        fields = ['name', 'usuario', 'email', 'phone', 'cnh_numero', 'cnh_categoria', 'cnh_validade', 'cnh_foto']
         widgets = {'cnh_validade': _DATE}
+
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -28,6 +29,36 @@ class MotoristaForm(forms.ModelForm):
         self.fields['usuario'].queryset = User.objects.filter(
             Q(papel__acesso_vistoria=True) | Q(papel__administrador=True), is_active=True,
         ).order_by('full_name')
+
+class MeusDadosMotoristaForm(forms.ModelForm):
+    """O próprio motorista completa os dados dele antes da primeira vistoria."""
+    class Meta:
+        model = Motorista
+        fields = ['phone', 'cnh_numero', 'cnh_categoria', 'cnh_validade', 'cnh_foto']
+        labels = {'phone': 'Telefone (WhatsApp)'}
+        widgets = {
+            'phone': forms.TextInput(attrs={'class': 'v-input', 'inputmode': 'tel', 'placeholder': '(84) 99999-9999'}),
+            'cnh_numero': forms.TextInput(attrs={'class': 'v-input', 'inputmode': 'numeric'}),
+            'cnh_categoria': forms.TextInput(attrs={'class': 'v-input', 'placeholder': 'Ex.: B', 'style': 'text-transform:uppercase'}),
+            'cnh_validade': forms.DateInput(attrs={'type': 'date', 'class': 'v-input'}, format='%Y-%m-%d'),
+            'cnh_foto': forms.ClearableFileInput(attrs={'accept': 'image/*', 'class': 'file-oculto', 'id': 'cnh-foto'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for nome in self.fields:
+            self.fields[nome].required = True
+        self.fields['cnh_foto'].required = not (self.instance and self.instance.cnh_foto)
+
+    def clean_cnh_categoria(self):
+        return self.cleaned_data['cnh_categoria'].upper().replace(' ', '')
+
+    def clean_cnh_validade(self):
+        from django.utils import timezone
+        v = self.cleaned_data['cnh_validade']
+        if v and v < timezone.localdate():
+            raise forms.ValidationError('Esta CNH está vencida. Informe a validade da CNH atual.')
+        return v
 
 
 class VeiculoForm(forms.ModelForm):

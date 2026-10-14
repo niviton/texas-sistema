@@ -34,6 +34,17 @@ def _assinatura():
     return 'data:image/png;base64,' + base64.b64encode(buf.getvalue()).decode()
 
 
+def _completar_motorista(user=None, motorista=None):
+    """Motorista com os dados que ele mesmo preenche em "Meus dados" (sem isso não faz vistoria)."""
+    from .models import motorista_do_usuario
+    m = motorista or motorista_do_usuario(user)
+    m.phone, m.cnh_numero, m.cnh_categoria = '84999990000', '01234567890', 'B'
+    m.cnh_validade = date.today() + timedelta(days=365)
+    m.cnh_foto = _jpeg('cnh.jpg')
+    m.save()
+    return m
+
+
 @override_settings(MEDIA_ROOT=TMP_MEDIA, EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend', VEICULOS_EMAIL_ASYNC=False)
 class FluxoInspecaoTests(TestCase):
     @classmethod
@@ -47,7 +58,7 @@ class FluxoInspecaoTests(TestCase):
             email='vist@x.com', password='x', full_name='Vist Oriador', is_approved=True, role=User.ROLE_TECNICO,
         )
         self.prof = User.objects.create_user(email='prof@x.com', password='x', full_name='Prof', is_approved=True)
-        self.mot = Motorista.objects.create(name='João Motorista', email='joao@x.com', usuario=self.vist)
+        self.mot = _completar_motorista(motorista=Motorista.objects.create(name='João Motorista', email='joao@x.com', usuario=self.vist))
         self.v = Veiculo.objects.create(placa='abc 1d23', marca='Fiat', modelo='Strada', km_atual=1000, motorista_responsavel=self.mot)
         Supervisor.objects.create(name='Sup Um', email='sup1@x.com')
         Supervisor.objects.create(name='Sup Inativo', email='sup2@x.com', is_active=False)
@@ -173,6 +184,7 @@ class FluxoInspecaoTests(TestCase):
         outro = User.objects.create_user(
             email='outro@x.com', password='x', full_name='Outro Vist', is_approved=True, role=User.ROLE_TECNICO,
         )
+        _completar_motorista(outro)
         self.client.force_login(outro)
         self._post('saida', 1000)
         dele = Inspecao.objects.get()
@@ -194,6 +206,7 @@ class FluxoInspecaoTests(TestCase):
         self._post('saida', 1000)
         insp = Inspecao.objects.get()
         log = User.objects.create_user(email='log@x.com', password='x', full_name='Lara Logística', is_approved=True, role=User.ROLE_LOGISTICA)
+        _completar_motorista(log)
         self.client.force_login(log)
         self.assertEqual(self.client.get(reverse('veiculos:inspecao_detalhe', args=[insp.pk])).status_code, 200)
         self.assertContains(self.client.get(reverse('veiculos:usos')), 'João Motorista')
@@ -375,6 +388,7 @@ class PassosVistoriaTests(TestCase):
         from django.utils import timezone
         outro = Motorista.objects.create(name='Outra Pessoa')
         Uso.objects.create(veiculo=self.ocupado, motorista=outro, saida_em=timezone.now(), km_saida=10)
+        _completar_motorista(self.tec)
         self.client.force_login(self.tec)
 
     def test_tipo_depois_veiculo_depois_formulario(self):
@@ -390,3 +404,42 @@ class PassosVistoriaTests(TestCase):
         r = self.client.get(url, {'tipo': 'saida', 'veiculo': self.livre.pk})
         self.assertContains(r, 'id="insp-form"')
         self.assertContains(r, 'class="passos"')
+
+
+@override_settings(MEDIA_ROOT=TMP_MEDIA)
+class CadastroMotoristaTests(TestCase):
+    """Conta nova sem acesso; o administrador dá o papel Motorista; o motorista completa a CNH antes da vistoria."""
+
+    def test_motorista_completa_os_dados_antes_da_primeira_vistoria(self):
+        from accounts.models import Papel
+        pessoa = User.objects.create_user(email='novo@x.com', password='x', full_name='Novo Motorista', is_approved=True)
+        self.client.force_login(pessoa)
+        self.assertEqual(self.client.get(reverse('veiculos:inspecao_nova')).status_code, 403)  # sem papel: nada
+        self.assertContains(self.client.get(reverse('dashboard:home')), 'Aguardando liberação')
+        pessoa.papel = Papel.objects.get(nome='Motorista')
+        pessoa.save()
+        r = self.client.get(reverse('veiculos:inspecao_nova') + '?tipo=saida')
+        self.assertEqual(r.status_code, 302)
+        self.assertTrue(r['Location'].startswith(reverse('veiculos:meus_dados')))
+        self.assertContains(self.client.get(r['Location']), 'foto da CNH')
+        # CNH vencida não é aceita
+        dados = {'phone': '84999990000', 'cnh_numero': '123', 'cnh_categoria': 'b', 'cnh_validade': '2020-01-01',
+                 'cnh_foto': _jpeg('cnh.jpg'), 'next': reverse('veiculos:inspecao_nova') + '?tipo=saida'}
+        self.assertContains(self.client.post(reverse('veiculos:meus_dados'), dados), 'vencida')
+        dados.update(cnh_validade=(date.today() + timedelta(days=400)).isoformat(), cnh_foto=_jpeg('cnh.jpg'))
+        r = self.client.post(reverse('veiculos:meus_dados'), dados)
+        self.assertRedirects(r, reverse('veiculos:inspecao_nova') + '?tipo=saida')
+        m = Motorista.objects.get(usuario=pessoa)
+        self.assertEqual((m.cnh_categoria, m.pendencias_cadastro()), ('B', []))
+        self.assertEqual(self.client.get(reverse('veiculos:inspecao_nova') + '?tipo=saida').status_code, 200)
+        self.assertEqual(self.client.get(reverse('checklists:executar')).status_code, 403)  # Motorista: só vistoria
+
+    def test_login_volta_para_a_tela_do_qr(self):
+        User.objects.create_user(email='q@x.com', password='senha-forte-1', full_name='Q', is_approved=True, role=User.ROLE_TECNICO)
+        destino = reverse('checklists:executar')
+        r = self.client.post(reverse('accounts:auth') + '?next=' + destino,
+                             {'form_type': 'login', 'username': 'q@x.com', 'password': 'senha-forte-1', 'next': destino})
+        self.assertRedirects(r, destino, fetch_redirect_response=False)
+        r = self.client.post(reverse('accounts:auth'), {'form_type': 'login', 'username': 'q@x.com', 'password': 'senha-forte-1',
+                                                        'next': 'https://site-malicioso.com/'})
+        self.assertRedirects(r, reverse('dashboard:home'), fetch_redirect_response=False)

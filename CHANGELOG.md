@@ -2,6 +2,13 @@
 
 Escrito em linguagem simples, do mais recente para o mais antigo.
 
+## 14/10/2026 – Cadastro do motorista e QR code direto
+
+- Conta nova entra sem acesso a nada até o administrador escolher o papel. Novo papel pronto: **Motorista** (só vistoria de veículos).
+- Na primeira vistoria, o motorista completa **Meus dados**: telefone, nº, categoria, validade e foto da CNH. CNH vencida não é aceita. A CNH sai no comprovante de cada vistoria e não é mais fotografada a cada vez.
+- Fotos dos pneus deixaram de ser obrigatórias (o estado de 0 a 100% continua).
+- Login fica guardado no celular por 6 meses (renovado a cada uso) e, depois de entrar, a pessoa volta para a tela aberta pelo QR code.
+
 ## 14/10/2026 – QR codes por tela e servidor da oficina
 
 - Configurações → Sistema → **QR codes**: escolha telas (ex.: "Pré-uso › Gerador", "Vistoria de saída", "Novo termo") ou equipamentos e veículos específicos e imprima as etiquetas.

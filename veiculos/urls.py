@@ -7,6 +7,7 @@ app_name = 'veiculos'
 urlpatterns = [
     path('', views.painel_view, name='painel'),
     path('inspecao/nova/', views.inspecao_nova_view, name='inspecao_nova'),
+    path('meus-dados/', views.meus_dados_view, name='meus_dados'),
     path('inspecoes/', views.inspecoes_view, name='inspecoes'),
     path('inspecoes/<int:pk>/', views.inspecao_detalhe_view, name='inspecao_detalhe'),
     path('inspecoes/<int:pk>/pdf/', views.inspecao_pdf_view, name='inspecao_pdf'),

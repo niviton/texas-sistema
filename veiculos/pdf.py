@@ -157,13 +157,23 @@ def _assinatura_img(inspecao, max_w, max_h):
         return ''
 
 
+def _cnh_texto(m):
+    if not m or not m.cnh_numero:
+        return ''
+    partes = [f'CNH {m.cnh_numero}'] + ([f'cat. {m.cnh_categoria}'] if m.cnh_categoria else [])
+    if m.cnh_validade:
+        partes.append(f'válida até {m.cnh_validade:%d/%m/%Y}')
+    return '<font size="7">' + ' · '.join(partes) + '</font>'
+
+
 def _assinatura(inspecao):
     nome = str(inspecao.motorista) if inspecao.motorista else '[NOME]'
     t = Table([
         [_assinatura_img(inspecao, 70 * mm, 17 * mm)],
         [Paragraph(nome, _s['sig'])],
         [Paragraph('MOTORISTA', _s['sig'])],
-    ], colWidths=[80 * mm], rowHeights=[19 * mm, None, None])
+        [Paragraph(_cnh_texto(inspecao.motorista), _s['sig'])],
+    ], colWidths=[80 * mm], rowHeights=[19 * mm, None, None, None])
     t.setStyle(TableStyle([
         ('ALIGN', (0, 0), (-1, 0), 'CENTER'), ('VALIGN', (0, 0), (-1, 0), 'BOTTOM'),
         ('LINEBELOW', (0, 0), (-1, 0), 1.2, colors.black),
@@ -226,6 +236,11 @@ def _foto_flowable(foto, max_w, max_h):
 def _fotos_block(inspecao):
     # Primeiro as fotos guiadas (na ordem das posições), depois as adicionais.
     fotos = sorted(inspecao.fotos.all(), key=lambda f: (FOTO_ORDEM.get(f.posicao, 999), f.pk))
+    # A CNH fica no cadastro do motorista (não é fotografada a cada vistoria): entra como primeira foto.
+    m = inspecao.motorista
+    if m and m.cnh_foto and not any(f.posicao == 'cnh' for f in fotos):
+        from types import SimpleNamespace
+        fotos.insert(0, SimpleNamespace(imagem=m.cnh_foto, titulo='CNH do motorista (cadastro)'))
     if not fotos:
         return [Paragraph('<font color="#777777">Nenhuma foto registrada.</font>', _s['body'])]
     col_w = CONTENT_W / 2

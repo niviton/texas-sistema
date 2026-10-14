@@ -15,13 +15,13 @@ from dashboard.navigation import CONFIG_KEYS, CONFIG_TABS
 from .emails import (
     enviar_alertas, enviar_emails_da_vistoria_em_segundo_plano, enviar_inspecao, enviar_teste, supervisor_emails,
 )
-from .forms import InspecaoForm, ManutencaoForm, MotoristaForm, SupervisorForm, VeiculoForm
+from .forms import InspecaoForm, ManutencaoForm, MeusDadosMotoristaForm, MotoristaForm, SupervisorForm, VeiculoForm
 from .carimbo import carimbo_da_requisicao
 from .imagens import ImagemInvalida, assinatura_de_dataurl, comprimir_foto
 from .pdf import pdf_filename, render_inspecao_pdf
 from .models import (
     CATEGORIA_CAMINHONETE, CHECKLIST_ITEMS, FOTO_GRUPOS, FOTO_LABELS, FOTO_ORDEM, FOTO_POSICOES, PNEU_KEYS, ITEM_NOK, ITEM_OK, ITEM_STATUS_CHOICES, TIPO_CHEGADA, TIPO_CHOICES, TIPO_SAIDA,
-    Inspecao, InspecaoFoto, InspecaoItem, Manutencao, Motorista, Supervisor, Uso, Veiculo,
+    Inspecao, InspecaoFoto, InspecaoItem, Manutencao, Motorista, Supervisor, Uso, Veiculo, motorista_do_usuario,
 )
 
 logger = logging.getLogger(__name__)
@@ -39,11 +39,13 @@ TABS_VISTORIADOR = [
     ('nova', 'Nova vistoria', 'veiculos:inspecao_nova'),
     ('inspecoes', 'Minhas vistorias', 'veiculos:inspecoes'),
     ('usos', 'Meus usos', 'veiculos:usos'),
+    ('meus_dados', 'Meus dados', 'veiculos:meus_dados'),
 ]
 TABS_LOGISTICA = [
     ('nova', 'Nova vistoria', 'veiculos:inspecao_nova'),
     ('inspecoes', 'Vistorias', 'veiculos:inspecoes'),
     ('usos', 'Uso da frota', 'veiculos:usos'),
+    ('meus_dados', 'Meus dados', 'veiculos:meus_dados'),
 ]
 
 
@@ -170,7 +172,40 @@ def _escolha_vistoria(request):
 
 
 @veiculos_required
+def meus_dados_view(request):
+    """O motorista completa os próprios dados (telefone e CNH) antes da primeira vistoria."""
+    from django.utils.http import url_has_allowed_host_and_scheme
+
+    motorista = motorista_do_usuario(request.user)
+    proximo = request.POST.get('next') or request.GET.get('next', '')
+    if not url_has_allowed_host_and_scheme(proximo, allowed_hosts={request.get_host()}):
+        proximo = ''
+    form = MeusDadosMotoristaForm(request.POST or None, request.FILES or None, instance=motorista)
+    if request.method == 'POST' and form.is_valid():
+        m = form.save(commit=False)
+        foto = request.FILES.get('cnh_foto')
+        if foto:
+            try:
+                m.cnh_foto = comprimir_foto(foto)
+            except ImagemInvalida as exc:
+                form.add_error('cnh_foto', str(exc))
+        if not form.errors:
+            m.save()
+            messages.success(request, 'Dados salvos. Agora você já pode fazer a vistoria.' if proximo else 'Dados salvos.')
+            return redirect(proximo or 'veiculos:meus_dados')
+    return render(request, 'veiculos/meus_dados.html', _ctx(
+        request, 'meus_dados', form=form, motorista=motorista, pendencias=motorista.pendencias_cadastro(), proximo=proximo,
+    ))
+
+
+@veiculos_required
 def inspecao_nova_view(request):
+    # Motorista com cadastro incompleto (telefone, CNH) completa os dados antes da primeira vistoria.
+    if not request.user.is_admin_geral:
+        pendencias = motorista_do_usuario(request.user).pendencias_cadastro()
+        if pendencias:
+            messages.info(request, 'Antes da primeira vistoria, complete seus dados de motorista.')
+            return redirect(reverse('veiculos:meus_dados') + '?next=' + request.get_full_path().replace('&', '%26').replace('?', '%3F'))
     if request.method != 'POST' and not (request.GET.get('veiculo') and request.GET.get('tipo')):
         return render(request, 'veiculos/inspecao_passos.html', _ctx(request, 'nova', escolha=_escolha_vistoria(request)))
     initial = {}

@@ -30,6 +30,12 @@ class AparenciaTests(TestCase):
         self.assertEqual((self.user.tema, self.user.fonte), ('claro', 'manrope'))
 
 
+import tempfile  # noqa: E402
+
+from django.test import override_settings  # noqa: E402
+
+
+@override_settings(MEDIA_ROOT=tempfile.mkdtemp())
 class PapeisTests(TestCase):
     """O administrador cria papéis (ex.: Motorista) e escolhe o que cada um acessa."""
 
@@ -43,10 +49,10 @@ class PapeisTests(TestCase):
         from django.urls import reverse
         self.client.force_login(self.admin)
         r = self.client.post(reverse('accounts_admin:papeis'), {
-            'nome': 'Motorista', 'descricao': 'Só vistoria', 'acesso_vistoria': 'on',
+            'nome': 'Motorista de entrega', 'descricao': 'Só vistoria', 'acesso_vistoria': 'on',
         })
         self.assertRedirects(r, reverse('accounts_admin:papeis'))
-        motorista = self.Papel.objects.get(nome='Motorista')
+        motorista = self.Papel.objects.get(nome='Motorista de entrega')
         self.assertContains(self.client.get(reverse('accounts_admin:papeis')), 'Vistoria de veículos')
         # papel sem nenhum acesso não é aceito
         r = self.client.post(reverse('accounts_admin:papeis'), {'nome': 'Vazio'})
@@ -59,7 +65,9 @@ class PapeisTests(TestCase):
         self.assertRedirects(r, reverse('accounts_admin:usuarios'))
         self.pessoa.refresh_from_db()
         self.assertEqual(self.pessoa.papel, motorista)
-        # a pessoa vê só a vistoria
+        # a pessoa vê só a vistoria (depois de completar a CNH)
+        from veiculos.tests import _completar_motorista
+        _completar_motorista(self.pessoa)
         self.client.force_login(self.pessoa)
         self.assertEqual(self.client.get(reverse('veiculos:inspecao_nova')).status_code, 200)
         self.assertEqual(self.client.get(reverse('checklists:executar')).status_code, 403)

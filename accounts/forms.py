@@ -56,7 +56,7 @@ class RegisterForm(forms.ModelForm):
     def save(self, commit=True):
         user = super().save(commit=False)
         user.set_password(self.cleaned_data['password'])
-        user.role = User.ROLE_PROFESSOR
+        user.role = User.ROLE_PENDENTE  # sem acesso até o administrador dar um papel
         user.is_approved = False
         if commit:
             user.save()

@@ -96,6 +96,9 @@ INSTALLED_APPS = [
 
 AUTH_USER_MODEL = 'accounts.User'
 LOGIN_URL = 'accounts:auth'
+# Login guardado no celular por 6 meses, renovado a cada uso: quem lê o QR code cai direto na tela.
+SESSION_COOKIE_AGE = 60 * 60 * 24 * 180
+SESSION_SAVE_EVERY_REQUEST = True
 LOGIN_REDIRECT_URL = 'dashboard:home'
 LOGOUT_REDIRECT_URL = 'accounts:auth'
 

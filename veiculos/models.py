@@ -41,22 +41,22 @@ CHECKLIST_LABELS = {key: label for _, items in CHECKLIST_ITEMS for key, label in
 
 # Fotos guiadas pedidas em toda inspeção: (chave, rótulo, obrigatória).
 FOTO_POSICOES = [
-    ('cnh', 'CNH do motorista', True),
+    ('cnh', 'CNH do motorista', False),  # antigo: a CNH agora fica no cadastro do motorista
     ('documento', 'Documento do veículo (CRLV)', True),
     ('painel', 'Painel (quadro de instrumentos)', True),
     ('frente', 'Frente', True),
     ('traseira', 'Traseira', True),
     ('lateral_esq', 'Lateral esquerda', True),
     ('lateral_dir', 'Lateral direita', True),
-    ('pneu_de', 'Pneu dianteiro esquerdo', True),
-    ('pneu_dd', 'Pneu dianteiro direito', True),
-    ('pneu_te', 'Pneu traseiro esquerdo', True),
-    ('pneu_td', 'Pneu traseiro direito', True),
+    ('pneu_de', 'Pneu dianteiro esquerdo', False),
+    ('pneu_dd', 'Pneu dianteiro direito', False),
+    ('pneu_te', 'Pneu traseiro esquerdo', False),
+    ('pneu_td', 'Pneu traseiro direito', False),
 ]
 FOTO_LABELS = {k: l for k, l, _ in FOTO_POSICOES}
 # Agrupamento na tela; os pneus pedem também o estado de 0 a 100%.
 FOTO_GRUPOS = [
-    ('Documentos', ['cnh', 'documento']),
+    ('Documentos', ['documento']),
     ('Veículo', ['painel', 'frente', 'traseira', 'lateral_esq', 'lateral_dir']),
     ('Pneus', ['pneu_de', 'pneu_dd', 'pneu_te', 'pneu_td']),
 ]
@@ -137,7 +137,9 @@ class Motorista(models.Model):
     email = models.EmailField('e-mail', blank=True)
     phone = models.CharField('telefone', max_length=20, blank=True)
     cnh_numero = models.CharField('nº da CNH', max_length=20, blank=True)
+    cnh_categoria = models.CharField('categoria da CNH', max_length=5, blank=True, help_text='Ex.: B, AB, C, D, E')
     cnh_validade = models.DateField('validade da CNH', null=True, blank=True)
+    cnh_foto = models.ImageField('foto da CNH', upload_to='motoristas/cnh/', null=True, blank=True)
     is_active = models.BooleanField('ativo', default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -148,6 +150,17 @@ class Motorista(models.Model):
 
     def __str__(self):
         return self.name
+
+
+    def pendencias_cadastro(self):
+        """O que falta para o motorista poder fazer vistoria (preenchido por ele em "Meus dados")."""
+        from django.utils import timezone
+        faltam = [rotulo for campo, rotulo in [('phone', 'telefone'), ('cnh_numero', 'número da CNH'),
+                                                ('cnh_categoria', 'categoria da CNH'), ('cnh_validade', 'validade da CNH'),
+                                                ('cnh_foto', 'foto da CNH')] if not getattr(self, campo)]
+        if self.cnh_validade and self.cnh_validade < timezone.localdate():
+            faltam.append('CNH vencida: atualize a validade e a foto')
+        return faltam
 
 
 def motorista_do_usuario(user):

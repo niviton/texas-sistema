@@ -5,5 +5,6 @@
 {% block item %}
   <div style="font-weight:700; font-size:14px; color:#0d1b2e;">{{ obj.name }}</div>
   <div style="font-size:12.5px; color:#6b7480;">{{ obj.email|default:"sem e-mail" }}{% if obj.phone %} · {{ obj.phone }}{% endif %}</div>
-  {% if obj.cnh_validade %}<div style="font-size:12px; color:#8b95a1;">CNH {{ obj.cnh_numero }} · válida até {{ obj.cnh_validade|date:"d/m/Y" }}</div>{% endif %}
+  {% if obj.cnh_validade %}<div style="font-size:12px; color:#8b95a1;">CNH {{ obj.cnh_numero }}{% if obj.cnh_categoria %} · categoria {{ obj.cnh_categoria }}{% endif %} · válida até {{ obj.cnh_validade|date:"d/m/Y" }}</div>{% endif %}
+  {% if obj.cnh_foto %}<a href="{{ obj.cnh_foto.url }}" target="_blank" class="v-btn-sm" style="margin-top:6px;">Ver foto da CNH</a>{% elif obj.usuario %}<span class="v-badge b-warn" style="margin-top:6px;">Cadastro incompleto: o motorista completa ao fazer a 1ª vistoria</span>{% endif %}
 {% endblock %}

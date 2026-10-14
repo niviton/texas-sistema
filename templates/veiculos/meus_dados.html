@@ -1,0 +1,57 @@
+{% extends "veiculos/_base.html" %}
+{% block title %}Meus dados de motorista · Polaris{% endblock %}
+{% block v_style %}
+  .md { max-width:560px; }
+  .md .v-field { margin-bottom:14px; }
+  .md-falta { padding:12px 14px; border-radius:10px; background:#fff8ea; border:1px solid #f3dfb5; color:#6b5216; font-size:13.5px; margin:0 0 16px; }
+  .cnh-box { display:flex; align-items:center; gap:14px; padding:14px; border:2px dashed #c5ccd4; border-radius:12px; cursor:pointer; background:#f9fafb; }
+  .cnh-box img { width:120px; height:80px; object-fit:cover; border-radius:8px; }
+  .cnh-box b { display:block; font-size:14px; color:#0d1b2e; }
+  .cnh-box small { font-size:12.5px; color:#6b7480; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  @media (max-width:560px) { .grid2 { grid-template-columns:1fr; } }
+{% endblock %}
+{% block veiculos_content %}
+<div class="md">
+  <div class="v-card">
+    <h3 class="v-h3">Meus dados de motorista</h3>
+    <p class="v-help" style="margin:-8px 0 14px;">Preencha uma vez. A CNH fica guardada e sai no comprovante de cada vistoria; não é preciso fotografá-la de novo.</p>
+    {% if pendencias %}<div class="md-falta"><b>Falta:</b> {{ pendencias|join:", " }}.</div>{% endif %}
+    <form method="post" enctype="multipart/form-data" novalidate>
+      {% csrf_token %}
+      {% if proximo %}<input type="hidden" name="next" value="{{ proximo }}">{% endif %}
+      <div class="v-field"><label class="v-label">Nome</label><div style="font-size:14px; font-weight:700; color:#0d1b2e;">{{ motorista.name }}</div></div>
+      <div class="v-field"><label class="v-label" for="id_phone">{{ form.phone.label }}</label>{{ form.phone }}{% for e in form.phone.errors %}<div class="v-err">{{ e }}</div>{% endfor %}</div>
+      <div class="grid2">
+        <div class="v-field"><label class="v-label" for="id_cnh_numero">Nº da CNH</label>{{ form.cnh_numero }}{% for e in form.cnh_numero.errors %}<div class="v-err">{{ e }}</div>{% endfor %}</div>
+        <div class="v-field"><label class="v-label" for="id_cnh_categoria">Categoria</label>{{ form.cnh_categoria }}{% for e in form.cnh_categoria.errors %}<div class="v-err">{{ e }}</div>{% endfor %}</div>
+      </div>
+      <div class="v-field"><label class="v-label" for="id_cnh_validade">Validade da CNH</label>{{ form.cnh_validade }}{% for e in form.cnh_validade.errors %}<div class="v-err">{{ e }}</div>{% endfor %}</div>
+      <div class="v-field">
+        <label class="v-label">Foto da CNH (frente, aberta)</label>
+        <label class="cnh-box" for="cnh-foto">
+          {% if motorista.cnh_foto %}<img id="cnh-prev" src="{{ motorista.cnh_foto.url }}" alt="CNH">{% else %}<img id="cnh-prev" alt="" hidden>{% endif %}
+          <span><b id="cnh-txt">{% if motorista.cnh_foto %}Foto guardada · trocar{% else %}Tirar foto da CNH{% endif %}</b><small>Toque para abrir a câmera ou escolher da galeria</small></span>
+        </label>
+        {{ form.cnh_foto }}
+        {% for e in form.cnh_foto.errors %}<div class="v-err">{{ e }}</div>{% endfor %}
+      </div>
+      <button type="submit" class="v-btn" style="width:100%;">{% if proximo %}Salvar e fazer a vistoria{% else %}Salvar{% endif %}</button>
+    </form>
+  </div>
+</div>
+{% load static %}
+<script src="{% static 'js/polaris-campo.js' %}"></script>
+<script>
+(function () {
+  const input = document.getElementById('cnh-foto');
+  input.addEventListener('change', async () => {
+    if (!input.files.length) return;
+    const [f] = await Polaris.trocarArquivos(input, [input.files[0]]);
+    const img = document.getElementById('cnh-prev');
+    img.src = URL.createObjectURL(f); img.hidden = false;
+    document.getElementById('cnh-txt').textContent = 'Foto escolhida · trocar';
+  });
+})();
+</script>
+{% endblock %}

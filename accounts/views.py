@@ -8,9 +8,18 @@ from .forms import EmailAuthenticationForm, RegisterForm
 from .models import FONTES, TEMA_CHOICES
 
 
+def _destino(request):
+    """Para onde ir depois do login (ex.: a tela aberta pelo QR code); só endereços deste site."""
+    from django.utils.http import url_has_allowed_host_and_scheme
+    proximo = request.POST.get('next') or request.GET.get('next') or ''
+    if url_has_allowed_host_and_scheme(proximo, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
+        return proximo
+    return 'dashboard:home'
+
+
 def auth_view(request):
     if request.user.is_authenticated:
-        return redirect('dashboard:home')
+        return redirect(_destino(request))
 
     tab = request.POST.get('form_type') or request.GET.get('tab') or 'login'
     submitted = False
@@ -23,7 +32,7 @@ def auth_view(request):
     if request.method == 'POST' and tab == 'login':
         if login_form.is_valid():
             auth_login(request, login_form.get_user())
-            return redirect('dashboard:home')
+            return redirect(_destino(request))
     elif request.method == 'POST' and tab == 'register':
         if register_form.is_valid():
             user = register_form.save()
@@ -40,6 +49,7 @@ def auth_view(request):
         'submitted': submitted,
         'register_first_name': register_first_name,
         'register_email': register_email,
+        'next': request.POST.get('next') or request.GET.get('next', ''),
     }
     return render(request, 'accounts/auth.html', context)
 

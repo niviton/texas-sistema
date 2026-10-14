@@ -16,7 +16,7 @@ class UserManager(BaseUserManager):
         return user
 
     def create_user(self, email, password=None, **extra_fields):
-        extra_fields.setdefault('role', User.ROLE_PROFESSOR)
+        extra_fields.setdefault('role', User.ROLE_PENDENTE)
         extra_fields.setdefault('is_approved', False)
         extra_fields.setdefault('is_staff', False)
         extra_fields.setdefault('is_superuser', False)
@@ -109,11 +109,13 @@ class User(AbstractUser):
     ROLE_TECNICO = 'tecnico'
     ROLE_LOGISTICA = 'logistica'
     ROLE_VISTORIADOR = 'vistoriador'  # legado: migrado para Técnico (accounts 0004)
+    ROLE_PENDENTE = 'pendente'  # conta nova: sem acesso até o administrador escolher o papel
     ROLE_CHOICES = [
         (ROLE_ADMIN, 'Administrador'),
         (ROLE_TECNICO, 'Técnico (executor de checklists)'),
         (ROLE_LOGISTICA, 'Logística'),
         (ROLE_PROFESSOR, 'Professor'),
+        (ROLE_PENDENTE, 'Sem papel'),
     ]
 
     username = None
@@ -121,7 +123,7 @@ class User(AbstractUser):
     full_name = models.CharField('nome completo', max_length=150)
     cpf = models.CharField('CPF', max_length=14, blank=True)
     phone = models.CharField('telefone', max_length=15, blank=True)
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default=ROLE_PROFESSOR)
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default=ROLE_PENDENTE)
     is_approved = models.BooleanField('acesso aprovado', default=False)
     papel = models.ForeignKey(Papel, verbose_name='papel', on_delete=models.SET_NULL, null=True, blank=True, related_name='usuarios')
     tema = models.CharField('tema', max_length=10, choices=TEMA_CHOICES, default=TEMA_CLARO)

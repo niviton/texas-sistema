@@ -69,6 +69,7 @@
           <form method="post" novalidate>
             {% csrf_token %}
             <input type="hidden" name="form_type" value="login">
+            {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
 
             <label style="display:block; font-size:13px; font-weight:600; color:#334051; margin-bottom:7px;">E-mail</label>
             <input type="email" name="username" placeholder="seunome@texascontrols.com" required autofocus
