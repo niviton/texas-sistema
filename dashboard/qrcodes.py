@@ -62,9 +62,17 @@ def grupos():
     return _paginas() + [('Um equipamento específico', _equipamentos()), ('Um veículo específico', _veiculos())]
 
 
+def endereco_base():
+    """Endereço do servidor que vai no QR (SITE_URL), e não o endereço por onde a tela foi aberta:
+    gerar a etiqueta pelo próprio computador (127.0.0.1) não pode produzir um QR que só funciona nele."""
+    from django.conf import settings
+    return settings.SITE_URL.rstrip('/')
+
+
 def etiquetas(request, chaves):
     """Etiquetas das chaves escolhidas, na ordem da tela, com o endereço completo no QR."""
     escolhidas = set(chaves)
+    base = endereco_base()
     saida = []
     for grupo, itens in grupos():
         for chave, titulo, detalhe, caminho in itens:
@@ -76,5 +84,5 @@ def etiquetas(request, chaves):
                 acao = 'Aponte a câmera para fazer a vistoria'
             else:
                 acao = ACAO_PAGINA
-            saida.append({'titulo': titulo, 'sub': detalhe, 'acao': acao, 'url': request.build_absolute_uri(caminho)})
+            saida.append({'titulo': titulo, 'sub': detalhe, 'acao': acao, 'url': base + caminho})
     return saida

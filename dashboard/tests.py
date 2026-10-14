@@ -128,5 +128,9 @@ class RegistrosTests(TestCase):
         self.assertContains(r, '<svg', count=2)
         self.assertContains(r, 'Vistoria de saída')
         self.assertContains(r, 'Manutenção › Gerador')
+        # o QR usa o endereço do servidor, mesmo gerado pelo próprio computador (127.0.0.1)
+        with self.settings(SITE_URL='https://192.168.1.59:8443'):
+            r = self.client.get(reverse('dashboard:etiquetas'), {'d': 'pag:inicio'}, HTTP_HOST='127.0.0.1')
+            self.assertEqual(r.context['etiquetas'][0]['url'], 'https://192.168.1.59:8443' + reverse('dashboard:home'))
         self.client.force_login(self.tec)
         self.assertEqual(self.client.get(reverse('dashboard:qrcodes')).status_code, 403)

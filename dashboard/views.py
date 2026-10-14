@@ -227,7 +227,7 @@ def etiquetas_view(request):
     etiquetas = qrcodes.etiquetas(request, chaves)
     for e in etiquetas:
         e['qr'] = _qr_svg(e['url'])
-    return render(request, 'dashboard/etiquetas.html', {'etiquetas': etiquetas, 'host': request.get_host()})
+    return render(request, 'dashboard/etiquetas.html', {'etiquetas': etiquetas, 'host': qrcodes.endereco_base()})
 
 
 @login_required
@@ -241,4 +241,4 @@ def qrcodes_view(request):
 
     if not request.user.is_admin_geral:
         raise PermissionDenied
-    return render(request, 'dashboard/qrcodes.html', _ctx(request, 'qrcodes', grupos=qrcodes.grupos(), host=request.get_host()))
+    return render(request, 'dashboard/qrcodes.html', _ctx(request, 'qrcodes', grupos=qrcodes.grupos(), host=qrcodes.endereco_base()))
