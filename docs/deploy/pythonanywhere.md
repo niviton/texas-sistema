@@ -8,15 +8,22 @@ Com o Polaris no PythonAnywhere, o endereço fica `https://SEUUSUARIO.pythonanyw
 
 Troque `SEUUSUARIO` pelo seu usuário do PythonAnywhere em todos os comandos.
 
-## 0. Plano
+## 0. Plano (conferido em 14/10/2026)
 
-| | Gratuito (Beginner) | Pago (Hacker, cerca de US$ 5/mês) |
+| | Gratuito (Beginner) | Pago (a partir de cerca de US$ 5/mês) |
 |---|---|---|
-| Espaço em disco | 512 MB (as fotos enchem rápido) | 1 GB ou mais |
-| Acesso à internet de dentro do servidor | Só sites liberados pelo PythonAnywhere | Livre |
-| Validade | Precisa clicar em "renovar" no painel periodicamente | Não expira |
+| Endereço | `SEUUSUARIO.pythonanywhere.com`, com HTTPS | Também permite domínio próprio |
+| Espaço em disco | 512 MB | 1 GB ou mais |
+| Validade do site | Expira em 1 mês: é preciso entrar na aba "Web" e clicar em "Run until 1 month from today" | Não expira |
+| Tarefa diária agendada | Contas criadas depois de 15/01/2026 **não têm** | Tem |
+| Acesso à internet de dentro do servidor | Só sites de uma lista liberada. O mapa do carimbo (nominatim.openstreetmap.org) e o SharePoint (graph.microsoft.com) estão nela | Livre |
 
-**Recomendado: o plano pago.** No gratuito, o carimbo pode sair sem o endereço (só data e hora) se o serviço de mapas não estiver na lista liberada. A integração com o SharePoint (certificados) também pode ser bloqueada. O resto funciona. Dá para começar no gratuito para testar.
+**Dá para usar o gratuito**, com estes cuidados:
+
+- **Renovação:** todo mês, renove o site na aba "Web". Se esquecer, ele sai do ar até renovar; os dados não se perdem.
+- **Alertas diários da frota:** sem tarefa agendada, use o botão "Enviar alertas" em Configurações → Notificações → Envio e teste.
+- **Espaço:** as fotos enchem os 512 MB com o tempo, então acompanhe em "Account". Cada vistoria ocupa cerca de 2 a 4 MB.
+- **E-mail:** o envio pelo Gmail precisa ser testado no próprio PythonAnywhere. Use o botão "Enviar teste" depois de publicar. Se o plano gratuito bloquear, os registros continuam funcionando, só o e-mail não sai.
 
 ## 1. Baixar o código (aba "Consoles" → "Bash")
 
@@ -125,9 +132,9 @@ application = get_wsgi_application()
 7. Clique no botão verde **Reload**.
 8. Abra `https://SEUUSUARIO.pythonanywhere.com` e entre com seu usuário.
 
-## 5. Alertas diários da frota (aba "Tasks")
+## 5. Alertas diários da frota (aba "Tasks", só no plano pago)
 
-Crie uma tarefa diária, por exemplo às 07:00:
+No plano gratuito, use o botão "Enviar alertas" em Configurações → Notificações. No pago, crie uma tarefa diária, por exemplo às 07:00:
 
 ```bash
 cd ~/texas-sistema && ~/.virtualenvs/polaris/bin/python manage.py veiculos_alertas
