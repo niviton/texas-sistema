@@ -41,7 +41,7 @@
   </div>
 </div>
 {% load static %}
-<script src="{% static 'js/polaris-campo.js' %}"></script>
+{% load polaris_nav %}<script src="{% static_v 'js/polaris-campo.js' %}"></script>
 <script>
 (function () {
   const input = document.getElementById('cnh-foto');

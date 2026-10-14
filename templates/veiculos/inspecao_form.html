@@ -252,7 +252,7 @@
 </form>
 
 {{ veiculos_info|json_script:"veiculos-info" }}
-<script src="{% static 'js/polaris-campo.js' %}"></script>
+{% load polaris_nav %}<script src="{% static_v 'js/polaris-campo.js' %}"></script>
 <script>
 (function () {
   const info = JSON.parse(document.getElementById('veiculos-info').textContent);

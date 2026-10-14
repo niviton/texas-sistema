@@ -33,6 +33,12 @@
     return input.files;
   }
 
+  // Celular ou tablet: tela de toque (mesmo no modo "versão para computador" do navegador).
+  function ehCelular() {
+    const toque = window.matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0 || 'ontouchstart' in window;
+    return toque && Math.min(screen.width, screen.height) < 900;
+  }
+
   // Assinatura com o dedo num <canvas>. Retorna { assinado, ajustar(), limpar(), dataURL() }.
   function assinatura(canvas, opcoes) {
     opcoes = opcoes || {};
@@ -60,7 +66,7 @@
     }
     const pos = (e) => { const r = canvas.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
     // Celular: tocar no quadro abre a assinatura em tela cheia, deitada.
-    const telaCheia = opcoes.telaCheia !== undefined ? opcoes.telaCheia : window.matchMedia('(pointer: coarse)').matches;
+    const telaCheia = opcoes.telaCheia !== undefined ? opcoes.telaCheia : ehCelular();
     if (telaCheia) {
       const dica = canvas.parentElement && canvas.parentElement.querySelector('.sig-hint');
       if (dica && dica.lastChild && dica.lastChild.nodeType === 3) dica.lastChild.textContent = 'Toque para assinar';

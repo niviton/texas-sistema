@@ -166,7 +166,7 @@
 </form>
 
 {{ rotulos|json_script:"rotulos" }}
-<script src="{% static 'js/polaris-campo.js' %}"></script>
+{% load polaris_nav %}<script src="{% static_v 'js/polaris-campo.js' %}"></script>
 <script>
 (function () {
   const $ = (id) => document.getElementById(id);
