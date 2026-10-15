@@ -1,16 +1,18 @@
 {% extends "veiculos/email/_layout.html" %}
+{% block previa %}{{ veiculo.placa }}: {{ avisos|length }} item{{ avisos|length|pluralize:"ns" }} para atenção{% endblock %}
+{% block modulo %}Frota{% endblock %}
 {% block header %}Aviso de manutenção · {{ veiculo.placa }}{% endblock %}
 {% block body %}
-<p style="margin:0 0 12px;">O veículo <b>{{ veiculo.placa }}</b> ({{ veiculo.marca }} {{ veiculo.modelo }}) está com <b>{{ veiculo.km_atual }} km</b>, registrado na última vistoria.</p>
-<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="font-size:14px; margin:0 0 4px;">
+<p style="margin:0 0 14px;">O veículo <b>{{ veiculo.placa }}</b> ({{ veiculo.marca }} {{ veiculo.modelo }}) está com <b>{{ veiculo.km_atual }} km</b>, registrado na última vistoria.</p>
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%">
   {% for a in avisos %}
-    <tr><td style="padding:7px 0 7px 10px; border-left:3px solid {% if a.dias is not None and a.dias < 0 or 'vencida' in a.nome %}#b3261e{% else %}#d68910{% endif %};">
+    <tr><td style="padding:11px 14px; background:{% if a.dias is not None and a.dias < 0 or 'vencida' in a.nome %}#fdf1f0{% else %}#fff8ea{% endif %}; border-left:4px solid {% if a.dias is not None and a.dias < 0 or 'vencida' in a.nome %}#b3261e{% else %}#d68910{% endif %}; border-radius:0 8px 8px 0; font-size:14.5px; color:#12181f;">
       {% if a.dias is None %}{{ a.nome }}
       {% elif a.dias < 0 %}{{ a.nome }}: vencido desde {{ a.data|date:"d/m/Y" }}
       {% elif a.dias == 0 %}{{ a.nome }}: vence hoje
       {% else %}{{ a.nome }}: vence em {{ a.dias }} dia{{ a.dias|pluralize }} ({{ a.data|date:"d/m/Y" }}){% endif %}
     </td></tr>
-    <tr><td style="height:6px;"></td></tr>
+    <tr><td style="height:8px; line-height:8px; font-size:1px;">&nbsp;</td></tr>
   {% endfor %}
 </table>
 {% endblock %}

@@ -218,10 +218,28 @@ EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_TIMEOUT = 30
-DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', '') or f'Polaris Frota <{EMAIL_HOST_USER or "noreply@localhost"}>'
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', '') or f'Texas Controls · Polaris <{EMAIL_HOST_USER or "noreply@localhost"}>'
 
 # Carimbo das fotos: converte o GPS do celular em endereço pelo OpenStreetMap (desligue com CARIMBO_ENDERECO=0).
 CARIMBO_ENDERECO = os.environ.get('CARIMBO_ENDERECO', '1') == '1'
+
+# Assinatura no rodapé dos e-mails (igual à assinatura do Outlook da Oficina Técnica).
+# Redes sociais sem endereço não aparecem. "Disclaimer" só aparece se EMAIL_URL_DISCLAIMER estiver preenchido.
+EMAIL_ASSINATURA = {
+    'nome': os.environ.get('EMAIL_ASSINATURA_NOME', 'OFICINA TÉCNICA'),
+    'setor': os.environ.get('EMAIL_ASSINATURA_SETOR', 'Dpto. Técnico'),
+    'site': 'texascontrols.com',
+    'telefone': '(+55) 84 36432108',
+    'celular': '(+55) 84 99137-7233',
+    'endereco': 'BR 304, km 11,500, Lj B. Parque de Exposições, CEP:59146-750 Parnamirim/RN. Brasil',
+    'redes': [
+        ('facebook', 'Facebook', os.environ.get('EMAIL_URL_FACEBOOK', 'https://www.facebook.com/texascontrols')),
+        ('youtube', 'YouTube', os.environ.get('EMAIL_URL_YOUTUBE', 'https://www.youtube.com/channel/UCg9hUeGRqbL_V3-NoUBgqOA')),
+        ('linkedin', 'LinkedIn', os.environ.get('EMAIL_URL_LINKEDIN', 'https://www.linkedin.com/company/texas-controls')),
+        ('instagram', 'Instagram', os.environ.get('EMAIL_URL_INSTAGRAM', 'https://www.instagram.com/texascontrols/')),
+    ],
+    'disclaimer_url': os.environ.get('EMAIL_URL_DISCLAIMER', ''),
+}
 
 # Envia os e-mails em segundo plano (a tela não espera o Gmail). No PythonAnywhere os web apps
 # não rodam threads: lá use EMAIL_SEGUNDO_PLANO=0 (o e-mail sai na hora, a tela espera alguns segundos).

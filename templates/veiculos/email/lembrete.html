@@ -1,4 +1,6 @@
 {% extends "veiculos/email/_layout.html" %}
+{% block previa %}Faça a inspeção do veículo {{ veiculo.placa }} o quanto antes.{% endblock %}
+{% block modulo %}Frota{% endblock %}
 {% block header %}Lembrete de checklist · {{ veiculo.placa }}{% endblock %}
 {% block body %}
 <p style="margin:0 0 12px;">Olá{% if motorista %}, {{ motorista.name }}{% endif %}!</p>
@@ -8,6 +10,5 @@
   {% else %}ainda não tem nenhuma inspeção registrada.{% endif %}
   O checklist deve ser feito a cada {{ veiculo.checklist_frequencia_dias }} dias.
 </p>
-<p style="margin:0 0 18px;">Por favor, faça a inspeção o quanto antes.</p>
-<a href="{{ site_url }}{% url 'veiculos:inspecao_nova' %}?veiculo={{ veiculo.pk }}&tipo=rotina" style="display:inline-block; background:#f5a623; color:#0d1b2e; text-decoration:none; font-weight:bold; padding:11px 18px; border-radius:8px;">Fazer checklist agora</a>
+<p style="margin:0;">Por favor, faça a inspeção o quanto antes.</p>
 {% endblock %}

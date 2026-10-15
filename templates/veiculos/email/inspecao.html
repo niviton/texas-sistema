@@ -1,6 +1,7 @@
 {% extends "veiculos/email/_layout.html" %}
+{% block previa %}{{ titulo }}{% endblock %}
+{% block modulo %}Vistoria de veículo{% endblock %}
 {% block header %}Comprovante de vistoria{% endblock %}
 {% block body %}
-<p style="margin:0 0 10px;">{{ titulo }}.</p>
-<p style="margin:0; color:#6b7480;">O comprovante em PDF segue em anexo.</p>
+<p style="margin:0;">Segue o comprovante da vistoria. O PDF segue em anexo, com todos os itens e as fotos.</p>
 {% endblock %}

@@ -1,4 +1,9 @@
+import email.policy
+import functools
+import html as html_lib
+import io
 import logging
+import re
 import threading
 from datetime import date
 
@@ -6,6 +11,7 @@ from django.conf import settings
 from django.core.mail import EmailMultiAlternatives, get_connection
 from django.db import close_old_connections
 from django.template.loader import render_to_string
+from django.utils import timezone
 from django.utils.html import strip_tags
 
 from .models import AlertaEnviado, Supervisor, Veiculo
@@ -18,15 +24,102 @@ def supervisor_emails(modulo=None, tipo_ativo=None):
     return Supervisor.emails(modulo, tipo_ativo)
 
 
+def _png(img):
+    buf = io.BytesIO()
+    img.save(buf, 'PNG', optimize=True)
+    return buf.getvalue()
+
+
+def _icone_rede(nome, tamanho=44):
+    """Ícone quadrado azul-marinho com o símbolo da rede em branco (desenhado aqui: não depende de site externo)."""
+    from PIL import Image, ImageDraw, ImageFont
+    k = 4
+    t = tamanho * k
+    img = Image.new('RGBA', (t, t), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    azul, branco = (13, 36, 64, 255), (255, 255, 255, 255)
+    d.rounded_rectangle((0, 0, t - 1, t - 1), radius=int(t * 0.14), fill=azul)
+    fonte = str(settings.BASE_DIR / 'veiculos' / 'assets' / 'fonts' / 'Montserrat-Bold.ttf')
+    if nome in ('facebook', 'linkedin'):
+        texto = 'f' if nome == 'facebook' else 'in'
+        f = ImageFont.truetype(fonte, int(t * (0.78 if nome == 'facebook' else 0.5)))
+        x0, y0, x1, y1 = d.textbbox((0, 0), texto, font=f)
+        dx = int(t * 0.08) if nome == 'facebook' else 0
+        d.text(((t - (x1 - x0)) / 2 - x0 + dx, (t - (y1 - y0)) / 2 - y0 + (int(t * 0.06) if nome == 'facebook' else 0)), texto, font=f, fill=branco)
+    elif nome == 'youtube':
+        d.rounded_rectangle((t * 0.17, t * 0.27, t * 0.83, t * 0.73), radius=int(t * 0.13), fill=branco)
+        d.polygon([(t * 0.43, t * 0.38), (t * 0.43, t * 0.62), (t * 0.63, t * 0.5)], fill=azul)
+    elif nome == 'instagram':
+        d.rounded_rectangle((t * 0.2, t * 0.2, t * 0.8, t * 0.8), radius=int(t * 0.17), outline=branco, width=int(t * 0.07))
+        d.ellipse((t * 0.35, t * 0.35, t * 0.65, t * 0.65), outline=branco, width=int(t * 0.07))
+        d.ellipse((t * 0.64, t * 0.25, t * 0.72, t * 0.33), fill=branco)
+    return _png(img.resize((tamanho, tamanho), Image.LANCZOS))
+
+
+@functools.lru_cache(maxsize=1)
+def imagens_do_email():
+    """Imagens embutidas no próprio e-mail (o Gmail não abre imagens do servidor da oficina):
+    cid -> bytes. Logo branca (cabeçalho), logo colorida e ícones das redes (assinatura)."""
+    from django.contrib.staticfiles import finders
+    from PIL import Image
+    saida = {}
+    for cid, arquivo, largura in [('logo-texas', 'logo-texas-branco.png', 220), ('logo-texas-cor', 'logo-texas-cor-hd.png', 300)]:
+        caminho = finders.find('assets/' + arquivo)
+        if caminho:
+            img = Image.open(caminho).convert('RGBA')
+            img.thumbnail((largura, largura))
+            saida[cid] = _png(img)
+    for nome, _, _ in settings.EMAIL_ASSINATURA['redes']:
+        saida[f'rede-{nome}'] = _icone_rede(nome)
+    return saida
+
+
+class _EmailTexas(EmailMultiAlternatives):
+    """E-mail com as imagens embutidas (cid:...). Não contam como anexo: o PDF continua sendo o único."""
+
+    def message(self, *, policy=email.policy.default):
+        msg = super().message(policy=policy)
+        corpo = msg.get_body(preferencelist=('html',))
+        if corpo is not None:
+            html = corpo.get_content()
+            for cid, dados in imagens_do_email().items():
+                if f'cid:{cid}"' in html:
+                    corpo.add_related(dados, 'image', 'png', cid=f'<{cid}>', disposition='inline')
+        return msg
+
+
+def _texto_simples(html):
+    """Versão só texto do e-mail (para leitores sem HTML e para a prévia): sem tags nem linhas em excesso."""
+    t = re.sub(r'(?is)<(style|head)[^>]*>.*?</\1>', '', html)
+    t = re.sub(r'(?is)<div[^>]*display:\s*none[^>]*>.*?</div>', '', t)
+    t = re.sub(r'(?i)<br\s*/?>|</p>|</tr>|</h1>|</div>|</table>', '\n', t)
+    t = html_lib.unescape(strip_tags(t))
+    linhas = [re.sub(r'[ \t\u00a0]+', ' ', l).strip() for l in t.splitlines()]
+    saida = []
+    for l in linhas:
+        if l or (saida and saida[-1]):
+            saida.append(l)
+    return '\n'.join(saida).strip()
+
+
+def _itens_nc(n):
+    return f'{n} item não conforme' if n == 1 else f'{n} itens não conformes'
+
+
+def _quando(dt):
+    return timezone.localtime(dt).strftime('%d/%m/%Y às %H:%M')
+
+
 def _send(subject, template, context, to, cc=None, attachments=(), connection=None):
     to = [e for e in to if e]
     cc = [e for e in (cc or []) if e and e not in to]
     if not to and not cc:
         return False
-    context = {**context, 'site_url': settings.SITE_URL.rstrip('/')}
+    context = {**context, 'site_url': settings.SITE_URL.rstrip('/'), 'anexos': [nome for nome, _, _ in attachments],
+               'assinatura': settings.EMAIL_ASSINATURA}
     html = render_to_string(template, context)
-    msg = EmailMultiAlternatives(
-        subject, strip_tags(html), settings.DEFAULT_FROM_EMAIL, to or cc, cc=cc if to else None, connection=connection,
+    msg = _EmailTexas(
+        subject, _texto_simples(html), settings.DEFAULT_FROM_EMAIL, to or cc, cc=cc if to else None, connection=connection,
     )
     msg.attach_alternative(html, 'text/html')
     for name, content, mimetype in attachments:
@@ -59,8 +152,23 @@ def enviar_inspecao(inspecao, connection=None):
     """Comprovante de toda vistoria: só o título e o PDF em anexo (todo o detalhe está no PDF)."""
     titulo = titulo_comprovante(inspecao)
     anexos = [(pdf_filename(inspecao), render_inspecao_pdf(inspecao), 'application/pdf')]
+    from django.urls import reverse
+    v, problemas = inspecao.veiculo, inspecao.itens_problema
+    condutor = inspecao.motorista or inspecao.created_by
+    contexto = {
+        'titulo': titulo,
+        'status': 'problema' if problemas else 'ok',
+        'status_texto': _itens_nc(len(problemas)) if problemas else 'Sem problemas',
+        'resumo': [
+            ('Veículo', f'{v.placa} · {v.marca} {v.modelo}'.strip()),
+            ('Vistoria', f'{inspecao.get_tipo_display()} · {inspecao.km} km'),
+            ('Condutor', str(condutor)),
+            ('Data', _quando(inspecao.created_at)),
+        ],
+        'link': settings.SITE_URL.rstrip('/') + reverse('veiculos:inspecao_detalhe', args=[inspecao.pk]),
+    }
     enviado = _send(
-        titulo, 'veiculos/email/inspecao.html', {'titulo': titulo}, to=supervisor_emails('veiculos'), attachments=anexos,
+        titulo, 'veiculos/email/inspecao.html', contexto, to=supervisor_emails('veiculos'), attachments=anexos,
         connection=connection,
     )
     if enviado:

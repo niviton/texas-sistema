@@ -2,6 +2,13 @@
 
 Escrito em linguagem simples, do mais recente para o mais antigo.
 
+## 15/10/2026 – E-mails com novo visual
+
+- Remetente passa a aparecer como "Texas Controls · Polaris" (antes, "Polaris Frota").
+- Novo layout: cabeçalho azul com a logo da Texas, título, etiqueta de situação (sem problemas / itens não conformes), quadro-resumo (veículo ou equipamento, responsável, data), indicação do PDF em anexo e botão "Abrir no Polaris".
+- Rodapé no padrão da assinatura do Outlook da Oficina Técnica: nome e departamento, logo colorida, telefone, celular, endereço e ícones das redes sociais (endereços em `EMAIL_ASSINATURA`, em `config/settings.py`).
+- As imagens vão dentro do próprio e-mail, então aparecem no Gmail mesmo com o servidor fora do ar.
+
 ## 14/10/2026 – Várias fotos, uma de cada vez, com apagar
 
 - Fotos do checklist, fotos adicionais da vistoria e fotos do termo: cada foto nova soma às anteriores (dá para tirar várias com a câmera, uma por vez) e cada miniatura tem um X para apagar. O rascunho guarda as fotos certas.

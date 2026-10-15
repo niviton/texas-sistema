@@ -20,7 +20,20 @@ def titulo_termo(termo):
 
 def enviar_termo(termo):
     titulo = titulo_termo(termo)
-    enviado = _send(titulo, 'termos/email/termo.html', {'titulo': titulo}, to=supervisor_emails('termos'),
+    from django.urls import reverse
+
+    from veiculos.emails import _quando
+    contexto = {
+        'titulo': titulo,
+        'resumo': [
+            ('Termo', f'nº {termo.numero} · {termo.get_tipo_display()}'),
+            ('Cliente', termo.cliente_contato),
+            ('Responsável Texas', termo.responsavel_texas or '—'),
+            ('Data', _quando(termo.finalizado_em or termo.created_at)),
+        ],
+        'link': settings.SITE_URL.rstrip('/') + reverse('termos:detalhe', args=[termo.pk]),
+    }
+    enviado = _send(titulo, 'termos/email/termo.html', contexto, to=supervisor_emails('termos'),
                     attachments=[(pdf_filename(termo), render_termo_pdf(termo), 'application/pdf')])
     if enviado:
         termo.email_enviado = True

@@ -19,8 +19,24 @@ def titulo_comprovante(execucao):
 
 def enviar_execucao(execucao):
     titulo = titulo_comprovante(execucao)
+    from django.urls import reverse
+
+    from veiculos.emails import _itens_nc, _quando
+    a, m = execucao.ativo, execucao.revisao.modelo
+    contexto = {
+        'titulo': titulo,
+        'status': 'problema' if execucao.tem_problema else 'ok',
+        'status_texto': _itens_nc(len(execucao.problemas)) if execucao.tem_problema else 'Sem problemas',
+        'resumo': [
+            ('Equipamento', a.nome if a.tipo.nome.lower() in a.nome.lower() else f'{a.nome} · {a.tipo.nome}'),
+            ('Formulário', f'{m.codigo} · {m.get_finalidade_display()}'),
+            ('Técnico', execucao.executor_nome),
+            ('Data', _quando(execucao.created_at)),
+        ],
+        'link': settings.SITE_URL.rstrip('/') + reverse('checklists:execucao', args=[execucao.pk]),
+    }
     enviado = _send(
-        titulo, 'checklists/email/comprovante.html', {'titulo': titulo}, to=supervisor_emails('checklists', execucao.ativo.tipo),
+        titulo, 'checklists/email/comprovante.html', contexto, to=supervisor_emails('checklists', execucao.ativo.tipo),
         attachments=[(pdf_filename(execucao), render_execucao_pdf(execucao), 'application/pdf')],
     )
     if enviado:
