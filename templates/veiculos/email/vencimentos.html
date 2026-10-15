@@ -14,7 +14,7 @@
     <tr>
       <td style="padding:10px 0; border-bottom:1px solid #f0f2f4;"><b>{{ a.veiculo.placa }}</b><br><span style="color:#8b95a1; font-size:12px;">{{ a.veiculo.marca }} {{ a.veiculo.modelo }}</span></td>
       <td style="padding:10px 0; border-bottom:1px solid #f0f2f4;">{{ a.nome }}{% if a.data %}<br><span style="color:#8b95a1; font-size:12px;">{{ a.data|date:"d/m/Y" }}</span>{% endif %}</td>
-      <td align="right" style="padding:10px 0; border-bottom:1px solid #f0f2f4; font-weight:bold; color:{% if a.dias is None or a.dias <= 7 %}#c0392b{% else %}#b7791f{% endif %};">
+      <td align="right" style="padding:10px 0; border-bottom:1px solid #f0f2f4; font-weight:bold; color:{% if a.dias is None or a.dias <= 7 %}#c0392b{% else %}#8a6a00{% endif %};">
         {% if a.dias is None %}Por km{% elif a.dias < 0 %}Vencido há {{ a.dias|stringformat:"d"|slice:"1:" }} dia(s){% elif a.dias == 0 %}Vence hoje{% else %}Em {{ a.dias }} dia{{ a.dias|pluralize }}{% endif %}
       </td>
     </tr>

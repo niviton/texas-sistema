@@ -31,13 +31,13 @@ def _png(img):
 
 
 def _icone_rede(nome, tamanho=44):
-    """Ícone quadrado azul-marinho com o símbolo da rede em branco (desenhado aqui: não depende de site externo)."""
+    """Ícone quadrado azul da marca (#365F91) com o símbolo da rede em branco (desenhado aqui: não depende de site externo)."""
     from PIL import Image, ImageDraw, ImageFont
     k = 4
     t = tamanho * k
     img = Image.new('RGBA', (t, t), (0, 0, 0, 0))
     d = ImageDraw.Draw(img)
-    azul, branco = (13, 36, 64, 255), (255, 255, 255, 255)
+    azul, branco = (54, 95, 145, 255), (255, 255, 255, 255)
     d.rounded_rectangle((0, 0, t - 1, t - 1), radius=int(t * 0.14), fill=azul)
     fonte = str(settings.BASE_DIR / 'veiculos' / 'assets' / 'fonts' / 'Montserrat-Bold.ttf')
     if nome in ('facebook', 'linkedin'):

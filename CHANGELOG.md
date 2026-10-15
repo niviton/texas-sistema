@@ -7,6 +7,7 @@ Escrito em linguagem simples, do mais recente para o mais antigo.
 - Remetente passa a aparecer como "Texas Controls · Polaris" (antes, "Polaris Frota").
 - Novo layout: cabeçalho azul com a logo da Texas, título, etiqueta de situação (sem problemas / itens não conformes), quadro-resumo (veículo ou equipamento, responsável, data), indicação do PDF em anexo e botão "Abrir no Polaris".
 - Rodapé no padrão da assinatura do Outlook da Oficina Técnica: nome e departamento, logo colorida, telefone, celular, endereço e ícones das redes sociais (endereços em `EMAIL_ASSINATURA`, em `config/settings.py`).
+- Cores da marca nos e-mails: azul #365F91 e amarelo #FFC000. Sem a caixa com o nome do PDF (o anexo aparece normalmente no Gmail).
 - As imagens vão dentro do próprio e-mail, então aparecem no Gmail mesmo com o servidor fora do ar.
 
 ## 14/10/2026 – Várias fotos, uma de cada vez, com apagar
