@@ -67,6 +67,12 @@
     {% if pendencias.total %}
       <div class="bloco">
         <h2>Para conferir <span style="font-family:'Manrope',sans-serif; font-size:12px; font-weight:800; color:#8a5a00; background:#fff4d6; padding:2px 8px; border-radius:100px; margin-left:4px;">{{ pendencias.total }}</span></h2>
+        {% for p in pendencias.pessoas %}
+          <a class="linha" href="{% url 'accounts_admin:usuarios' %}?edit={{ p.pk }}">
+            <div><b>{{ p.full_name|default:p.email }}</b> <span style="color:#6b7480;">{{ p.email }}</span><small>Conta nova, sem papel: não vê nenhuma opção</small></div>
+            <span class="ir">Escolher papel</span>
+          </a>
+        {% endfor %}
         {% for a in pendencias.equipamentos %}
           <a class="linha" href="{% url 'checklists:ativos' %}?edit={{ a.pk }}">
             <div><b>{{ a.nome }}</b> <span style="color:#6b7480;">{{ a.tipo.nome }}</span><small>Equipamento cadastrado no checklist{% if a.cadastrado_por %} por {{ a.cadastrado_por.full_name|default:a.cadastrado_por.email }}{% endif %}</small></div>
@@ -113,7 +119,7 @@
   {% else %}
     <div style="background:#fff8ea; border:1px solid #f6dfa8; border-radius:14px; padding:24px 28px; max-width:520px;">
       <div style="font-family:'Sora',sans-serif; font-size:16px; font-weight:700; color:#7a5410; margin-bottom:6px;">Aguardando liberação</div>
-      <div style="font-size:13.5px; color:#8a6a2a; line-height:1.6;">Um administrador ainda não definiu o seu papel no Polaris. Assim que isso acontecer, as suas opções aparecem aqui.</div>
+      <div style="font-size:13.5px; color:#8a6a2a; line-height:1.6;">Sua conta foi criada. Um administrador ainda vai liberar as suas opções no Polaris. Assim que isso acontecer, elas aparecem aqui; atualize a página ou entre de novo.</div>
     </div>
   {% endif %}
 </div>

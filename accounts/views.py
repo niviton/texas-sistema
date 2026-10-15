@@ -36,11 +36,8 @@ def auth_view(request):
     elif request.method == 'POST' and tab == 'register':
         if register_form.is_valid():
             user = register_form.save()
-            submitted = True
-            register_first_name = user.first_name_display
-            register_email = user.email
-            register_form = RegisterForm()
-            tab = 'register'
+            auth_login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+            return redirect('dashboard:home')
 
     context = {
         'tab': tab,

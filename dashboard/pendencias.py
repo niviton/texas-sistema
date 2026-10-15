@@ -7,10 +7,12 @@ from .registros import TIPO_CHECKLIST, TIPO_VISTORIA, como_registro
 def _consultas():
     from checklists.models import Ativo, Execucao
     from veiculos.models import Inspecao
+    from accounts.models import User
+    pessoas = User.objects.filter(papel__isnull=True, role=User.ROLE_PENDENTE, is_active=True, is_approved=True, is_superuser=False).order_by('-date_joined')
     equipamentos = Ativo.objects.filter(conferido=False, is_active=True).select_related('tipo', 'cadastrado_por')
     vistorias = Inspecao.objects.filter(tem_problema=True, conferido_em__isnull=True).select_related('veiculo', 'motorista')
     execucoes = Execucao.objects.filter(tem_problema=True, conferido_em__isnull=True).select_related('ativo__tipo', 'revisao__modelo')
-    return equipamentos, vistorias, execucoes
+    return equipamentos, vistorias, execucoes, pessoas
 
 
 def contar(user):
@@ -21,13 +23,13 @@ def contar(user):
 
 def listar(user, limite=12):
     if not user.is_admin_geral:
-        return {'equipamentos': [], 'registros': [], 'total': 0}
-    equipamentos, vistorias, execucoes = _consultas()
+        return {'equipamentos': [], 'registros': [], 'pessoas': [], 'total': 0}
+    equipamentos, vistorias, execucoes, pessoas = _consultas()
     registros = [como_registro(TIPO_VISTORIA, v) for v in vistorias.order_by('-created_at')[:limite]]
     registros += [como_registro(TIPO_CHECKLIST, e) for e in execucoes.order_by('-created_at')[:limite]]
     registros.sort(key=lambda r: r.quando, reverse=True)
-    return {'equipamentos': list(equipamentos[:limite]), 'registros': registros[:limite],
-            'total': equipamentos.count() + vistorias.count() + execucoes.count()}
+    return {'equipamentos': list(equipamentos[:limite]), 'registros': registros[:limite], 'pessoas': list(pessoas[:limite]),
+            'total': equipamentos.count() + vistorias.count() + execucoes.count() + pessoas.count()}
 
 
 def conferir(user, tipo, pk):

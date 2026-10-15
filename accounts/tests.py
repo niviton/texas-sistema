@@ -104,3 +104,50 @@ class PapeisTests(TestCase):
         self.assertContains(r, 'Torque hidráulico')
         self.assertEqual(self.client.get(reverse('cert_prof:folders')).status_code, 200)
         self.assertEqual(self.client.get(reverse('checklists:executar')).status_code, 403)
+
+
+class ContaNovaTests(TestCase):
+    """Conta nova entra no sistema, mas sem nenhuma opção até o administrador dar um papel."""
+
+    def test_conta_nova_entra_sem_opcoes_e_ganha_acesso_com_o_papel(self):
+        from django.urls import reverse
+
+        from .models import Papel, User
+        r = self.client.post(reverse('accounts:auth'), {
+            'form_type': 'register', 'full_name': 'Pessoa Nova', 'cpf': '12345678901', 'phone': '84999990000',
+            'email': 'nova@x.com', 'password': 'senha-forte-123', 'password2': 'senha-forte-123', 'terms': 'on',
+        })
+        self.assertRedirects(r, reverse('dashboard:home'), fetch_redirect_response=False)
+        nova = User.objects.get(email='nova@x.com')
+        home = self.client.get(reverse('dashboard:home'))  # já entrou, sem precisar de aprovação
+        self.assertContains(home, 'Aguardando liberação')
+        for texto in ['Novo registro', 'Histórico', 'Checklists', 'Termos', 'Certificados', 'Configurações']:
+            self.assertNotContains(home, texto)
+        self.assertNotContains(home, reverse('accounts:aparencia'))  # link do menu
+        for url in [reverse('veiculos:inspecao_nova'), reverse('checklists:executar'), reverse('termos:lista'),
+                    reverse('dashboard:historico'), reverse('accounts_admin:usuarios')]:
+            self.assertEqual(self.client.get(url).status_code, 403, url)
+        # aparece para o administrador conferir
+        admin = User.objects.create_superuser(email='adm@x.com', password='x', full_name='Admin')
+        self.client.force_login(admin)
+        home = self.client.get(reverse('dashboard:home'))
+        self.assertContains(home, 'Conta nova, sem papel')
+        self.assertContains(self.client.get(reverse('accounts_admin:usuarios')), 'Sem papel')
+        # com o papel, as opções aparecem
+        nova.papel = Papel.objects.get(nome='Técnico')
+        nova.save()
+        self.client.force_login(nova)
+        home = self.client.get(reverse('dashboard:home'))
+        self.assertNotContains(home, 'Aguardando liberação')
+        self.assertContains(home, 'Checklist de equipamento')
+        self.assertContains(home, reverse('accounts:aparencia'))
+        self.client.force_login(admin)
+        self.assertNotContains(self.client.get(reverse('dashboard:home')), 'Conta nova, sem papel')
+
+    def test_conta_bloqueada_pelo_administrador_nao_entra(self):
+        from django.urls import reverse
+
+        from .models import User
+        User.objects.create_user(email='b@x.com', password='senha-forte-123', full_name='B', is_approved=False)
+        r = self.client.post(reverse('accounts:auth'), {'form_type': 'login', 'username': 'b@x.com', 'password': 'senha-forte-123'})
+        self.assertContains(r, 'não foi aprovada')

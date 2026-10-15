@@ -124,7 +124,7 @@ class User(AbstractUser):
     cpf = models.CharField('CPF', max_length=14, blank=True)
     phone = models.CharField('telefone', max_length=15, blank=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default=ROLE_PENDENTE)
-    is_approved = models.BooleanField('acesso aprovado', default=False)
+    is_approved = models.BooleanField('pode entrar no sistema', default=False)
     papel = models.ForeignKey(Papel, verbose_name='papel', on_delete=models.SET_NULL, null=True, blank=True, related_name='usuarios')
     tema = models.CharField('tema', max_length=10, choices=TEMA_CHOICES, default=TEMA_CLARO)
     fonte = models.CharField('fonte', max_length=20, choices=FONTE_CHOICES, default='manrope')
@@ -159,6 +159,11 @@ class User(AbstractUser):
             return p.is_active and (p.administrador or getattr(p, campo))
         acessos = _ACESSOS_POR_ROLE.get(self.role, {})
         return acessos.get('administrador', False) or acessos.get(campo, False)
+
+    @property
+    def tem_acesso(self):
+        """Tem alguma opção liberada (papel com algum acesso). Sem isso, só vê a tela de espera."""
+        return any(self._acesso(c) for c in ('administrador', 'acesso_vistoria', 'acesso_checklists', 'acesso_termos', 'acesso_certificados'))
 
     @property
     def is_admin_geral(self):

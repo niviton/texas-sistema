@@ -2,6 +2,12 @@
 
 Escrito em linguagem simples, do mais recente para o mais antigo.
 
+## 15/10/2026 – Conta nova entra sem opções
+
+- Quem cria a conta entra no sistema na hora, sem esperar aprovação, mas só vê a tela "Aguardando liberação" (menu só com Início e Sair, sem Aparência, histórico ou módulos). Qualquer endereço direto de um módulo responde "sem permissão".
+- O administrador vê essas contas na lista "Para conferir" da tela inicial (e no contador do menu) e libera escolhendo o papel em Configurações → Pessoas → Usuários. Contas sem papel aparecem em vermelho como "Sem papel".
+- "Acesso aprovado" virou "Pode entrar no sistema": desmarcar bloqueia o login de uma pessoa.
+
 ## 15/10/2026 – E-mails com novo visual
 
 - Remetente passa a aparecer como "Texas Controls · Polaris" (antes, "Polaris Frota").
