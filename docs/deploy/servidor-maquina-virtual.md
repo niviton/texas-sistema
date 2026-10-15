@@ -161,6 +161,16 @@ O endereço (`https://192.168.1.59:8443`), os QR codes impressos, o certificado 
 4. **Backup semanal:** onde guardar a cópia fora do computador (pen drive, Google Drive da empresa)?
 5. **Branch `producao`:** aceita esse fluxo de junção e versões marcadas?
 
+## 13. Decisões tomadas (15/10/2026)
+
+- **Hyper-V:** aprovado. Ligar o recurso com um clique (`deploy/windows/1-ATIVAR-HYPERV.bat`) e reiniciar.
+- **IP fixo:** não é possível reservar pelo roteador (a rede é da empresa, com DHCP e DNS do TI). Pedido ao TI preparado no passo 0 do guia, com os endereços físicos deste computador, e também um nome no DNS interno.
+- **Memória:** 2 GB para a máquina virtual, aprovado.
+- **Backup semanal:** em pen drive (`deploy/windows/backup-para-pendrive.ps1`).
+- **Fluxo com branch `producao` e versões marcadas:** aprovado.
+
+O passo a passo para executar está em [deploy/LEIA-ME.md](../../deploy/LEIA-ME.md).
+
 ## Apêndice: comandos de referência (esboço, a validar na Fase 1)
 
 Ligar o Hyper-V (PowerShell como administrador, depois reiniciar):

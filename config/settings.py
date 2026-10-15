@@ -48,6 +48,8 @@ _site = urlparse(SITE_URL)
 if _site.hostname and '*' not in ALLOWED_HOSTS and _site.hostname not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append(_site.hostname)
 CSRF_TRUSTED_ORIGINS = [f'{_site.scheme}://{_site.netloc}'] if _site.scheme == 'https' else []
+# Outros endereços por onde o sistema é aberto (ex.: porta de ensaio): DJANGO_CSRF_TRUSTED_ORIGINS=https://192.168.1.59:9443
+CSRF_TRUSTED_ORIGINS += [o.strip() for o in os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS', '').split(',') if o.strip()]
 
 if not DEBUG:
     if SECRET_KEY.startswith('django-insecure') or SECRET_KEY.startswith('troque-por'):
@@ -140,6 +142,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
+        'OPTIONS': {'timeout': 20},
     }
 }
 

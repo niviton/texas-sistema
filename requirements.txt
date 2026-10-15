@@ -14,3 +14,5 @@ Werkzeug>=3.0
 cryptography>=42
 # Servidor da oficina (python servidor.py)
 cheroot>=10.0
+# Servidor Linux da máquina virtual (deploy/vm)
+gunicorn>=22; sys_platform != "win32"

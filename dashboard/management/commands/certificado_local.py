@@ -22,6 +22,14 @@ from django.conf import settings
 from django.core.management.base import BaseCommand
 
 
+def _eh_ip(texto):
+    try:
+        ipaddress.ip_address(texto)
+        return True
+    except ValueError:
+        return False
+
+
 def _chave():
     return rsa.generate_private_key(public_exponent=65537, key_size=2048)
 
@@ -38,14 +46,14 @@ class Command(BaseCommand):
     help = 'Gera certificado HTTPS para a rede local (o celular só libera o GPS em HTTPS).'
 
     def add_arguments(self, parser):
-        parser.add_argument('ips', nargs='*', help='IPs do computador na rede (padrão: detecta automaticamente)')
+        parser.add_argument('ips', nargs='*', help='IPs e/ou nomes do servidor na rede (padrão: detecta o IP automaticamente)')
 
     def handle(self, *args, **opts):
         pasta = settings.BASE_DIR / 'ssl_local'
         pasta.mkdir(exist_ok=True)
         agora = datetime.datetime.now(datetime.timezone.utc)
 
-        ips = set(opts['ips'] or [])
+        ips = set(opts['ips'] or [])  # IPs e/ou nomes (ex.: polaris.texascontrols.local)
         if not ips:
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -79,9 +87,11 @@ class Command(BaseCommand):
             self.stdout.write('Autoridade certificadora criada.')
 
         key = _chave()
-        san = [x509.DNSName('localhost')] + [x509.IPAddress(ipaddress.ip_address(ip)) for ip in sorted(ips)]
+        nomes = sorted(n for n in ips if not _eh_ip(n))
+        ips = {n for n in ips if _eh_ip(n)}
+        san = [x509.DNSName('localhost')] + [x509.DNSName(n) for n in nomes] + [x509.IPAddress(ipaddress.ip_address(ip)) for ip in sorted(ips)]
         cert = (x509.CertificateBuilder()
-                .subject_name(x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, sorted(ips)[0])]))
+                .subject_name(x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, (nomes or sorted(ips))[0])]))
                 .issuer_name(ca_cert.subject).public_key(key.public_key()).serial_number(x509.random_serial_number())
                 .not_valid_before(agora - datetime.timedelta(days=1)).not_valid_after(agora + datetime.timedelta(days=825))
                 .add_extension(x509.SubjectAlternativeName(san), critical=False)
@@ -90,5 +100,5 @@ class Command(BaseCommand):
                 .sign(ca_key, hashes.SHA256()))
         _salvar(pasta / 'polaris.key', chave=key)
         _salvar(pasta / 'polaris.crt', cert=cert)
-        self.stdout.write(self.style.SUCCESS(f'Certificado do servidor gerado para: {", ".join(sorted(ips))} e localhost'))
+        self.stdout.write(self.style.SUCCESS(f'Certificado do servidor gerado para: {", ".join(nomes + sorted(ips))} e localhost'))
         self.stdout.write('Rode: python manage.py runserver_https  (https://<ip>:8443)')

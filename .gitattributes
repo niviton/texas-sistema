@@ -1,0 +1,5 @@
+# Scripts do servidor Linux precisam de fim de linha LF (o Windows converteria para CRLF e quebraria)
+*.sh text eol=lf
+*.service text eol=lf
+deploy/vm/*.conf text eol=lf
+*.bat text eol=crlf
