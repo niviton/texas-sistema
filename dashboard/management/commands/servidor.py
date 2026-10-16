@@ -6,8 +6,11 @@ Roda o Polaris como servidor neste computador (rede da oficina), em modo produç
 
 - HTTPS na porta 8443 (o celular libera o GPS), com o certificado de ssl_local/.
 - A porta 8000 só redireciona para o HTTPS, para quem digitar o endereço sem "https".
-- Se o IP do computador mudou, gera de novo o certificado do servidor (a autoridade é a mesma,
-  os celulares não precisam reinstalar) e usa o IP novo nos links dos e-mails.
+- Endereço: se a rede já dá um nome a este computador (ex.: e12780.localdomain, pelo DHCP/DNS da
+  empresa), o sistema usa esse nome. Diferente do IP, o nome continua certo quando o IP muda — não
+  precisa reimprimir os QR codes nem reinstalar o certificado no celular.
+- Se o endereço mudou (nome novo ou IP novo), gera de novo o certificado do servidor (a autoridade
+  é a mesma, os celulares não precisam reinstalar).
 """
 import ipaddress
 import socket
@@ -31,12 +34,69 @@ def ip_local():
         return '127.0.0.1'
 
 
-def _certificado_cobre(caminho, ip):
+def _sufixos_dns_windows():
+    """Domínio(s) que a rede (DHCP) deu a este computador, ex.: 'localdomain'. Lido direto do
+    registro do Windows, então funciona em qualquer idioma (ipconfig muda de texto por idioma)."""
+    import winreg
+    sufixos = set()
+    base = r'SYSTEM\CurrentControlSet\Services\Tcpip\Parameters'
+    try:
+        with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, base) as k:
+            try:
+                v, _ = winreg.QueryValueEx(k, 'Domain')
+                if v:
+                    sufixos.add(v)
+            except FileNotFoundError:
+                pass
+        with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, base + r'\Interfaces') as ifaces:
+            i = 0
+            while True:
+                try:
+                    sub = winreg.EnumKey(ifaces, i)
+                except OSError:
+                    break
+                i += 1
+                with winreg.OpenKey(ifaces, sub) as ik:
+                    for nome in ('DhcpDomain', 'Domain'):
+                        try:
+                            v, _ = winreg.QueryValueEx(ik, nome)
+                            if v:
+                                sufixos.add(v)
+                        except FileNotFoundError:
+                            pass
+    except OSError:
+        pass
+    return sufixos
+
+
+def nome_na_rede():
+    """Nome deste computador na rede da empresa (ex.: e12780.localdomain), se o DHCP der um domínio.
+    Sobrevive à troca de IP; None se não for possível descobrir (ex.: fora do Windows)."""
+    try:
+        sufixos = _sufixos_dns_windows()
+    except ImportError:
+        return None  # não é Windows
+    if not sufixos:
+        return None
+    return f'{socket.gethostname().lower()}.{sorted(sufixos)[0].lower()}'
+
+
+def _certificado_cobre(caminho, hosts):
+    """hosts: lista de IPs e/ou nomes que o certificado precisa cobrir."""
     from cryptography import x509
     try:
         cert = x509.load_pem_x509_certificate(caminho.read_bytes())
         san = cert.extensions.get_extension_for_class(x509.SubjectAlternativeName).value
-        return ipaddress.ip_address(ip) in san.get_values_for_type(x509.IPAddress)
+        ips_no_cert = set(san.get_values_for_type(x509.IPAddress))
+        nomes_no_cert = {n.lower() for n in san.get_values_for_type(x509.DNSName)}
+        for h in hosts:
+            try:
+                if ipaddress.ip_address(h) not in ips_no_cert:
+                    return False
+            except ValueError:
+                if h.lower() not in nomes_no_cert:
+                    return False
+        return True
     except (OSError, ValueError, x509.ExtensionNotFound):
         return False
 
@@ -66,20 +126,29 @@ class Command(BaseCommand):
             self.stdout.write(self.style.WARNING('Atenção: DJANGO_DEBUG está ligado. Use "python servidor.py" para o modo produção.'))
         porta, porta_http = opts['porta'], opts['porta_http']
         ip = ip_local()
+        nome = nome_na_rede()
         pasta = settings.BASE_DIR / 'ssl_local'
         crt, key = pasta / 'polaris.crt', pasta / 'polaris.key'
-        if not (crt.exists() and key.exists()) or not _certificado_cobre(crt, ip):
-            self.stdout.write(f'Gerando certificado para o IP {ip}...')
-            call_command('certificado_local', ip)
+        hosts_do_certificado = [ip, nome] if nome else [ip]
+        if not (crt.exists() and key.exists()) or not _certificado_cobre(crt, hosts_do_certificado):
+            self.stdout.write(f'Gerando certificado para {" e ".join(hosts_do_certificado)}...')
+            call_command('certificado_local', *hosts_do_certificado)
 
-        # Endereço atual: links dos e-mails, QR codes impressos daqui e domínios aceitos.
-        endereco = f'https://{ip}:{porta}'
+        # Endereço principal: o nome dado pela rede, se existir (sobrevive à troca de IP);
+        # senão o IP, como antes. Usado nos links dos e-mails e nos QR codes impressos daqui.
+        preferido = nome or ip
+        endereco = f'https://{preferido}:{porta}'
         if settings.SITE_URL != endereco:
             self.stdout.write(self.style.WARNING(f'SITE_URL era {settings.SITE_URL}; usando {endereco} (atualize o .env).'))
             settings.SITE_URL = endereco
-        for host in [ip, 'localhost', '127.0.0.1', socket.gethostname()]:
+        hosts_aceitos = [ip, 'localhost', '127.0.0.1', socket.gethostname()]
+        if nome:
+            hosts_aceitos.append(nome)
+        for host in hosts_aceitos:
             if '*' not in settings.ALLOWED_HOSTS and host not in settings.ALLOWED_HOSTS:
                 settings.ALLOWED_HOSTS.append(host)
+        if nome:
+            self.stdout.write(f'Nome na rede: {nome}  (continua certo mesmo se o IP {ip} mudar)')
 
         app = StaticFilesHandler(get_wsgi_application())
         servidor = wsgi.Server(('0.0.0.0', porta), app, numthreads=opts['threads'], server_name='Polaris')
@@ -89,7 +158,8 @@ class Command(BaseCommand):
             redireciona = wsgi.Server(('0.0.0.0', porta_http), _app_redireciona(porta), numthreads=4, server_name='Polaris')
             threading.Thread(target=redireciona.safe_start, daemon=True).start()
 
-        self.stdout.write(self.style.SUCCESS(f'Polaris no ar: {endereco}  (http://{ip}:{porta_http} redireciona)'))
+        extra = f'  (ou pelo IP: https://{ip}:{porta})' if nome else ''
+        self.stdout.write(self.style.SUCCESS(f'Polaris no ar: {endereco}{extra}  (http://{preferido}:{porta_http} redireciona)'))
         try:
             servidor.start()
         except KeyboardInterrupt:
